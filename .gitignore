@@ -1,0 +1,6 @@
+decaf.output
+decaf.tab.c
+decaf.tab.h
+lex.yy.c
+main
+*.o
