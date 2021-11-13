@@ -12,7 +12,7 @@ prefixe=decaf
 
 all: main
 
-main: main.o $(prefixe).tab.o lex.yy.o
+main: main.o $(prefixe).tab.o lex.yy.o quad.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 $(prefixe).tab.c: $(prefixe).y

@@ -168,5 +168,5 @@ expr
 
 void yyerror(char *msg)
 {
-	printf("Error: %s %d\n", msg);
+	printf("Error: %s\n", msg);
 }

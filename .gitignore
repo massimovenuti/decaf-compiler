@@ -4,3 +4,4 @@ decaf.tab.h
 lex.yy.c
 main
 *.o
+.vscode/
