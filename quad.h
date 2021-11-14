@@ -61,6 +61,7 @@ quadop newtemp(); // génère un temporaire frais
 quadop quadop_empty();           // crée un quadop vide
 quadop quadop_cst(int cst);      // crée un quadop de type constante
 quadop quadop_bool(int boolean); // crée un quadop de type booléen
+quadop quadop_label(int label);  // crée un quadop de type label
 quadop quadop_name(char *name);  // crée un quadop de type nom
 
 quad quad_make(enum quad_type type, quadop op1, quadop op2,
