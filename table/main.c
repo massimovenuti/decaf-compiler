@@ -2,28 +2,62 @@
 
 int main(int argc, char **argv)
 {
-    Table st = new_table();
-    st = add_table(st);
-    st = add_entry(st, "rayan");
-    st = add_entry(st, "victor");
+    if (argc != 2)
+    {
+        fprintf(stderr, "invalid arguments\n");
+        exit(EXIT_FAILURE);
+    }
 
-    printf("> Table 1\n");
-    print_table(st);
-    printf("'rayan' is declared at scope %d\n", search_entry_scope(st, "rayan"));
-    st = add_table(st);
-    st = add_entry(st, "massimo");
-    st = add_entry(st, "ahmet");
-    st = add_entry(st, "alex");
+    int test = atoi(argv[1]);
+    table = new_tos();
 
-    printf("\n> Table 2\n");
-    print_table(st);
-    printf("'ahmet' is declared at scope %d\n", search_entry_scope(st, "ahmet"));
-    st = pop_table(st);
-
-    printf("\n> Table 3\n");
-    print_table(st);
-    printf("'ahmet' is declared at scope %d\n", search_entry_scope(st, "ahmet"));
-    st = pop_table(st);
+    switch (test)
+    {
+    case 1: // 1 variable, 1 scope
+        table = push_tos(table);
+        table = tos_newname(table, "compteur", S_INT, 0);
+        print_tos(table);
+        table = pop_tos(table);
+        break;
+    case 2: // variable redefinition, 1 scope
+        table = push_tos(table);
+        table = tos_newname(table, "compteur", S_INT, 0);
+        print_tos(table);
+        table = tos_newname(table, "compteur", S_INT, 0);
+        // error expected here ...
+        break;
+    case 3: // sereval variables, 2 scope
+        table = push_tos(table);
+        table = tos_newname(table, "compteur", S_INT, 0);
+        table = tos_newname(table, "diviseur", S_INT, 0);
+        table = tos_newname(table, "test", S_BOOL, 0);
+        print_tos(table);
+        printf("\n");
+        table = push_tos(table);
+        table = tos_newname(table, "test", S_BOOL, 0);
+        table = tos_newname(table, "symbole", S_INT, 0);
+        print_tos(table);
+        table = pop_tos(table);
+        table = pop_tos(table);
+        break;
+    case 4: // sereval variables, 2 scope with redefinition
+        table = push_tos(table);
+        table = tos_newname(table, "compteur", S_INT, 0);
+        table = tos_newname(table, "diviseur", S_INT, 0);
+        table = tos_newname(table, "test", S_BOOL, 0);
+        print_tos(table);
+        printf("\n");
+        table = push_tos(table);
+        table = tos_newname(table, "test", S_BOOL, 0);
+        table = tos_newname(table, "nombre", S_INT, 0);
+        print_tos(table);
+        table = tos_newname(table, "test", S_BOOL, 0);
+        // error expected here ...
+        break;
+    default:
+        printf("unknown test\n");
+        break;
+    }
 
     return EXIT_SUCCESS;
 }
