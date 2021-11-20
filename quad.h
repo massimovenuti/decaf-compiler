@@ -10,7 +10,7 @@
 #define LIST_SIZE 255
 
 struct quadop {
-    enum quadop_type { QO_CST, QO_BOOL, QO_NAME, QO_LABEL, QO_EMPTY } type;
+    enum quadop_type { QO_EMPTY, QO_CST, QO_BOOL, QO_LABEL, QO_NAME } type;
     union {
         int cst;
         int boolean;
@@ -30,7 +30,7 @@ struct quad {
         Q_MOD,
         Q_MINUS, // opération unaire et affectation
         Q_NOT,
-        Q_ASSIGN, // copie
+        Q_MOVE, // copie
         Q_GOTO,   // branchement inconditionnel
         Q_BLT,    // branchement conditionnel
         Q_BGT,
@@ -69,8 +69,7 @@ quad quad_make(enum quad_type type, quadop op1, quadop op2,
 
 struct ilist {
     int *content;
-    size_t max_size;
-    size_t current_size;
+    size_t size;
 };
 
 typedef struct ilist ilist;
@@ -83,7 +82,7 @@ ilist *concat(ilist *list1, ilist *list2); // concatène deux listes à partir d
 // leurs pointeurs respectifs "list1" et "list2", et retourne un pointeur sur la
 // liste résultat
 
-ilist *complete(ilist *list, int label); // complète tous les quadruplets de la
+void complete(ilist *list, int label); // complète tous les quadruplets de la
 // liste "list" avec le label spécifié
 
 void freelist(ilist *list);

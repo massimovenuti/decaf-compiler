@@ -10,9 +10,7 @@ void initcode() {
     nextquad = 0;
 }
 
-void freecode() {
-    free(globalcode);
-}
+void freecode() { free(globalcode); }
 
 void gencode(quad q) {
     if (globalcode == NULL) {
@@ -79,31 +77,28 @@ quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3) {
 ilist *crelist(int label) {
     ilist *l;
     MCHK(l = malloc(sizeof(ilist)));
-    l->content = malloc(LIST_SIZE * sizeof(int));
+    l->content = malloc(sizeof(int));
     l->content[0] = label;
-    l->max_size = LIST_SIZE;
-    l->current_size = 1;
+    l->size = 1;
     return l;
 }
 
 ilist *concat(ilist *list1, ilist *list2) {
     ilist *l;
     MCHK(l = malloc(sizeof(ilist)));
-    l->max_size = list1->max_size + list2->max_size;
-    l->current_size = list1->current_size + list2->current_size;
-    MCHK(l->content = malloc(l->max_size * sizeof(int)));
-    MCHK(memcpy(l->content, list1->content, list1->current_size));
-    MCHK(memcpy(l->content + list1->current_size, list2->content,
-                list2->current_size));
+    l->size = list1->size + list2->size;
+    MCHK(l->content = malloc(l->size * sizeof(int)));
+    MCHK(memcpy(l->content, list1->content, list1->size * sizeof(int)));
+    MCHK(memcpy(l->content + list1->size, list2->content,
+                list2->size * sizeof(int)));
     return l;
 }
 
-ilist *complete(ilist *list, int label) {
-    for (size_t i = 0; i < list->current_size; i++) {
+void complete(ilist *list, int label) {
+    for (size_t i = 0; i < list->size; i++) {
         quad *q = &globalcode[list->content[i]];
         q->op3 = quadop_label(label);
     }
-    return list;
 }
 
 void freelist(ilist *list) {
