@@ -1,4 +1,5 @@
 %{
+#include <stdio.h>
 #include "decaf.tab.h"
 %}
 
@@ -19,7 +20,8 @@ HEX_NUM 0x[0-9a-fA-F]+
 "class Program"				{return CLPR;}
 "continue"					{return CONTINUE;}
 "else"						{return ELSE;}
-"true"|"false"				{return BOOL_LITERAL;}
+"true"						{yylval=1; return BOOL_LITERAL;}
+"false"						{yylval=0; return BOOL_LITERAL;}
 "for"						{return FOR;}
 "if"						{return IF;}
 "int"						{return INT;}
@@ -42,10 +44,23 @@ HEX_NUM 0x[0-9a-fA-F]+
 
 "//"[^\n]*"\n"				{;}
 
-'{CHAR}' 					{return CHAR_LITERAL;}
+'{CHAR}' 					{yylval = yytext[1]; return CHAR_LITERAL;}
 \"{CHAR}*\"					{return STRING_LITERAL;}
 
-{NUM}|{HEX_NUM}				{return INT_LITERAL;}
+{NUM}						{
+								if (sscanf(yytext, "%d", &yylval) != 1) {
+									fprintf(stderr, "%s not int\n", yytext);
+									exit(EXIT_FAILURE);
+								}
+								return INT_LITERAL;
+							}
+{HEX_NUM}					{
+								if (sscanf(yytext, "%x", &yylval) != 1) {
+									fprintf(stderr, "%s not hex\n", yytext);
+									exit(EXIT_FAILURE);
+								}
+								return INT_LITERAL;
+							}
 
 [[:space:]]					{;}
 

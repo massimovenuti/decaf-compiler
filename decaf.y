@@ -56,7 +56,7 @@ field_decl_elem_l
 
 field_decl_elem 
 : ID
-| ID '[' INT_LITERAL ']'
+| ID '[' INT_LITERAL ']'	//{printf("INT %d\n", $3);}
 ;
 
 method_decl_l 
@@ -143,9 +143,9 @@ expr_l
 expr 
 : location
 | method_call
-| INT_LITERAL
-| CHAR_LITERAL
-| BOOL_LITERAL
+| INT_LITERAL		//{printf("INT %d\n", $1);}
+| CHAR_LITERAL		//{printf("CHAR %c\n", $1);}
+| BOOL_LITERAL		//{printf("BOOL %d\n", $1);}
 | expr '+' expr
 | expr '-' expr
 | expr '*' expr
