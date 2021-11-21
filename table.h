@@ -15,6 +15,8 @@
 */
 int hash_idx(const char *str);
 
+/* -------------------------------------------------------------------------------- */
+
 // liste de symboles
 typedef struct s_symbol {
     char *ident;
@@ -22,14 +24,6 @@ typedef struct s_symbol {
     int val;
     struct s_symbol *next;
 } *Symbol;
-
-// pile de table des symboles
-typedef struct s_tos
-{
-    Symbol entry[HASH_SIZE];
-    int scope;
-    struct s_tos *next;
-} *Tos;
 
 /**
 * @brief Crée une nouvelle liste de symboles
@@ -55,6 +49,16 @@ void free_symbol(Symbol sym);
 * @brief Affiche une liste de symboles
 */
 void print_symbol(Symbol sym);
+
+/* -------------------------------------------------------------------------------- */
+
+// pile de table des symboles
+typedef struct s_tos
+{
+    Symbol entry[HASH_SIZE];
+    int scope;
+    struct s_tos *next;
+} *Tos;
 
 /**
 * @brief Crée une nouvelle pile de table de symboles vide
@@ -82,11 +86,13 @@ Tos pop_tos(Tos curr_table);
 Symbol tos_lookup(Tos curr_table, const char *ident);
 
 /**
+* @brief Libère l'espace mémoire occupé par une pile de tables de ymboles
+*/
+void free_tos(Tos curr_table);
+
+/**
 * @brief Affiche le contenu d'un pile de table de symboles
 */
 void print_tos(Tos curr_table);
-
-// variable globale de la pile de tables de symboles
-Tos table;
 
 # endif

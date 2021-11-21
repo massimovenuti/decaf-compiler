@@ -95,8 +95,9 @@ Tos tos_newname(Tos curr_table, const char *ident, int type, int val)
     
     if (lookup_symbol(curr_table->entry[idx], ident) != NULL)
     {
-        fprintf(stderr, "error : '%s' redefinition\n", ident);
-        exit(EXIT_FAILURE);
+        fprintf(stderr, "Error : '%s' redefinition\n", ident);
+        free_tos(curr_table);
+        return NULL;
     }
 
     curr_table->entry[idx] = add_symbol(curr_table->entry[idx], ident, type, val);
@@ -128,6 +129,12 @@ Symbol tos_lookup(Tos curr_table, const char *ident)
         curr_scope = curr_scope->next;
     }
     return ret;
+}
+
+void free_tos(Tos curr_table)
+{
+    while (curr_table != NULL)
+        curr_table = pop_tos(curr_table);
 }
 
 void print_tos(Tos curr_table)
