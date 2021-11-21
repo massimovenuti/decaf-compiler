@@ -1,0 +1,35 @@
+image: gcc
+
+build-quad:
+  stage: build
+  before_script:
+    - apt update && apt -y install make
+  script:
+    - cd test
+    - make test_quad
+  artifacts:
+    paths:
+      - ./test/test_quad
+
+test-quad:
+  stage: test
+  script:
+    - ./test/test_quad 
+  needs: ["build-quad"]
+
+build-table:
+  stage: build
+  before_script:
+    - apt update && apt -y install make
+  script:
+    - cd test
+    - make test_table
+  artifacts:
+    paths:
+      - ./test/test_table
+
+test-table:
+  stage: test
+  script:
+    - ./test/test_table 
+  needs: ["build-table"]
