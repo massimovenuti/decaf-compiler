@@ -32,13 +32,11 @@ int main(int argc, char **argv)
     table = push_tos(table);
     
     table = tos_newname(table, "compteur", S_INT, 0);
-    
     errors += (tos_lookup(table, "compteur") == NULL) ? 1 : 0;
     
     // error expected here ...
     printf("=> error expected here ...\n");
     table = tos_newname(table, "compteur", S_INT, 0);
-    
     
     printf("Test 2 : ");
     if (table == NULL && !errors) 
@@ -92,7 +90,6 @@ int main(int argc, char **argv)
     table = tos_newname(table, "compteur", S_INT, 0);
     table = tos_newname(table, "diviseur", S_INT, 0);
     table = tos_newname(table, "test", S_BOOL, 0);
-
 
     errors += (tos_lookup(table, "compteur") == NULL) ? 1 : 0;
     errors += (tos_lookup(table, "diviseur") == NULL) ? 1 : 0;
