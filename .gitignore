@@ -5,3 +5,4 @@ lex.yy.c
 main
 *.o
 .vscode/
+test/test_table

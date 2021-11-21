@@ -114,7 +114,7 @@ int main(int argc, char const *argv[]) {
 
     if (nextquad != 3) {
         printf("[ko]\n"
-               "nextquad = %d\n",
+               "nextquad = %ld\n",
                nextquad);
         exit(EXIT_FAILURE);
     }
