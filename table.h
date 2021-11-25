@@ -5,94 +5,34 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define S_INT   1
-#define S_BOOL  2
+#define N_HASH 100
 
-#define HASH_SIZE 100
+struct s_typedesc {
+    enum { T_INT, T_BOOL, T_ARRAY, T_FUNCTION } type;
+    // union ...
+};
 
-/**
-* @brief Récupère un indice dans la table des symboles à partir du hachage d'un symbole
-*/
+struct s_entry {
+    char *ident;
+    struct s_typedesc *type;
+    struct s_entry *next;
+};
+
+struct s_context {
+    struct s_entry *entry[N_HASH]; // chaque entrée du tab est un pointeur sur une struct s_entry
+    int scope;
+    struct s_context *next;
+};
+
 int hash_idx(const char *str);
 
-/* -------------------------------------------------------------------------------- */
+struct s_entry *lookup_entry(struct s_entry *entry, const char *ident);
+void free_entry(struct s_entry *entry);
 
-// liste de symboles
-typedef struct s_symbol {
-    char *ident;
-    enum { INT = S_INT, BOOL = S_BOOL } type;
-    int val;
-    struct s_symbol *next;
-} *Symbol;
+void pushctx(struct s_context *ctx);
+void popctx(struct s_context *ctx);
 
-/**
-* @brief Crée une nouvelle liste de symboles
-*/
-Symbol new_symbol();
-
-/**
-* @brief Ajoute un nouveau symbole dans une liste de symboles
-*/
-Symbol add_symbol(Symbol sym, const char *ident, int type, int val);
-
-/**
-* @brief Recherche un symbole dans une liste de symboles
-*/
-Symbol lookup_symbol(Symbol sym, const char *ident);
-
-/**
-* @brief Libère l'espace mémoire occupé par une liste de symboles
-*/
-void free_symbol(Symbol sym);
-
-/**
-* @brief Affiche une liste de symboles
-*/
-void print_symbol(Symbol sym);
-
-/* -------------------------------------------------------------------------------- */
-
-// pile de table des symboles
-typedef struct s_tos
-{
-    Symbol entry[HASH_SIZE];
-    int scope;
-    struct s_tos *next;
-} *Tos;
-
-/**
-* @brief Crée une nouvelle pile de table de symboles vide
-*/
-Tos new_tos();
-
-/**
-* @brief Empile une nouvelle table de symboles vide
-*/
-Tos push_tos(Tos prev_table);
-
-/**
-* @brief Ajoute un nouveau symbole dans la table des symboles au sommet de la pile
-*/
-Tos tos_newname(Tos curr_table, const char *ident, int type, int val);
-
-/**
-* @brief Dépile la table des symboles au sommet de la pile
-*/
-Tos pop_tos(Tos curr_table);
-
-/**
-* @brief Recherche un symbole dans une pile de table de symboles
-*/
-Symbol tos_lookup(Tos curr_table, const char *ident);
-
-/**
-* @brief Libère l'espace mémoire occupé par une pile de tables de ymboles
-*/
-void free_tos(Tos curr_table);
-
-/**
-* @brief Affiche le contenu d'un pile de table de symboles
-*/
-void print_tos(Tos curr_table);
+struct s_entry *newname(struct s_context *ctx, const char *ident);
+struct s_entry *lookup(struct s_context *ctx, const char *ident);
 
 # endif
