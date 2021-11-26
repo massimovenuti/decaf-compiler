@@ -80,5 +80,7 @@ struct s_entry *tos_lookup(struct s_context *ctx, const char *ident)
         
         tmp = tmp->next;
     }
+    
+    fprintf(stderr, "error : '%s' undeclared variable\n", ident);
     return NULL;
 }

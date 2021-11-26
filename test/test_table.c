@@ -8,14 +8,18 @@ int main(int argc, char **argv)
     struct s_context *table = NULL;
     struct s_entry *e1, *e2, *e3;
     
-    int errors = 0;
+    char var[5] = "var";
+
+    int i, j, errors = 0;
     freopen("/dev/null", "w", stderr); // disabling stderr
     
-    // test 1 : 1 variable
+    // test 1 : 1 variable + undeclared error
     table = tos_pushctx(table);
 
     errors += (tos_newname(table, "var1") == NULL) ? 1 : 0;
     errors += (tos_lookup (table, "var1") == NULL) ? 1 : 0;
+
+    // error expected here ...
 
     table = tos_popctx(table);
 
@@ -30,28 +34,20 @@ int main(int argc, char **argv)
     }
     errors = 0;
 
-    // test 2 : 10 variables
+    // test 2 : 100 variables
     table = tos_pushctx(table);
 
-    errors += (tos_newname(table, "var1") == NULL) ? 1 : 0;
-    errors += (tos_newname(table, "var2") == NULL) ? 1 : 0;
-    errors += (tos_newname(table, "var3") == NULL) ? 1 : 0;
-    errors += (tos_newname(table, "var4") == NULL) ? 1 : 0;
-    errors += (tos_newname(table, "var5") == NULL) ? 1 : 0;
-    errors += (tos_newname(table, "var6") == NULL) ? 1 : 0;
-    errors += (tos_newname(table, "var7") == NULL) ? 1 : 0;
-    errors += (tos_newname(table, "var8") == NULL) ? 1 : 0;
-    errors += (tos_newname(table, "var9") == NULL) ? 1 : 0;
-
-    errors += (tos_lookup (table, "var1") == NULL) ? 1 : 0;
-    errors += (tos_lookup (table, "var2") == NULL) ? 1 : 0;
-    errors += (tos_lookup (table, "var3") == NULL) ? 1 : 0;
-    errors += (tos_lookup (table, "var4") == NULL) ? 1 : 0;
-    errors += (tos_lookup (table, "var5") == NULL) ? 1 : 0;
-    errors += (tos_lookup (table, "var6") == NULL) ? 1 : 0;
-    errors += (tos_lookup (table, "var7") == NULL) ? 1 : 0;
-    errors += (tos_lookup (table, "var8") == NULL) ? 1 : 0;
-    errors += (tos_lookup (table, "var9") == NULL) ? 1 : 0;
+    for (i = 0; i < 10; i++)
+    {
+        var[3] = i + '0';
+        for (j = 0; j < 10; j++)
+        {
+            var[4] = j + '0';
+            e1 = tos_newname(table, var);
+            e2 = tos_lookup (table, var);
+            errors += (e1 == NULL || e1 != e2) ? 1 : 0;
+        }
+    }
 
     table = tos_popctx(table);
 
@@ -94,10 +90,14 @@ int main(int argc, char **argv)
     e1 = tos_newname(table, "var1");
     e2 = tos_lookup (table, "var1");
 
-    errors += (e1 != e2)? 1 : 0;
+    errors += (e1 == NULL || e1 != e2)? 1 : 0;
 
     table = tos_pushctx(table);
     
+    e2 = tos_lookup (table, "var1");
+
+    errors += (e1 != e2)? 1 : 0;
+
     e2 = tos_newname(table, "var1");
     e3 = tos_lookup (table, "var1");
 
