@@ -8,3 +8,4 @@ main
 test/test_table
 *.gcda
 *.gcno
+test/test_quad

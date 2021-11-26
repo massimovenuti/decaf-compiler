@@ -76,21 +76,21 @@ void print_quad(quad q) {
 
 void print_ilist(ilist *l) {
     printf("{ ");
-    for (int i = 0; i < l->size; i++) {
+    for (size_t i = 0; i < l->size; i++) {
         printf("%d ", l->content[i]);
     }
     printf("}\n");
 }
 
 void print_globalcode() {
-    for (int i = 0; i < nextquad; i++) {
-        printf("%d: ", i);
+    for (size_t i = 0; i < nextquad; i++) {
+        printf("%ld: ", i);
         print_quad(globalcode[i]);
         printf("\n");
     }
 }
 
-int main(int argc, char const *argv[]) {
+int main() {
     initcode();
 
     printf("check gencode\n"
