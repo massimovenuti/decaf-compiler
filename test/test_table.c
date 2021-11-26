@@ -5,21 +5,23 @@ int main(int argc, char **argv)
     (void)argc; (void)argv;
 
     struct s_entry *e1, *e2, *e3;
-    struct s_arglist *al1, *al2, *al3;
-
+    
     char var[5] = "var";
-    int i, j, test, errors;
 
-    test = 0;
-    errors = 0;
+    int i, j, errors = 0;
+    freopen("/dev/null", "w", stderr); // disabling stderr
+    
+    // test 1 : 1 variable + undeclared error
+    table = tos_pushctx(table);
 
     //--------------------------------------------------------------
     // TEST 1 : SINGLE VARIABLE + LOOKUP ERROR
     //--------------------------------------------------------------
     context = tos_pushctx();
 
-    errors += (tos_newname("var1") == NULL) ? 1 : 0;
-    errors += (tos_lookup("var1") == NULL) ? 1 : 0;
+    // error expected here ...
+
+    table = tos_popctx(table);
 
     // error expected here ...
     errors += (tos_lookup("var2") != NULL) ? 1 : 0;
@@ -37,10 +39,8 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    //--------------------------------------------------------------
-    // TEST 2 : HASHTABLE OVERFLOW
-    //--------------------------------------------------------------
-    context = tos_pushctx();
+    // test 2 : 100 variables
+    table = tos_pushctx(table);
 
     for (i = 0; i < 10; i++)
     {
@@ -48,16 +48,15 @@ int main(int argc, char **argv)
         for (j = 0; j < 10; j++)
         {
             var[4] = j + '0';
-            e1 = tos_newname(var);
-            e2 = tos_lookup(var);
+            e1 = tos_newname(table, var);
+            e2 = tos_lookup (table, var);
             errors += (e1 == NULL || e1 != e2) ? 1 : 0;
         }
     }
 
-    context = tos_popctx();
+    table = tos_popctx(table);
 
-    printf("test %d\t", ++test);
-    if (context == NULL && !errors)  
+    if (table == NULL && !errors)  
     {
         printf("[ok]\t'hashtable overflow'\n");
     }
@@ -103,12 +102,12 @@ int main(int argc, char **argv)
 
     context = tos_pushctx();
     
-    e2 = tos_lookup("var1");
+    e2 = tos_lookup (table, "var1");
 
     errors += (e1 != e2)? 1 : 0;
 
-    e2 = tos_newname("var1");
-    e3 = tos_lookup("var1");
+    e2 = tos_newname(table, "var1");
+    e3 = tos_lookup (table, "var1");
 
     errors += (e2 != e3)? 1 : 0;
     errors += (e1 == e3)? 1 : 0;

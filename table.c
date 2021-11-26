@@ -103,6 +103,8 @@ struct s_entry *tos_lookup(const char *ident)
         
         tmp = tmp->next;
     }
+    
+    fprintf(stderr, "error : '%s' undeclared variable\n", ident);
     return NULL;
 }
 
