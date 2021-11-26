@@ -3,7 +3,7 @@ image: gcc
 build-quad:
   stage: build
   before_script:
-    - apt update && apt -y install make
+    - apt update && apt -y install make gcovr
   script:
     - cd test
     - make test_quad
@@ -21,7 +21,7 @@ test-quad:
   artifacts:
     name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     reports:
-      cobertura: test/coverage-quad.xml
+      cobertura: ./test/coverage-quad.xml
   needs: ["build-quad"]
 
 build-table:
@@ -45,5 +45,5 @@ test-table:
   artifacts:
     name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     reports:
-      cobertura: test/coverage-table.xml
+      cobertura: ./test/coverage-table.xml
   needs: ["build-table"]
