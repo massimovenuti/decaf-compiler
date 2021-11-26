@@ -20,6 +20,7 @@ int main(int argc, char **argv)
     context = tos_pushctx();
 
     // error expected here ...
+    errors += (tos_lookup (table, "var2") != NULL) ? 1 : 0;
 
     table = tos_popctx(table);
 
