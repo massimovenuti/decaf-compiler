@@ -18,12 +18,12 @@ test-quad:
   script:
     - cd test
     - ./test_quad 
-    - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage-quad.xml --root ${CI_PROJECT_DIR}
+    - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     reports:
-      cobertura: ./test/coverage-quad.xml
+      cobertura: ./test/coverage.xml
   needs: ["build-quad"]
 
 build-table:
@@ -44,10 +44,10 @@ test-table:
   script:
     - cd test
     - ./test_table 
-    - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage-table.xml --root ${CI_PROJECT_DIR}
+    - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
     name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     reports:
-      cobertura: ./test/coverage-table.xml
+      cobertura: ./test/coverage.xml
   needs: ["build-table"]
