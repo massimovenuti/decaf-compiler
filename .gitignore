@@ -6,3 +6,5 @@ main
 *.o
 .vscode/
 test/test_table
+*.gcda
+*.gcno
