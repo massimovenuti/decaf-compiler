@@ -6,5 +6,5 @@ https://git.unistra.fr/avogel/compilateur-decaf/badges/master/coverage.svg?job=t
 
 |  lib  | Couverture de test |
 |:-----:|:------------------:|
-| quad  | [![coverage report](https://git.unistra.fr/avogel/compilateur-decaf/badges/master/coverage.svg?job=test-quad) |
-| table | [![coverage report](https://git.unistra.fr/avogel/compilateur-decaf/badges/master/coverage.svg?job=test-table) |
+| quad  | [![coverage report](https://git.unistra.fr/avogel/compilateur-decaf/badges/master/coverage.svg?job=test-quad)](https://git.unistra.fr/avogel/compilateur-decaf/-/commits/master) |
+| table | [![coverage report](https://git.unistra.fr/avogel/compilateur-decaf/badges/master/coverage.svg?job=test-table)](https://git.unistra.fr/avogel/compilateur-decaf/-/commits/master) |
