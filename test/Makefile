@@ -1,11 +1,12 @@
-CC = gcc -fprofile-arcs -ftest-coverage
-CFLAGS = -Wall -Wextra -Werror
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -fprofile-arcs -ftest-coverage
+LDFLAGS = -fprofile-arcs -ftest-coverage
 all: test_quad test_table
 
 test_quad: test_quad.o ../quad.o
 
 test_quad.o: test_quad.c ../quad.h
-	cc -c $< -I../
+	$(CC) $(CFLAGS) -c $< -I../
 
 test_table: test_table.o ../table.o
 
