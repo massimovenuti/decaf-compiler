@@ -6,10 +6,7 @@ main
 *.o
 .vscode/
 test/test_table
-<<<<<<< HEAD
 test/test_quad
 projet.pdf
-=======
 *.gcda
 *.gcno
->>>>>>> b2b4c9d (fix make v2)

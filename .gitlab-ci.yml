@@ -10,6 +10,7 @@ build-quad:
   artifacts:
     paths:
       - ./test/test_quad
+      - ./test/quad.gcno
 
 test-quad:
   stage: test

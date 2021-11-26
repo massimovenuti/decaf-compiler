@@ -33,7 +33,64 @@ int check_quad(quad expected, quad output) {
            check_quadop(expected.op3, output.op3);
 }
 
-int main(int argc, char const *argv[]) {
+void print_quadop(quadop qo) {
+    switch (qo.type) {
+    case QO_CST:
+        printf("(cst,%d)", qo.u.cst);
+        break;
+    case QO_LABEL:
+        printf("(label,%d)", qo.u.label);
+        break;
+    case QO_BOOL:
+        printf("(bool,%s)", qo.u.boolean ? "true" : "false");
+        break;
+    case QO_NAME:
+        printf("(name,%s)", qo.u.name);
+        break;
+    case QO_EMPTY:
+        printf("(empty,_)");
+        break;
+    default:
+        printf("(%d,_)", qo.type);
+        break;
+    }
+}
+
+void print_quad(quad q) {
+    char quad_type_str[][5] = {"add",   "sub",  "mul",  "div",  "mod",
+                               "minus", "not",  "move", "goto", "blt",
+                               "bgt",   "ble",  "bge",  "beq",  "bne",
+                               "param", "call", "seti", "geti"};
+    if (q.type >= Q_ADD && q.type <= Q_GETI) {
+        printf("(%s,", quad_type_str[q.type]);
+    } else {
+        printf("(%d,", q.type);
+    }
+    print_quadop(q.op1);
+    printf(",");
+    print_quadop(q.op2);
+    printf(",");
+    print_quadop(q.op3);
+    printf(")");
+}
+
+void print_ilist(ilist *l) {
+    printf("{ ");
+    for (size_t i = 0; i < l->size; i++) {
+        printf("%d ", l->content[i]);
+    }
+    printf("}\n");
+}
+
+void print_globalcode() {
+    for (size_t i = 0; i < nextquad; i++) {
+        printf("%ld: ", i);
+        print_quad(globalcode[i]);
+        printf("\n");
+    }
+}
+
+int main() {
     initcode();
 
     printf("check gencode\n"
