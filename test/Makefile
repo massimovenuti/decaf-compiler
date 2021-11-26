@@ -1,5 +1,5 @@
-CC = gcc -g
-CFLAGS = -Wall -Wextra -Werror
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -fprofile-arcs -ftest-coverage
 
 all: test_quad test_table
 
