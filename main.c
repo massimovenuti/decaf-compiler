@@ -5,5 +5,7 @@ extern int yydebug;
 
 int main(void)
 {
+    initcode();
     return yyparse();
+    freecode();
 }

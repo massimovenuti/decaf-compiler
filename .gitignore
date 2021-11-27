@@ -6,3 +6,4 @@ main
 *.o
 .vscode/
 test/test_table
+projet.pdf

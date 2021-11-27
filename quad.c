@@ -85,19 +85,29 @@ ilist *crelist(int label) {
 
 ilist *concat(ilist *list1, ilist *list2) {
     ilist *l;
-    MCHK(l = malloc(sizeof(ilist)));
-    l->size = list1->size + list2->size;
-    MCHK(l->content = malloc(l->size * sizeof(int)));
-    MCHK(memcpy(l->content, list1->content, list1->size * sizeof(int)));
-    MCHK(memcpy(l->content + list1->size, list2->content,
-                list2->size * sizeof(int)));
+    if (list1 == NULL && list2 == NULL) {
+        l = NULL;
+    } else if (list1 == NULL) {
+        l = list2;
+    } else if (list2 == NULL) {
+        l = list1;
+    } else {
+        MCHK(l = malloc(sizeof(ilist)));
+        l->size = list1->size + list2->size;
+        MCHK(l->content = malloc(l->size * sizeof(int)));
+        MCHK(memcpy(l->content, list1->content, list1->size * sizeof(int)));
+        MCHK(memcpy(l->content + list1->size, list2->content,
+                    list2->size * sizeof(int)));
+    }
     return l;
 }
 
 void complete(ilist *list, int label) {
-    for (size_t i = 0; i < list->size; i++) {
-        quad *q = &globalcode[list->content[i]];
-        q->op3 = quadop_label(label);
+    if (list != NULL) {
+        for (size_t i = 0; i < list->size; i++) {
+            quad *q = &globalcode[list->content[i]];
+            q->op3 = quadop_label(label);
+        }
     }
 }
 

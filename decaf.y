@@ -1,15 +1,41 @@
 %{
 #include <stdio.h>
+#include "quad.h"
 extern int yylex();
 void yyerror(char *msg);
 
 // int yydebug = 1; 
 %}
 
+%union {
+	char charval;
+	char *strval;
+	int intval;
+	quadop qoval;
+	struct {
+		quadop result;
+		ilist *true;
+		ilist *false;
+		// ...
+	} exprval;
+	struct {
+		ilist *next;
+	} stateval;
+	struct {
+		unsigned length;
+	} listval;
+}
+
+%type <exprval> expr
+%type <intval> marker
+%type <listval> expr_l
+%type <qoval> method_call
+%type <stateval> statement statement_l goto block
+
 %token CLPR							// class Program
 %token INT BOOL						// type
 %token VOID							// void
-%token ID							// id
+%token <strval> ID							// id
 %token IF ELSE						// if else
 %token FOR							// for
 %token BREAK CONTINUE				// break continue
@@ -17,8 +43,9 @@ void yyerror(char *msg);
 %token ADD_ASSIGN SUB_ASSIGN		// '+=' '-='
 %token LEQ BEQ EQ NEQ				// '<=' '>=' '==' '!='
 %token AND OR						// '&&' '||'
-%token INT_LITERAL BOOL_LITERAL		// ...
-%token CHAR_LITERAL STRING_LITERAL	// ...
+%token <intval> INT_LITERAL BOOL_LITERAL		// ...
+%token <charval> CHAR_LITERAL 
+%token STRING_LITERAL	// ...
 
 %left '+' '-'
 %nonassoc NOT
@@ -34,9 +61,9 @@ void yyerror(char *msg);
 %%
 program 
 : CLPR '{' field_decl_l method_decl_l '}'
-| CLPR '{' field_decl_l '}'
+//| CLPR '{' field_decl_l '}'
 | CLPR '{' method_decl_l '}'
-| CLPR '{' '}'
+//| CLPR '{' '}'
 ;
 
 field_decl_l 
@@ -106,18 +133,85 @@ id_l
 ;
 
 statement_l 
-: statement
-| statement_l statement
+: statement {$$.next = $1.next;}
+| statement_l marker statement {
+	complete($1.next, $2);
+	$$.next = $3.next;
+}
 ;
 
 statement 
-: location '=' expr ';'
-| location ADD_ASSIGN expr ';'
-| location SUB_ASSIGN expr ';'
+: ID '=' expr ';' {
+	quadop id = quadop_name($1);
+	if (1) { // cas int
+		gencode(quad_make(Q_MOVE, $3.result, quadop_empty(), id));
+	} else { // cas bool
+		complete($3.true, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), id));
+		$$.next = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+		complete($3.false, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), id));
+	}
+}
+| ID '[' expr ']' '=' expr ';' {
+	quadop id = quadop_name($1);
+	if (1) { // cas int
+		gencode(quad_make(Q_SETI, id, $3.result, $6.result));	
+	} else { // cas bool
+		complete($6.true, nextquad);
+		gencode(quad_make(Q_SETI, id, $3.result, quadop_bool(1)));
+		complete($6.false, nextquad);
+		$$.next = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+		gencode(quad_make(Q_SETI, id, $3.result, quadop_bool(0)));
+	}
+}
+| ID ADD_ASSIGN expr ';' {
+	quadop id = quadop_name($1);
+	gencode(quad_make(Q_ADD, id, $3.result, id));
+}
+| ID '[' expr ']' ADD_ASSIGN expr ';' {
+	quadop tmp = newtemp();
+	quadop id = quadop_name($1);
+	gencode(quad_make(Q_GETI, id, $3.result, tmp));
+	gencode(quad_make(Q_ADD, tmp, $6.result, tmp));
+	gencode(quad_make(Q_SETI, id, $3.result, tmp));
+}
+| ID SUB_ASSIGN expr ';' {
+	quadop id = quadop_name($1);
+	gencode(quad_make(Q_SUB, id, $3.result, id));
+}
+| ID '[' expr ']' SUB_ASSIGN expr ';' {
+	quadop tmp = newtemp();
+	quadop id = quadop_name($1);
+	gencode(quad_make(Q_GETI, id, $3.result, tmp));
+	gencode(quad_make(Q_SUB, tmp, $6.result, tmp));
+	gencode(quad_make(Q_SETI, id, $3.result, tmp));
+}
 | method_call ';'
-| IF '(' expr ')' block
-| IF '(' expr ')' block ELSE block;
-| FOR ID '=' expr ',' expr block
+| IF '(' expr ')' marker block {
+	complete($3.true, $5);
+	$$.next = concat($3.false, $6.next);
+}
+| IF '(' expr ')' marker block goto ELSE marker block {
+	complete($3.true, $5);
+	complete($3.false, $9);
+	$$.next = concat(concat($6.next, $7.next), $10.next);
+}
+| FOR ID '=' expr ',' expr {
+	// ! créer un nouvel identificateur !
+	// ! push une nouvelle table des symboles !
+	gencode(quad_make(Q_MOVE, $4.result, quadop_empty(), quadop_name($2)));
+} marker {
+	gencode(quad_make(Q_BGT, quadop_name($2), $4.result, quadop_empty()));
+} block {
+	complete($10.next, nextquad);
+	quadop id = quadop_name($2);
+	gencode(quad_make(Q_ADD, id, quadop_cst(1), id));
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	$$.next = crelist($8);
+}
 | RETURN expr ';'
 | RETURN ';'
 | BREAK ';'
@@ -125,43 +219,161 @@ statement
 | block
 ;
 
-location 
-: ID 
-| ID '[' expr ']'
-;
-
-method_call 
-: ID '(' ')'
-| ID '(' expr_l ')'
+method_call
+: ID '(' ')' {
+	quadop qo;
+	if (1) // procédure
+		qo = quadop_empty();
+	else // fonction
+		qo = newtemp();
+	gencode(quad_make(Q_CALL, quadop_name($1), quadop_empty(), qo));
+	$$ = qo;
+}
+| ID '(' expr_l ')' {
+	quadop qo;
+	if (1) // procédure
+		qo = quadop_empty();
+	else // fonction
+		qo = newtemp();
+	gencode(quad_make(Q_CALL, quadop_name($1), quadop_cst($3.length), qo));
+	$$ = qo;
+}
 ;
 
 expr_l 
-: expr
-| expr_l ',' expr
+: expr {
+	$$.length = 1;
+	gencode(quad_make(Q_PARAM, $1.result, quadop_empty(), quadop_empty()));
+}
+| expr_l ',' expr {
+	$$.length = $1.length + 1;
+	gencode(quad_make(Q_PARAM, $3.result, quadop_empty(), quadop_empty()));
+}
 ;
 
 expr 
-: location
-| method_call
-| INT_LITERAL		//{printf("INT %d\n", $1);}
-| CHAR_LITERAL		//{printf("CHAR %c\n", $1);}
-| BOOL_LITERAL		//{printf("BOOL %d\n", $1);}
-| expr '+' expr
-| expr '-' expr
-| expr '*' expr
-| expr '/' expr
-| expr '%' expr
-| expr '<' expr
-| expr '>' expr
-| expr LEQ expr
-| expr BEQ expr
-| expr EQ expr
-| expr NEQ expr
-| expr AND expr
-| expr OR expr
-| '-' expr			%prec UMINUS
-| '!' expr			%prec NOT
-| '(' expr ')'
+: ID {
+	if (1) { // cas int
+		$$.result = quadop_name($1);
+	} else { // cas bool
+		$$.true = crelist(nextquad);
+		gencode(quad_make(Q_BEQ, quadop_name($1), quadop_bool(1), quadop_empty()));
+		$$.false = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	}
+} 
+| ID '[' expr ']' {
+	quadop qo = newtemp();
+	gencode(quad_make(Q_GETI, quadop_name($1), $3.result, qo));
+	$$.result = qo;
+}
+| method_call {
+	if ($1.type == QO_EMPTY)
+		printf("appel de procédure dans expression");
+	else
+		$$.result = $1;
+}
+| INT_LITERAL {$$.result = quadop_cst($1);}
+| CHAR_LITERAL {$$.result = quadop_cst((int) $1);}
+| BOOL_LITERAL {
+	if ($1)
+		$$.true = crelist(nextquad);
+	else
+		$$.false = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| expr '+' expr {
+	quadop qo = newtemp();
+	gencode(quad_make(Q_ADD, $1.result, $3.result, qo));
+	$$.result = qo;
+}
+| expr '-' expr {
+	quadop qo = newtemp();
+	gencode(quad_make(Q_SUB, $1.result, $3.result, qo));
+	$$.result = qo;
+}
+| expr '*' expr {
+	quadop qo = newtemp();
+	gencode(quad_make(Q_MUL, $1.result, $3.result, qo));
+	$$.result = qo;
+}
+| expr '/' expr {
+	quadop qo = newtemp();
+	gencode(quad_make(Q_DIV, $1.result, $3.result, qo));
+	$$.result = qo;
+}
+| expr '%' expr {
+	quadop qo = newtemp();
+	gencode(quad_make(Q_MOD, $1.result, $3.result, qo));
+	$$.result = qo;
+}
+| expr '<' expr {
+	$$.true = crelist(nextquad);
+	gencode(quad_make(Q_BLT, $1.result, $3.result, quadop_empty()));
+	$$.false = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| expr '>' expr {
+	$$.true = crelist(nextquad);
+	gencode(quad_make(Q_BGT, $1.result, $3.result, quadop_empty()));
+	$$.false = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| expr LEQ expr {
+	$$.true = crelist(nextquad);
+	gencode(quad_make(Q_BLE, $1.result, $3.result, quadop_empty()));
+	$$.false = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| expr BEQ expr {
+	$$.true = crelist(nextquad);
+	gencode(quad_make(Q_BGE, $1.result, $3.result, quadop_empty()));
+	$$.false = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| expr EQ expr {
+	$$.true = crelist(nextquad);
+	gencode(quad_make(Q_BEQ, $1.result, $3.result, quadop_empty()));
+	$$.false = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| expr NEQ expr {
+	$$.true = crelist(nextquad);
+	gencode(quad_make(Q_BNE, $1.result, $3.result, quadop_empty()));
+	$$.false = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| expr AND marker expr {
+	complete($1.true, $3);
+	$$.false = concat($1.false, $4.false);
+	$$.true = $4.true;
+}
+| expr OR marker expr {
+	complete($1.false, $3);
+	$$.true = concat($1.true, $4.true);
+	$$.false = $4.false;
+}
+| '-' expr {
+	quadop qo = newtemp();
+	gencode(quad_make(Q_MINUS, $2.result, quadop_empty(), qo));
+	$$.result = qo;
+} %prec UMINUS
+| '!' expr %prec NOT {
+	$$.true = $2.false;
+	$$.false = $2.true;
+}
+| '(' expr ')' {$$ = $2;}
+;
+
+marker
+: %empty {$$ = nextquad;}
+;
+
+goto
+: %empty {
+	$$.next = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
 ;
 
 %%
