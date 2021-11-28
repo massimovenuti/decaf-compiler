@@ -20,6 +20,8 @@ void yyerror(char *msg);
 	} exprval;
 	struct {
 		ilist *next;
+		ilist *next_break;
+		ilist *next_continue;
 	} stateval;
 	struct {
 		unsigned length;
@@ -92,12 +94,54 @@ method_decl_l
 ;
 
 method_decl 
-: INT ID '(' arg_l ')' block
-| BOOL ID '(' arg_l ')' block
-| VOID ID '(' arg_l ')' block
-| INT ID '(' ')' block
-| BOOL ID '(' ')' block
-| VOID ID '(' ')' block
+: INT ID '(' arg_l ')' {
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+} block {
+	if ($7.next_break != NULL)
+		printf("break doit être dans une boucle\n");
+	if ($7.next_continue != NULL)
+		printf("continue doit être dans une boucle\n");
+}
+| BOOL ID '(' arg_l ')' {
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+} block {
+	if ($7.next_break != NULL)
+		printf("break doit être dans une boucle\n");
+	if ($7.next_continue != NULL)
+		printf("continue doit être dans une boucle\n");
+}
+| VOID ID '(' arg_l ')' {
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+} block {
+	if ($7.next_break != NULL)
+		printf("break doit être dans une boucle\n");
+	if ($7.next_continue != NULL)
+		printf("continue doit être dans une boucle\n");
+}
+| INT ID '(' ')' {
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+} block {
+	if ($6.next_break != NULL)
+		printf("break doit être dans une boucle\n");
+	if ($6.next_continue != NULL)
+		printf("continue doit être dans une boucle\n");
+}
+| BOOL ID '(' ')' {
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+} block {
+	if ($6.next_break != NULL)
+		printf("break doit être dans une boucle\n");
+	if ($6.next_continue != NULL)
+		printf("continue doit être dans une boucle\n");
+}
+| VOID ID '(' ')' {
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+} block {
+	if ($6.next_break != NULL)
+		printf("break doit être dans une boucle\n");
+	if ($6.next_continue != NULL)
+		printf("continue doit être dans une boucle\n");
+}
 ;
 
 arg_l 
@@ -111,9 +155,9 @@ arg
 ;
 
 block 
-: '{' var_decl_l statement_l '}'
+: '{' var_decl_l statement_l '}' {$$ = $3;}
 | '{' var_decl_l '}'
-| '{' statement_l '}'
+| '{' statement_l '}' {$$ = $2;}
 | '{' '}'
 ;
 
@@ -133,10 +177,12 @@ id_l
 ;
 
 statement_l 
-: statement {$$.next = $1.next;}
+: statement {$$ = $1;}
 | statement_l marker statement {
 	complete($1.next, $2);
 	$$.next = $3.next;
+	$$.next_break = concat($1.next_break, $3.next_break);
+	$$.next_continue = concat($1.next_continue, $3.next_continue);
 }
 ;
 
@@ -193,11 +239,15 @@ statement
 | IF '(' expr ')' marker block {
 	complete($3.true, $5);
 	$$.next = concat($3.false, $6.next);
+	$$.next_break = $6.next_break;
+	$$.next_continue = $6.next_continue;
 }
 | IF '(' expr ')' marker block goto ELSE marker block {
 	complete($3.true, $5);
 	complete($3.false, $9);
 	$$.next = concat(concat($6.next, $7.next), $10.next);
+	$$.next_break = concat($6.next_break, $10.next_break);
+	$$.next_continue = concat($6.next_continue, $10.next_continue);
 }
 | FOR ID '=' expr ',' expr {
 	// ! créer un nouvel identificateur !
@@ -207,16 +257,29 @@ statement
 	gencode(quad_make(Q_BGT, quadop_name($2), $4.result, quadop_empty()));
 } block {
 	complete($10.next, nextquad);
+	complete($10.next_continue, nextquad);
 	quadop id = quadop_name($2);
 	gencode(quad_make(Q_ADD, id, quadop_cst(1), id));
-	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
-	$$.next = crelist($8);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($8)));
+	$$.next = concat(crelist($8), $10.next_break);
 }
-| RETURN expr ';'
-| RETURN ';'
-| BREAK ';'
-| CONTINUE ';'
-| block
+| RETURN expr ';' {
+	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), $2.result));
+}
+| RETURN ';' {
+	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| BREAK ';' {
+	$$.next_break = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| CONTINUE ';' {
+	$$.next_continue = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| block {
+	$$ = $1;
+}
 ;
 
 method_call

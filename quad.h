@@ -40,6 +40,8 @@ struct quad {
         Q_BNE,
         Q_PARAM, // appel de procédure
         Q_CALL,
+        Q_RETURN, // retour de fonction
+        Q_FUN, // début de fonction
         Q_SETI, // affectation et indice de tableau
         Q_GETI
     } type;
