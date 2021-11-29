@@ -155,10 +155,22 @@ arg
 ;
 
 block 
-: '{' var_decl_l statement_l '}' {$$ = $3;}
-| '{' var_decl_l '}'
-| '{' statement_l '}' {$$ = $2;}
-| '{' '}'
+: '{' var_decl_l statement_l '}' {
+	$$ = $3;
+}
+| '{' var_decl_l '}' {
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
+}
+| '{' statement_l '}' {
+	$$ = $2;
+}
+| '{' '}' {
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
+}
 ;
 
 var_decl_l 
@@ -199,6 +211,9 @@ statement
 		complete($3.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), id));
 	}
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
 | ID '[' expr ']' '=' expr ';' {
 	quadop id = quadop_name($1);
@@ -212,10 +227,16 @@ statement
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 		gencode(quad_make(Q_SETI, id, $3.result, quadop_bool(0)));
 	}
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
 | ID ADD_ASSIGN expr ';' {
 	quadop id = quadop_name($1);
 	gencode(quad_make(Q_ADD, id, $3.result, id));
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
 | ID '[' expr ']' ADD_ASSIGN expr ';' {
 	quadop tmp = newtemp();
@@ -223,10 +244,16 @@ statement
 	gencode(quad_make(Q_GETI, id, $3.result, tmp));
 	gencode(quad_make(Q_ADD, tmp, $6.result, tmp));
 	gencode(quad_make(Q_SETI, id, $3.result, tmp));
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
 | ID SUB_ASSIGN expr ';' {
 	quadop id = quadop_name($1);
 	gencode(quad_make(Q_SUB, id, $3.result, id));
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
 | ID '[' expr ']' SUB_ASSIGN expr ';' {
 	quadop tmp = newtemp();
@@ -234,8 +261,15 @@ statement
 	gencode(quad_make(Q_GETI, id, $3.result, tmp));
 	gencode(quad_make(Q_SUB, tmp, $6.result, tmp));
 	gencode(quad_make(Q_SETI, id, $3.result, tmp));
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
-| method_call ';'
+| method_call ';' {
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
+}
 | IF '(' expr ')' marker block {
 	complete($3.true, $5);
 	$$.next = concat($3.false, $6.next);
@@ -262,18 +296,39 @@ statement
 	gencode(quad_make(Q_ADD, id, quadop_cst(1), id));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($8)));
 	$$.next = concat(crelist($8), $10.next_break);
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
 | RETURN expr ';' {
-	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), $2.result));
+	if (1) { // cas int
+		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), $2.result));
+		$$.next = NULL;
+	} else { // cas bool
+		complete($2.true, nextquad);
+		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(1)));
+		$$.next = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+		complete($2.false, nextquad);
+		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(0)));
+	}
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
 | RETURN ';' {
 	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
 }
 | BREAK ';' {
+	$$.next = NULL;
+	$$.next_continue = NULL;
 	$$.next_break = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | CONTINUE ';' {
+	$$.next = NULL;
+	$$.next_break = NULL;
 	$$.next_continue = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }

@@ -77,7 +77,7 @@ quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3) {
 ilist *crelist(int label) {
     ilist *l;
     MCHK(l = malloc(sizeof(ilist)));
-    l->content = malloc(sizeof(int));
+    MCHK(l->content = malloc(sizeof(int)));
     l->content[0] = label;
     l->size = 1;
     return l;
@@ -103,15 +103,77 @@ ilist *concat(ilist *list1, ilist *list2) {
 }
 
 void complete(ilist *list, int label) {
-    if (list != NULL) {
-        for (size_t i = 0; i < list->size; i++) {
-            quad *q = &globalcode[list->content[i]];
-            q->op3 = quadop_label(label);
-        }
+    if (list == NULL)
+        return;
+    for (size_t i = 0; i < list->size; i++) {
+        quad *q = &globalcode[list->content[i]];
+        q->op3 = quadop_label(label);
     }
+    freelist(list);
 }
 
 void freelist(ilist *list) {
     free(list->content);
     free(list);
+}
+
+void print_quadop(quadop qo) {
+    switch (qo.type) {
+    case QO_CST:
+        printf("(cst:%d)", qo.u.cst);
+        break;
+    case QO_LABEL:
+        printf("(label:%d)", qo.u.label);
+        break;
+    case QO_BOOL:
+        printf("(bool:%s)", qo.u.boolean ? "true" : "false");
+        break;
+    case QO_NAME:
+        // printf("(name,%s)", qo.u.name);
+        break;
+    case QO_EMPTY:
+        printf("_");
+        break;
+    default:
+        printf("(?%d)", qo.type);
+        break;
+    }
+}
+
+void print_quad(quad q) {
+    char quad_type_str[][10] = {"add", "sub",  "mul",  "div",   "mod",  "minus",
+                               "not", "move", "goto", "blt",   "bgt",  "ble",
+                               "bge", "beq",  "bne",  "param", "call", "return",
+                               "fun", "seti", "geti"};
+    if (q.type >= Q_ADD && q.type <= Q_GETI) {
+        printf("(%s,", quad_type_str[q.type]);
+    } else {
+        printf("(?%d,", q.type);
+    }
+    print_quadop(q.op1);
+    printf(",");
+    print_quadop(q.op2);
+    printf(",");
+    print_quadop(q.op3);
+    printf(")");
+}
+
+void print_ilist(ilist *l) {
+    if (l == NULL)
+        return;
+    printf("{ ");
+    for (int i = 0; i < l->size; i++) {
+        printf("%d ", l->content[i]);
+    }
+    printf("}\n");
+}
+
+void print_globalcode() {
+    if (globalcode == NULL)
+        return;
+    for (int i = 0; i < nextquad; i++) {
+        printf("%d: ", i);
+        print_quad(globalcode[i]);
+        printf("\n");
+    }
 }

@@ -1,0 +1,13 @@
+class Program {
+    int moyenne(int nombre) { // Calcul de la moyenne des valeurs
+        if (true) {
+        }
+        return somme/nombre;
+    }
+    void main() {
+        int nombre;
+
+        nombre = 3;
+        // WriteString("Nombre de valeurs : ");
+    }
+}

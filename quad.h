@@ -89,4 +89,12 @@ void complete(ilist *list, int label); // complète tous les quadruplets de la
 
 void freelist(ilist *list);
 
+void print_quadop(quadop qo);
+
+void print_quad(quad q);
+
+void print_ilist(ilist *l);
+
+void print_globalcode();
+
 #endif

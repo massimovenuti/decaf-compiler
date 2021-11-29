@@ -6,6 +6,8 @@ extern int yydebug;
 int main(void)
 {
     initcode();    
-    return yyparse();
+    yyparse();
+    print_globalcode();
     freecode();
+    return 0;
 }
