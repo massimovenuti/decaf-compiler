@@ -3,11 +3,9 @@
 extern int yyparse();
 extern int yydebug;
 
-int main(void)
-{
-    initcode();    
-    yyparse();
-    print_globalcode();
+int main(void) {
+    initcode();
+    int res = yyparse();
     freecode();
-    return 0;
+    return res;
 }

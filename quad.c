@@ -129,7 +129,7 @@ void print_quadop(quadop qo) {
         printf("(bool:%s)", qo.u.boolean ? "true" : "false");
         break;
     case QO_NAME:
-        // printf("(name,%s)", qo.u.name);
+        printf("(name,%s)", qo.u.name);
         break;
     case QO_EMPTY:
         printf("_");
@@ -141,10 +141,10 @@ void print_quadop(quadop qo) {
 }
 
 void print_quad(quad q) {
-    char quad_type_str[][10] = {"add", "sub",  "mul",  "div",   "mod",  "minus",
-                               "not", "move", "goto", "blt",   "bgt",  "ble",
-                               "bge", "beq",  "bne",  "param", "call", "return",
-                               "fun", "seti", "geti"};
+    char quad_type_str[][10] = {
+        "add",  "sub",   "mul",  "div",    "mod", "minus", "not",
+        "move", "goto",  "blt",  "bgt",    "ble", "bge",   "beq",
+        "bne",  "param", "call", "return", "fun", "seti",  "geti"};
     if (q.type >= Q_ADD && q.type <= Q_GETI) {
         printf("(%s,", quad_type_str[q.type]);
     } else {
