@@ -122,12 +122,7 @@ int main(int argc, char const *argv[]) {
         print_globalcode();
         exit(EXIT_FAILURE);
     }
-
-    freelist(l0);
-    freelist(l1);
-    freelist(l2);
-    freelist(l01);
-    freelist(l012);
+    
     freecode();
     return 0;
 }
