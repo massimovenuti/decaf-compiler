@@ -162,7 +162,7 @@ void print_ilist(ilist *l) {
     if (l == NULL)
         return;
     printf("{ ");
-    for (int i = 0; i < l->size; i++) {
+    for (size_t i = 0; i < l->size; i++) {
         printf("%d ", l->content[i]);
     }
     printf("}\n");
@@ -171,8 +171,8 @@ void print_ilist(ilist *l) {
 void print_globalcode() {
     if (globalcode == NULL)
         return;
-    for (int i = 0; i < nextquad; i++) {
-        printf("%d: ", i);
+    for (size_t i = 0; i < nextquad; i++) {
+        printf("%ld: ", i);
         print_quad(globalcode[i]);
         printf("\n");
     }
