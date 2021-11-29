@@ -6,4 +6,5 @@ main
 *.o
 .vscode/
 test/test_table
+test/test_quad
 projet.pdf
