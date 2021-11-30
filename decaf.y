@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include "quad.h"
+#include "table.h"
 extern int yylex();
 void yyerror(char *msg);
 
@@ -13,10 +14,14 @@ void yyerror(char *msg);
 	int intval;
 	quadop qoval;
 	struct {
-		quadop result;
-		ilist *true;
-		ilist *false;
-		// ...
+		enum {E_BOOL, E_INT} type;
+		union {
+			quadop result;
+			struct {
+				ilist *true;
+				ilist *false;
+			} boolexpr;
+		} u;
 	} exprval;
 	struct {
 		ilist *next;
@@ -202,13 +207,13 @@ statement
 : ID '=' expr ';' {
 	quadop id = quadop_name($1);
 	if (1) { // cas int
-		gencode(quad_make(Q_MOVE, $3.result, quadop_empty(), id));
+		gencode(quad_make(Q_MOVE, $3.u.result, quadop_empty(), id));
 	} else { // cas bool
-		complete($3.true, nextquad);
+		complete($3.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), id));
 		$$.next = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
-		complete($3.false, nextquad);
+		complete($3.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), id));
 	}
 	$$.next = NULL;
@@ -218,14 +223,14 @@ statement
 | ID '[' expr ']' '=' expr ';' {
 	quadop id = quadop_name($1);
 	if (1) { // cas int
-		gencode(quad_make(Q_SETI, id, $3.result, $6.result));	
+		gencode(quad_make(Q_SETI, id, $3.u.result, $6.u.result));	
 	} else { // cas bool
-		complete($6.true, nextquad);
-		gencode(quad_make(Q_SETI, id, $3.result, quadop_bool(1)));
-		complete($6.false, nextquad);
+		complete($6.u.boolexpr.true, nextquad);
+		gencode(quad_make(Q_SETI, id, $3.u.result, quadop_bool(1)));
+		complete($6.u.boolexpr.false, nextquad);
 		$$.next = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
-		gencode(quad_make(Q_SETI, id, $3.result, quadop_bool(0)));
+		gencode(quad_make(Q_SETI, id, $3.u.result, quadop_bool(0)));
 	}
 	$$.next = NULL;
 	$$.next_break = NULL;
@@ -233,34 +238,38 @@ statement
 }
 | ID ADD_ASSIGN expr ';' {
 	quadop id = quadop_name($1);
-	gencode(quad_make(Q_ADD, id, $3.result, id));
+	gencode(quad_make(Q_ADD, id, $3.u.result, id));
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
 }
 | ID '[' expr ']' ADD_ASSIGN expr ';' {
-	quadop tmp = newtemp();
 	quadop id = quadop_name($1);
-	gencode(quad_make(Q_GETI, id, $3.result, tmp));
-	gencode(quad_make(Q_ADD, tmp, $6.result, tmp));
-	gencode(quad_make(Q_SETI, id, $3.result, tmp));
+	struct s_entry *entry = newtemp(); 
+	entry->type->type = T_INT;
+	quadop tmp = quadop_name(entry->ident);
+	gencode(quad_make(Q_GETI, id, $3.u.result, tmp));
+	gencode(quad_make(Q_ADD, tmp, $6.u.result, tmp));
+	gencode(quad_make(Q_SETI, id, $3.u.result, tmp));
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
 }
 | ID SUB_ASSIGN expr ';' {
 	quadop id = quadop_name($1);
-	gencode(quad_make(Q_SUB, id, $3.result, id));
+	gencode(quad_make(Q_SUB, id, $3.u.result, id));
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
 }
 | ID '[' expr ']' SUB_ASSIGN expr ';' {
-	quadop tmp = newtemp();
 	quadop id = quadop_name($1);
-	gencode(quad_make(Q_GETI, id, $3.result, tmp));
-	gencode(quad_make(Q_SUB, tmp, $6.result, tmp));
-	gencode(quad_make(Q_SETI, id, $3.result, tmp));
+	struct s_entry *entry = newtemp(); 
+	entry->type->type = T_INT;
+	quadop tmp = quadop_name(entry->ident);
+	gencode(quad_make(Q_GETI, id, $3.u.result, tmp));
+	gencode(quad_make(Q_SUB, tmp, $6.u.result, tmp));
+	gencode(quad_make(Q_SETI, id, $3.u.result, tmp));
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
@@ -271,14 +280,14 @@ statement
 	$$.next_continue = NULL;
 }
 | IF '(' expr ')' marker block {
-	complete($3.true, $5);
-	$$.next = concat($3.false, $6.next);
+	complete($3.u.boolexpr.true, $5);
+	$$.next = concat($3.u.boolexpr.false, $6.next);
 	$$.next_break = $6.next_break;
 	$$.next_continue = $6.next_continue;
 }
 | IF '(' expr ')' marker block goto ELSE marker block {
-	complete($3.true, $5);
-	complete($3.false, $9);
+	complete($3.u.boolexpr.true, $5);
+	complete($3.u.boolexpr.false, $9);
 	$$.next = concat(concat($6.next, $7.next), $10.next);
 	$$.next_break = concat($6.next_break, $10.next_break);
 	$$.next_continue = concat($6.next_continue, $10.next_continue);
@@ -286,9 +295,9 @@ statement
 | FOR ID '=' expr ',' expr {
 	// ! créer un nouvel identificateur !
 	// ! push une nouvelle table des symboles !
-	gencode(quad_make(Q_MOVE, $4.result, quadop_empty(), quadop_name($2)));
+	gencode(quad_make(Q_MOVE, $4.u.result, quadop_empty(), quadop_name($2)));
 } marker {
-	gencode(quad_make(Q_BGT, quadop_name($2), $4.result, quadop_empty()));
+	gencode(quad_make(Q_BGT, quadop_name($2), $4.u.result, quadop_empty()));
 } block {
 	complete($10.next, nextquad);
 	complete($10.next_continue, nextquad);
@@ -301,14 +310,14 @@ statement
 }
 | RETURN expr ';' {
 	if (1) { // cas int
-		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), $2.result));
+		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), $2.u.result));
 		$$.next = NULL;
 	} else { // cas bool
-		complete($2.true, nextquad);
+		complete($2.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(1)));
 		$$.next = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
-		complete($2.false, nextquad);
+		complete($2.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(0)));
 	}
 	$$.next_break = NULL;
@@ -340,19 +349,25 @@ statement
 method_call
 : ID '(' ')' {
 	quadop qo;
-	if (1) // procédure
+	if (1) { // procédure
 		qo = quadop_empty();
-	else // fonction
-		qo = newtemp();
+	} else { // fonction
+		struct s_entry *entry = newtemp(); 
+		// entry->type->type = T_INT;
+		qo = quadop_name(entry->ident);
+	}
 	gencode(quad_make(Q_CALL, quadop_name($1), quadop_empty(), qo));
 	$$ = qo;
 }
 | ID '(' expr_l ')' {
 	quadop qo;
-	if (1) // procédure
+	if (1) { // procédure
 		qo = quadop_empty();
-	else // fonction
-		qo = newtemp();
+	} else { // fonction
+		struct s_entry *entry = newtemp(); 
+		// entry->type->type = T_INT;
+		qo = quadop_name(entry->ident);
+	}
 	gencode(quad_make(Q_CALL, quadop_name($1), quadop_cst($3.length), qo));
 	$$ = qo;
 }
@@ -361,124 +376,138 @@ method_call
 expr_l 
 : expr {
 	$$.length = 1;
-	gencode(quad_make(Q_PARAM, $1.result, quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, $1.u.result, quadop_empty(), quadop_empty()));
 }
 | expr_l ',' expr {
 	$$.length = $1.length + 1;
-	gencode(quad_make(Q_PARAM, $3.result, quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, $3.u.result, quadop_empty(), quadop_empty()));
 }
 ;
 
 expr 
 : ID {
 	if (1) { // cas int
-		$$.result = quadop_name($1);
+		$$.u.result = quadop_name($1);
 	} else { // cas bool
-		$$.true = crelist(nextquad);
+		$$.u.boolexpr.true = crelist(nextquad);
 		gencode(quad_make(Q_BEQ, quadop_name($1), quadop_bool(1), quadop_empty()));
-		$$.false = crelist(nextquad);
+		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
 } 
 | ID '[' expr ']' {
-	quadop qo = newtemp();
-	gencode(quad_make(Q_GETI, quadop_name($1), $3.result, qo));
-	$$.result = qo;
+	struct s_entry *entry = newtemp(); 
+	// entry->type->type = T_INT;
+	quadop qo = quadop_name(entry->ident);
+	gencode(quad_make(Q_GETI, quadop_name($1), $3.u.result, qo));
+	$$.u.result = qo;
 }
 | method_call {
 	if ($1.type == QO_EMPTY)
 		printf("appel de procédure dans expression");
 	else
-		$$.result = $1;
+		$$.u.result = $1;
 }
-| INT_LITERAL {$$.result = quadop_cst($1);}
-| CHAR_LITERAL {$$.result = quadop_cst((int) $1);}
+| INT_LITERAL {$$.u.result = quadop_cst($1);}
+| CHAR_LITERAL {$$.u.result = quadop_cst((int) $1);}
 | BOOL_LITERAL {
 	if ($1)
-		$$.true = crelist(nextquad);
+		$$.u.boolexpr.true = crelist(nextquad);
 	else
-		$$.false = crelist(nextquad);
+		$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr '+' expr {
-	quadop qo = newtemp();
-	gencode(quad_make(Q_ADD, $1.result, $3.result, qo));
-	$$.result = qo;
+	struct s_entry *entry = newtemp(); 
+	entry->type->type = T_INT;
+	quadop qo = quadop_name(entry->ident);
+	gencode(quad_make(Q_ADD, $1.u.result, $3.u.result, qo));
+	$$.u.result = qo;
 }
 | expr '-' expr {
-	quadop qo = newtemp();
-	gencode(quad_make(Q_SUB, $1.result, $3.result, qo));
-	$$.result = qo;
+	struct s_entry *entry = newtemp(); 
+	entry->type->type = T_INT;
+	quadop qo = quadop_name(entry->ident);
+	gencode(quad_make(Q_SUB, $1.u.result, $3.u.result, qo));
+	$$.u.result = qo;
 }
 | expr '*' expr {
-	quadop qo = newtemp();
-	gencode(quad_make(Q_MUL, $1.result, $3.result, qo));
-	$$.result = qo;
+	struct s_entry *entry = newtemp(); 
+	entry->type->type = T_INT;
+	quadop qo = quadop_name(entry->ident);
+	gencode(quad_make(Q_MUL, $1.u.result, $3.u.result, qo));
+	$$.u.result = qo;
 }
 | expr '/' expr {
-	quadop qo = newtemp();
-	gencode(quad_make(Q_DIV, $1.result, $3.result, qo));
-	$$.result = qo;
+	struct s_entry *entry = newtemp(); 
+	entry->type->type = T_INT;
+	quadop qo = quadop_name(entry->ident);
+	gencode(quad_make(Q_DIV, $1.u.result, $3.u.result, qo));
+	$$.u.result = qo;
 }
 | expr '%' expr {
-	quadop qo = newtemp();
-	gencode(quad_make(Q_MOD, $1.result, $3.result, qo));
-	$$.result = qo;
+	struct s_entry *entry = newtemp(); 
+	entry->type->type = T_INT;
+	quadop qo = quadop_name(entry->ident);
+	gencode(quad_make(Q_MOD, $1.u.result, $3.u.result, qo));
+	$$.u.result = qo;
 }
 | expr '<' expr {
-	$$.true = crelist(nextquad);
-	gencode(quad_make(Q_BLT, $1.result, $3.result, quadop_empty()));
-	$$.false = crelist(nextquad);
+	$$.u.boolexpr.true = crelist(nextquad);
+	gencode(quad_make(Q_BLT, $1.u.result, $3.u.result, quadop_empty()));
+	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr '>' expr {
-	$$.true = crelist(nextquad);
-	gencode(quad_make(Q_BGT, $1.result, $3.result, quadop_empty()));
-	$$.false = crelist(nextquad);
+	$$.u.boolexpr.true = crelist(nextquad);
+	gencode(quad_make(Q_BGT, $1.u.result, $3.u.result, quadop_empty()));
+	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr LEQ expr {
-	$$.true = crelist(nextquad);
-	gencode(quad_make(Q_BLE, $1.result, $3.result, quadop_empty()));
-	$$.false = crelist(nextquad);
+	$$.u.boolexpr.true = crelist(nextquad);
+	gencode(quad_make(Q_BLE, $1.u.result, $3.u.result, quadop_empty()));
+	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr BEQ expr {
-	$$.true = crelist(nextquad);
-	gencode(quad_make(Q_BGE, $1.result, $3.result, quadop_empty()));
-	$$.false = crelist(nextquad);
+	$$.u.boolexpr.true = crelist(nextquad);
+	gencode(quad_make(Q_BGE, $1.u.result, $3.u.result, quadop_empty()));
+	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr EQ expr {
-	$$.true = crelist(nextquad);
-	gencode(quad_make(Q_BEQ, $1.result, $3.result, quadop_empty()));
-	$$.false = crelist(nextquad);
+	$$.u.boolexpr.true = crelist(nextquad);
+	gencode(quad_make(Q_BEQ, $1.u.result, $3.u.result, quadop_empty()));
+	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr NEQ expr {
-	$$.true = crelist(nextquad);
-	gencode(quad_make(Q_BNE, $1.result, $3.result, quadop_empty()));
-	$$.false = crelist(nextquad);
+	$$.u.boolexpr.true = crelist(nextquad);
+	gencode(quad_make(Q_BNE, $1.u.result, $3.u.result, quadop_empty()));
+	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr AND marker expr {
-	complete($1.true, $3);
-	$$.false = concat($1.false, $4.false);
-	$$.true = $4.true;
+	complete($1.u.boolexpr.true, $3);
+	$$.u.boolexpr.false = concat($1.u.boolexpr.false, $4.u.boolexpr.false);
+	$$.u.boolexpr.true = $4.u.boolexpr.true;
 }
 | expr OR marker expr {
-	complete($1.false, $3);
-	$$.true = concat($1.true, $4.true);
-	$$.false = $4.false;
+	complete($1.u.boolexpr.false, $3);
+	$$.u.boolexpr.true = concat($1.u.boolexpr.true, $4.u.boolexpr.true);
+	$$.u.boolexpr.false = $4.u.boolexpr.false;
 }
 | '-' expr {
-	quadop qo = newtemp();
-	gencode(quad_make(Q_MINUS, $2.result, quadop_empty(), qo));
-	$$.result = qo;
+	struct s_entry *entry = newtemp(); 
+	entry->type->type = T_INT;
+	quadop qo = quadop_name(entry->ident);
+	gencode(quad_make(Q_MINUS, $2.u.result, quadop_empty(), qo));
+	$$.u.result = qo;
 } %prec UMINUS
 | '!' expr %prec NOT {
-	$$.true = $2.false;
-	$$.false = $2.true;
+	$$.u.boolexpr.true = $2.u.boolexpr.false;
+	$$.u.boolexpr.false = $2.u.boolexpr.true;
 }
 | '(' expr ')' {$$ = $2;}
 ;

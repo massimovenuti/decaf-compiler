@@ -23,15 +23,19 @@ struct s_context {
     struct s_context *next;
 };
 
+extern struct s_context *context;
+extern unsigned tempnum;
+
 unsigned int hash_idx(const char *str);
 
+struct s_entry *newtemp(); // génère un temporaire frais
 struct s_entry *lookup_entry(struct s_entry *entry, const char *ident);
 void free_entry(struct s_entry *entry);
 
-struct s_context *tos_pushctx(struct s_context *ctx);
-struct s_context *tos_popctx (struct s_context *ctx);
+struct s_context *tos_pushctx();
+struct s_context *tos_popctx ();
 
-struct s_entry *tos_newname(struct s_context *ctx, const char *ident);
-struct s_entry *tos_lookup (struct s_context *ctx, const char *ident);
+struct s_entry *tos_newname(const char *ident);
+struct s_entry *tos_lookup (const char *ident);
 
 # endif

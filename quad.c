@@ -1,8 +1,8 @@
 #include "quad.h"
 
-quad *globalcode; // code généré
-size_t codesize;  // taille du tableau globalcode
-size_t nextquad;  // numéro du prochain quad généré
+quad *globalcode = NULL; // code généré
+size_t codesize = 0;  // taille du tableau globalcode
+size_t nextquad = 0;  // numéro du prochain quad généré
 
 void initcode() {
     MCHK(globalcode = (quad *)malloc(CODE_SIZE * sizeof(quad)));
@@ -58,11 +58,6 @@ quadop quadop_name(char *name) {
     // MCHK(qo.u.name = malloc(len * sizeof(char)));
     // snprintf(qo.u.name, len, "%s", name);
     return qo;
-}
-
-quadop newtemp() {
-    // TODO
-    return quadop_empty();
 }
 
 quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3) {

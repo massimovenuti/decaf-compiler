@@ -58,8 +58,6 @@ void initcode();      // initialise les variables globales
 void freecode();      // libère la mémoire du tableau global
 void gencode(quad q); // écrit dans globalcode[nextquad] et incrémente nextquad
 
-quadop newtemp(); // génère un temporaire frais
-
 quadop quadop_empty();           // crée un quadop vide
 quadop quadop_cst(int cst);      // crée un quadop de type constante
 quadop quadop_bool(int boolean); // crée un quadop de type booléen
