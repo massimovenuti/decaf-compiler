@@ -1,158 +1,84 @@
 # include "table.h"
 
-int hash_idx(const char *str)
+unsigned int hash_idx(const char *str)
 {
-	int i, res;
-    i = 0;
-    res = 0;
+    int i = 0;
+    unsigned long hash = 5381;
 
 	while (str[i] != '\0')
+        hash = ((hash << 5) + hash) + str[i++];
+	
+    return hash % N_HASH;
+}
+
+struct s_entry *lookup_entry(struct s_entry *entry, const char *ident)
+{
+    if (entry == NULL) return NULL;
+    if (strcmp(ident, entry->ident) == 0) return entry;
+    return lookup_entry(entry->next, ident);
+}
+
+void free_entry(struct s_entry *entry)
+{
+    if (entry == NULL) return;
+    free_entry(entry->next);
+    free(entry->ident);
+    free(entry);
+}
+
+struct s_context *tos_pushctx(struct s_context *ctx)
+{
+    struct s_context *new_ctx = (struct s_context *)malloc(sizeof(struct s_context));
+
+    for (int i = 0; i < N_HASH; i++)
+        new_ctx->entry[i] = NULL;
+
+    new_ctx->next = ctx;
+    return new_ctx;
+}
+
+struct s_context *tos_popctx(struct s_context *ctx)
+{
+    for (int i = 0; i < N_HASH; i++)
+        free_entry(ctx->entry[i]);
+
+    struct s_context *prev = ctx->next;
+    free(ctx);
+    return prev;
+}
+
+struct s_entry *tos_newname(struct s_context *ctx, const char *ident)
+{
+    unsigned int idx = hash_idx(ident);
+
+    if (lookup_entry(ctx->entry[idx], ident) != NULL)
     {
-		res += ('a' - str[i] + 1) * (i + 1);
-		i++;
-	}
-	return abs(res) % HASH_SIZE;
-}
-
-/* -------------------------------------------------------------------------------- */
-
-Symbol new_symbol()
-{
-    return NULL;
-}
-
-Symbol add_symbol(Symbol sym, const char *ident, int type, int val)
-{
-    Symbol new_sym = (Symbol)malloc(sizeof(struct s_symbol));
-    new_sym->ident = strdup(ident);
-    new_sym->next = sym;
-    new_sym->type = type;
-    new_sym->val = val;
-    return new_sym;
-}
-
-Symbol lookup_symbol(Symbol sym, const char *ident)
-{
-    if (sym == NULL) return NULL;
-    if (strcmp(ident, sym->ident) == 0) return sym;
-    return lookup_symbol(sym->next, ident);
-}
-
-void free_symbol(Symbol sym)
-{
-    if (sym == NULL) return;
-    free_symbol(sym->next);
-    free(sym->ident);
-    free(sym);
-}
-
-void print_symbol(Symbol sym)
-{
-    Symbol tmp = sym;
-
-    while (tmp != NULL)
-    {
-        switch (tmp->type)
-        {
-        case S_INT:
-            printf("<INT>");
-            break;
-        case S_BOOL:
-            printf("<BOOL>");
-            break;
-        default:
-            printf("<UNKNOWN TYPE>");
-            break;
-        }
-        printf("\t%d\t%s\n", tmp->val, tmp->ident);
-
-        tmp = tmp->next;
-    }
-}
-
-/* -------------------------------------------------------------------------------- */
-
-Tos new_tos()
-{
-    return NULL;
-}
-
-Tos push_tos(Tos prev_table)
-{
-    Tos new_table = (Tos)malloc(sizeof(struct s_tos));
-    new_table->next = prev_table;
-    new_table->scope = (prev_table == NULL) ? 0 : prev_table->scope + 1;
-
-    for (int i = 0; i < HASH_SIZE; i++)
-        new_table->entry[i] = new_symbol();
-
-    return new_table;
-}
-
-Tos tos_newname(Tos curr_table, const char *ident, int type, int val)
-{
-    int idx = hash_idx(ident);
-    
-    if (lookup_symbol(curr_table->entry[idx], ident) != NULL)
-    {
-        fprintf(stderr, "Error : '%s' redefinition\n", ident);
-        free_tos(curr_table);
+        fprintf(stderr, "error : redefinition of '%s'\n", ident);
         return NULL;
     }
 
-    curr_table->entry[idx] = add_symbol(curr_table->entry[idx], ident, type, val);
-    return curr_table;
+    struct s_entry *entry = (struct s_entry *)malloc(sizeof(struct s_entry));
+    entry->ident = strdup(ident); 
+    entry->type = NULL;
+    entry->next = ctx->entry[idx];
+
+    ctx->entry[idx] = entry;
+    return entry;
 }
 
-Tos pop_tos(Tos curr_table)
+struct s_entry *tos_lookup(struct s_context *ctx, const char *ident)
 {
-    for (int i = 0; i < HASH_SIZE; i++)
-        free_symbol(curr_table->entry[i]);
-
-    Tos new_table = curr_table->next;
-    free(curr_table);
-    return new_table;
-}
-
-Symbol tos_lookup(Tos curr_table, const char *ident)
-{
-    int idx = hash_idx(ident);
+    unsigned int idx = hash_idx(ident);
     
-    Tos curr_scope = curr_table;
-    Symbol ret = NULL;
+    struct s_context *tmp = ctx;
+    struct s_entry *look = NULL;
 
-    while (curr_scope != NULL)
+    while (tmp != NULL)
     {
-        if ((ret = lookup_symbol(curr_scope->entry[idx], ident)) != NULL)
-            return ret;
+        if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
+            return look;
         
-        curr_scope = curr_scope->next;
+        tmp = tmp->next;
     }
-    return ret;
-}
-
-void free_tos(Tos curr_table)
-{
-    while (curr_table != NULL)
-        curr_table = pop_tos(curr_table);
-}
-
-void print_tos(Tos curr_table)
-{
-    Tos curr_scope = curr_table;
-
-    while (curr_scope != NULL)
-    {
-        printf("---------------\n> Scope %d\n---------------\n", 
-            curr_scope->scope);
-
-        for (int i = 0; i < HASH_SIZE; i++)
-        {
-            if (curr_scope->entry[i] != NULL)
-            {
-                print_symbol(curr_scope->entry[i]);
-            }
-        }
-        curr_scope = curr_scope->next;
-    }
+    return NULL;
 }

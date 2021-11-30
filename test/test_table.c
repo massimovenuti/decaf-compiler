@@ -5,18 +5,20 @@ int main(int argc, char **argv)
     (void)argc;
     (void)argv;
 
-    Tos table = new_tos();
-    int errors = 0;
+    struct s_context *table = NULL;
+    struct s_entry *e1, *e2, *e3;
     
-    // test 1 : 1 variable, 1 scope
-    table = push_tos(table);
+    int errors = 0;
+    freopen("/dev/null", "w", stderr); // disabling stderr
+    
+    // test 1 : 1 variable
+    table = tos_pushctx(table);
 
-    table = tos_newname(table, "compteur", S_INT, 0);
-    errors += (tos_lookup(table, "compteur") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var1") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var1") == NULL) ? 1 : 0;
 
-    table = pop_tos(table);
+    table = tos_popctx(table);
 
-    printf("Test 1 : ");
     if (table == NULL && !errors)  
     {
         printf("[ok]\n");
@@ -28,18 +30,32 @@ int main(int argc, char **argv)
     }
     errors = 0;
 
-    // test 2 : 1 variable with redefinition, 1 scope
-    table = push_tos(table);
-    
-    table = tos_newname(table, "compteur", S_INT, 0);
-    errors += (tos_lookup(table, "compteur") == NULL) ? 1 : 0;
-    
-    // error expected here ...
-    printf("=> error expected here ...\n");
-    table = tos_newname(table, "compteur", S_INT, 0);
-    
-    printf("Test 2 : ");
-    if (table == NULL && !errors) 
+    // test 2 : 10 variables
+    table = tos_pushctx(table);
+
+    errors += (tos_newname(table, "var1") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var2") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var3") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var4") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var5") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var6") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var7") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var8") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var9") == NULL) ? 1 : 0;
+
+    errors += (tos_lookup (table, "var1") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var2") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var3") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var4") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var5") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var6") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var7") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var8") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var9") == NULL) ? 1 : 0;
+
+    table = tos_popctx(table);
+
+    if (table == NULL && !errors)  
     {
         printf("[ok]\n");
     }
@@ -50,30 +66,18 @@ int main(int argc, char **argv)
     }
     errors = 0;
 
-    // test 3 : several variables, 2 scopes
-    table = push_tos(table);
-    
-    table = tos_newname(table, "compteur", S_INT, 0);
-    table = tos_newname(table, "diviseur", S_INT, 0);
-    table = tos_newname(table, "test", S_BOOL, 0);
+    // test 3 : 1 variable + redefinition error
+    table = tos_pushctx(table);
 
-    errors += (tos_lookup(table, "compteur") == NULL) ? 1 : 0;
-    errors += (tos_lookup(table, "diviseur") == NULL) ? 1 : 0;
-    errors += (tos_lookup(table, "test") == NULL) ? 1 : 0;
+    errors += (tos_newname(table, "var1") == NULL) ? 1 : 0;
+    errors += (tos_lookup (table, "var1") == NULL) ? 1 : 0;    
+
+    // error expected here ...
+    errors += (tos_newname(table, "var1") != NULL) ? 1 : 0;
+
+    table = tos_popctx(table);
     
-    table = push_tos(table);
-    
-    table = tos_newname(table, "test", S_BOOL, 0);
-    table = tos_newname(table, "nombre", S_INT, 0);
-    
-    errors += (tos_lookup(table, "test") == NULL) ? 1 : 0;
-    errors += (tos_lookup(table, "nombre") == NULL) ? 1 : 0;
-    
-    table = pop_tos(table);
-    table = pop_tos(table);
-    
-    printf("Test 3 : ");
-    if (table == NULL && !errors) 
+    if (table == NULL && !errors)  
     {
         printf("[ok]\n");
     }
@@ -84,31 +88,30 @@ int main(int argc, char **argv)
     }
     errors = 0;
 
-    // test 4 : several variables with redefinition, 2 scopes
-    table = push_tos(table);
-    
-    table = tos_newname(table, "compteur", S_INT, 0);
-    table = tos_newname(table, "diviseur", S_INT, 0);
-    table = tos_newname(table, "test", S_BOOL, 0);
+    // test 4 : 2 variables of the same name in 2 different contexts + redefinition error after pop
+    table = tos_pushctx(table);
 
-    errors += (tos_lookup(table, "compteur") == NULL) ? 1 : 0;
-    errors += (tos_lookup(table, "diviseur") == NULL) ? 1 : 0;
-    errors += (tos_lookup(table, "test") == NULL) ? 1 : 0;
-    
-    table = push_tos(table);
-    
-    table = tos_newname(table, "test", S_BOOL, 0);
-    table = tos_newname(table, "nombre", S_INT, 0);
+    e1 = tos_newname(table, "var1");
+    e2 = tos_lookup (table, "var1");
 
-    errors += (tos_lookup(table, "test") == NULL) ? 1 : 0;
-    errors += (tos_lookup(table, "nombre") == NULL) ? 1 : 0;
+    errors += (e1 != e2)? 1 : 0;
+
+    table = tos_pushctx(table);
     
+    e2 = tos_newname(table, "var1");
+    e3 = tos_lookup (table, "var1");
+
+    errors += (e2 != e3)? 1 : 0;
+    errors += (e1 == e3)? 1 : 0;
+
+    table = tos_popctx(table);
+
     // error expected here ...
-    printf("=> error expected here ...\n");
-    table = tos_newname(table, "test", S_BOOL, 0);
+    errors += (tos_newname(table, "var1") != NULL) ? 1 : 0;
+
+    table = tos_popctx(table);
     
-    printf("Test 4 : ");
-    if (table == NULL && !errors) 
+    if (table == NULL && !errors)  
     {
         printf("[ok]\n");
     }
