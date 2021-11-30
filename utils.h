@@ -12,4 +12,13 @@
         }                                                                      \
     } while (0)
 
+// yacc check
+#define YCHK(exp, msg)                                                         \
+    do {                                                                       \
+        if (!(exp)) {                                                          \
+            fprintf(stderr, "%s", msg);                                        \
+            exit(1);                                                           \
+        }                                                                      \
+    } while (0)
+
 #endif

@@ -33,9 +33,9 @@ struct s_entry *lookup_entry(struct s_entry *entry, const char *ident);
 void free_entry(struct s_entry *entry);
 
 struct s_context *tos_pushctx();
-struct s_context *tos_popctx ();
+struct s_context *tos_popctx();
 
 struct s_entry *tos_newname(const char *ident);
-struct s_entry *tos_lookup (const char *ident);
+struct s_entry *tos_lookup(const char *ident);
 
-# endif
+#endif

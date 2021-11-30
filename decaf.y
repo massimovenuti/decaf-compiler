@@ -1,9 +1,13 @@
 %{
 #include <stdio.h>
+#include "utils.h"
 #include "quad.h"
 #include "table.h"
+#include "decaf.tab.h"
+
 extern int yylex();
 void yyerror(char *msg);
+void raler(char *msg);
 
 // int yydebug = 1; 
 %}
@@ -68,9 +72,11 @@ void yyerror(char *msg);
 %%
 program 
 : CLPR '{' field_decl_l method_decl_l '}'
-//| CLPR '{' field_decl_l '}'
 | CLPR '{' method_decl_l '}'
-//| CLPR '{' '}'
+| CLPR '{' field_decl_l '}' | CLPR '{' '}' {
+	printf("Main absent\n");
+	exit(1);
+}
 ;
 
 field_decl_l 
@@ -102,50 +108,38 @@ method_decl
 : INT ID '(' arg_l ')' {
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
 } block {
-	if ($7.next_break != NULL)
-		printf("break doit être dans une boucle\n");
-	if ($7.next_continue != NULL)
-		printf("continue doit être dans une boucle\n");
+	YCHK($7.next_break != NULL, "break doit être dans une boucle");
+	YCHK($7.next_continue != NULL, "continue doit être dans une boucle");
 }
 | BOOL ID '(' arg_l ')' {
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
 } block {
-	if ($7.next_break != NULL)
-		printf("break doit être dans une boucle\n");
-	if ($7.next_continue != NULL)
-		printf("continue doit être dans une boucle\n");
+	YCHK($7.next_break != NULL, "break doit être dans une boucle");
+	YCHK($7.next_continue != NULL, "continue doit être dans une boucle");
 }
 | VOID ID '(' arg_l ')' {
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
 } block {
-	if ($7.next_break != NULL)
-		printf("break doit être dans une boucle\n");
-	if ($7.next_continue != NULL)
-		printf("continue doit être dans une boucle\n");
+	YCHK($7.next_break != NULL, "break doit être dans une boucle");
+	YCHK($7.next_continue != NULL, "continue doit être dans une boucle");
 }
 | INT ID '(' ')' {
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
 } block {
-	if ($6.next_break != NULL)
-		printf("break doit être dans une boucle\n");
-	if ($6.next_continue != NULL)
-		printf("continue doit être dans une boucle\n");
+	YCHK($6.next_break != NULL, "break doit être dans une boucle");
+	YCHK($6.next_continue != NULL, "continue doit être dans une boucle");
 }
 | BOOL ID '(' ')' {
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
 } block {
-	if ($6.next_break != NULL)
-		printf("break doit être dans une boucle\n");
-	if ($6.next_continue != NULL)
-		printf("continue doit être dans une boucle\n");
+	YCHK($6.next_break != NULL, "break doit être dans une boucle");
+	YCHK($6.next_continue != NULL, "continue doit être dans une boucle");
 }
 | VOID ID '(' ')' {
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
 } block {
-	if ($6.next_break != NULL)
-		printf("break doit être dans une boucle\n");
-	if ($6.next_continue != NULL)
-		printf("continue doit être dans une boucle\n");
+	YCHK($6.next_break != NULL, "break doit être dans une boucle");
+	YCHK($6.next_continue != NULL, "continue doit être dans une boucle");
 }
 ;
 
@@ -386,27 +380,31 @@ expr_l
 
 expr 
 : ID {
-	if (1) { // cas int
+	struct s_entry *entry = tos_lookup($1);
+	if (entry->type->type == T_INT) { // cas int
 		$$.u.result = quadop_name($1);
-	} else { // cas bool
+	} else if (entry->type->type == T_BOOL) { // cas bool
 		$$.u.boolexpr.true = crelist(nextquad);
 		gencode(quad_make(Q_BEQ, quadop_name($1), quadop_bool(1), quadop_empty()));
 		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	} else {
+		raler("expression doit être int ou bool");
 	}
 } 
 | ID '[' expr ']' {
-	struct s_entry *entry = newtemp(); 
+	struct s_entry *entry = tos_lookup($1);
+	YCHK(entry->type->type != T_ARRAY, "la variable n'est pas un tableau");
+	YCHK($3.type != E_INT, "index de tableau doit être int");
+	entry = newtemp(); 
 	// entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
 	gencode(quad_make(Q_GETI, quadop_name($1), $3.u.result, qo));
 	$$.u.result = qo;
 }
 | method_call {
-	if ($1.type == QO_EMPTY)
-		printf("appel de procédure dans expression");
-	else
-		$$.u.result = $1;
+	YCHK($1.type == QO_EMPTY, "appel de procédure dans expression");
+	$$.u.result = $1;
 }
 | INT_LITERAL {$$.u.result = quadop_cst($1);}
 | CHAR_LITERAL {$$.u.result = quadop_cst((int) $1);}
@@ -418,6 +416,8 @@ expr
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr '+' expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	struct s_entry *entry = newtemp(); 
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
@@ -425,6 +425,8 @@ expr
 	$$.u.result = qo;
 }
 | expr '-' expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	struct s_entry *entry = newtemp(); 
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
@@ -432,6 +434,8 @@ expr
 	$$.u.result = qo;
 }
 | expr '*' expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	struct s_entry *entry = newtemp(); 
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
@@ -439,6 +443,8 @@ expr
 	$$.u.result = qo;
 }
 | expr '/' expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	struct s_entry *entry = newtemp(); 
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
@@ -446,6 +452,8 @@ expr
 	$$.u.result = qo;
 }
 | expr '%' expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	struct s_entry *entry = newtemp(); 
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
@@ -453,52 +461,78 @@ expr
 	$$.u.result = qo;
 }
 | expr '<' expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	$$.u.boolexpr.true = crelist(nextquad);
 	gencode(quad_make(Q_BLT, $1.u.result, $3.u.result, quadop_empty()));
 	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr '>' expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	$$.u.boolexpr.true = crelist(nextquad);
 	gencode(quad_make(Q_BGT, $1.u.result, $3.u.result, quadop_empty()));
 	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr LEQ expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	$$.u.boolexpr.true = crelist(nextquad);
 	gencode(quad_make(Q_BLE, $1.u.result, $3.u.result, quadop_empty()));
 	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr BEQ expr {
+	YCHK($1.type != E_INT, "opérande doit être int");
+	YCHK($3.type != E_INT, "opérande doit être int");
 	$$.u.boolexpr.true = crelist(nextquad);
 	gencode(quad_make(Q_BGE, $1.u.result, $3.u.result, quadop_empty()));
 	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr EQ expr {
-	$$.u.boolexpr.true = crelist(nextquad);
-	gencode(quad_make(Q_BEQ, $1.u.result, $3.u.result, quadop_empty()));
-	$$.u.boolexpr.false = crelist(nextquad);
-	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	if ($1.type == E_INT) {
+		YCHK($3.type != E_INT, "opérande doit être int");
+		$$.u.boolexpr.true = crelist(nextquad);
+		gencode(quad_make(Q_BEQ, $1.u.result, $3.u.result, quadop_empty()));
+		$$.u.boolexpr.false = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+
+	} else {
+		YCHK($3.type != E_BOOL, "opérande doit être bool");
+		// TODO
+	}
 }
 | expr NEQ expr {
-	$$.u.boolexpr.true = crelist(nextquad);
-	gencode(quad_make(Q_BNE, $1.u.result, $3.u.result, quadop_empty()));
-	$$.u.boolexpr.false = crelist(nextquad);
-	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	if ($1.type == E_INT) {
+		YCHK($3.type != E_INT, "opérande doit être int");
+		$$.u.boolexpr.true = crelist(nextquad);
+		gencode(quad_make(Q_BNE, $1.u.result, $3.u.result, quadop_empty()));
+		$$.u.boolexpr.false = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	} else {
+		YCHK($3.type != E_BOOL, "opérande doit être bool");
+		// TODO
+	}
 }
 | expr AND marker expr {
+	YCHK($1.type != E_BOOL, "opérande doit être bool");
+	YCHK($4.type != E_BOOL, "opérande doit être bool");
 	complete($1.u.boolexpr.true, $3);
 	$$.u.boolexpr.false = concat($1.u.boolexpr.false, $4.u.boolexpr.false);
 	$$.u.boolexpr.true = $4.u.boolexpr.true;
 }
 | expr OR marker expr {
+	YCHK($1.type != E_BOOL, "opérande doit être bool");
+	YCHK($4.type != E_BOOL, "opérande doit être bool");
 	complete($1.u.boolexpr.false, $3);
 	$$.u.boolexpr.true = concat($1.u.boolexpr.true, $4.u.boolexpr.true);
 	$$.u.boolexpr.false = $4.u.boolexpr.false;
 }
 | '-' expr {
+	YCHK($2.type != E_BOOL, "opérande doit être int");
 	struct s_entry *entry = newtemp(); 
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
@@ -506,10 +540,13 @@ expr
 	$$.u.result = qo;
 } %prec UMINUS
 | '!' expr %prec NOT {
+	YCHK($2.type != E_BOOL, "opérande doit être bool");
 	$$.u.boolexpr.true = $2.u.boolexpr.false;
 	$$.u.boolexpr.false = $2.u.boolexpr.true;
 }
-| '(' expr ')' {$$ = $2;}
+| '(' expr ')' {
+	$$ = $2;
+}
 ;
 
 marker
@@ -525,7 +562,11 @@ goto
 
 %%
 
-void yyerror(char *msg)
-{
+void yyerror(char *msg) {
 	printf("Error: %s\n", msg);
+}
+
+void raler(char *msg) {
+	printf("%s\n", msg);
+	exit(1);
 }
