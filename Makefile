@@ -15,7 +15,7 @@ main: main.o $(prefixe).tab.o lex.yy.o quad.o table.o
 	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
 
 $(prefixe).tab.c: $(prefixe).y
-	bison -t -d --debug --verbose $(prefixe).y
+	bison -t -d --debug --verbose $(prefixe).y -Wcounterexamples
 
 lex.yy.c: $(prefixe).l $(prefixe).tab.h
 	flex $(prefixe).l

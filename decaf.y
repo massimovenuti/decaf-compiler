@@ -381,9 +381,12 @@ expr_l
 expr 
 : ID {
 	struct s_entry *entry = tos_lookup($1);
+	YCHK(entry != NULL, "la variable n'existe pas");
 	if (entry->type->type == T_INT) { // cas int
+		$$.type = E_INT;
 		$$.u.result = quadop_name($1);
 	} else if (entry->type->type == T_BOOL) { // cas bool
+		$$.type = E_BOOL;
 		$$.u.boolexpr.true = crelist(nextquad);
 		gencode(quad_make(Q_BEQ, quadop_name($1), quadop_bool(1), quadop_empty()));
 		$$.u.boolexpr.false = crelist(nextquad);
@@ -394,21 +397,37 @@ expr
 } 
 | ID '[' expr ']' {
 	struct s_entry *entry = tos_lookup($1);
+	YCHK(entry != NULL, "la variable n'existe pas");
 	YCHK(entry->type->type != T_ARRAY, "la variable n'est pas un tableau");
 	YCHK($3.type != E_INT, "index de tableau doit être int");
-	entry = newtemp(); 
-	// entry->type->type = T_INT;
+	struct s_entry *temp = newtemp();
+	temp->type->type = entry->type->type; 
 	quadop qo = quadop_name(entry->ident);
 	gencode(quad_make(Q_GETI, quadop_name($1), $3.u.result, qo));
+	if (entry->type->type == T_INT)
+		$$.type = E_INT;
+	else
+		$$.type = E_BOOL;
 	$$.u.result = qo;
 }
 | method_call {
 	YCHK($1.type == QO_EMPTY, "appel de procédure dans expression");
+	if ($1.type == QO_CST)
+		$$.type = E_INT;
+	else
+		$$.type = E_BOOL;
 	$$.u.result = $1;
 }
-| INT_LITERAL {$$.u.result = quadop_cst($1);}
-| CHAR_LITERAL {$$.u.result = quadop_cst((int) $1);}
+| INT_LITERAL {
+	$$.type = E_INT;
+	$$.u.result = quadop_cst($1);
+}
+| CHAR_LITERAL {
+	$$.type = E_INT;
+	$$.u.result = quadop_cst((int) $1);
+}
 | BOOL_LITERAL {
+	$$.type = E_BOOL;
 	if ($1)
 		$$.u.boolexpr.true = crelist(nextquad);
 	else
@@ -422,6 +441,7 @@ expr
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
 	gencode(quad_make(Q_ADD, $1.u.result, $3.u.result, qo));
+	$$.type = E_INT;
 	$$.u.result = qo;
 }
 | expr '-' expr {
@@ -431,6 +451,7 @@ expr
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
 	gencode(quad_make(Q_SUB, $1.u.result, $3.u.result, qo));
+	$$.type = E_INT;
 	$$.u.result = qo;
 }
 | expr '*' expr {
@@ -440,6 +461,7 @@ expr
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
 	gencode(quad_make(Q_MUL, $1.u.result, $3.u.result, qo));
+	$$.type = E_INT;
 	$$.u.result = qo;
 }
 | expr '/' expr {
@@ -449,6 +471,7 @@ expr
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
 	gencode(quad_make(Q_DIV, $1.u.result, $3.u.result, qo));
+	$$.type = E_INT;
 	$$.u.result = qo;
 }
 | expr '%' expr {
@@ -458,11 +481,13 @@ expr
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
 	gencode(quad_make(Q_MOD, $1.u.result, $3.u.result, qo));
+	$$.type = E_INT;
 	$$.u.result = qo;
 }
 | expr '<' expr {
 	YCHK($1.type != E_INT, "opérande doit être int");
 	YCHK($3.type != E_INT, "opérande doit être int");
+	$$.type = E_BOOL;
 	$$.u.boolexpr.true = crelist(nextquad);
 	gencode(quad_make(Q_BLT, $1.u.result, $3.u.result, quadop_empty()));
 	$$.u.boolexpr.false = crelist(nextquad);
@@ -471,6 +496,7 @@ expr
 | expr '>' expr {
 	YCHK($1.type != E_INT, "opérande doit être int");
 	YCHK($3.type != E_INT, "opérande doit être int");
+	$$.type = E_BOOL;
 	$$.u.boolexpr.true = crelist(nextquad);
 	gencode(quad_make(Q_BGT, $1.u.result, $3.u.result, quadop_empty()));
 	$$.u.boolexpr.false = crelist(nextquad);
@@ -479,6 +505,7 @@ expr
 | expr LEQ expr {
 	YCHK($1.type != E_INT, "opérande doit être int");
 	YCHK($3.type != E_INT, "opérande doit être int");
+	$$.type = E_BOOL;
 	$$.u.boolexpr.true = crelist(nextquad);
 	gencode(quad_make(Q_BLE, $1.u.result, $3.u.result, quadop_empty()));
 	$$.u.boolexpr.false = crelist(nextquad);
@@ -487,12 +514,14 @@ expr
 | expr BEQ expr {
 	YCHK($1.type != E_INT, "opérande doit être int");
 	YCHK($3.type != E_INT, "opérande doit être int");
+	$$.type = E_BOOL;
 	$$.u.boolexpr.true = crelist(nextquad);
 	gencode(quad_make(Q_BGE, $1.u.result, $3.u.result, quadop_empty()));
 	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr EQ expr {
+	$$.type = E_BOOL;
 	if ($1.type == E_INT) {
 		YCHK($3.type != E_INT, "opérande doit être int");
 		$$.u.boolexpr.true = crelist(nextquad);
@@ -506,6 +535,7 @@ expr
 	}
 }
 | expr NEQ expr {
+	$$.type = E_BOOL;
 	if ($1.type == E_INT) {
 		YCHK($3.type != E_INT, "opérande doit être int");
 		$$.u.boolexpr.true = crelist(nextquad);
@@ -520,6 +550,7 @@ expr
 | expr AND marker expr {
 	YCHK($1.type != E_BOOL, "opérande doit être bool");
 	YCHK($4.type != E_BOOL, "opérande doit être bool");
+	$$.type = E_BOOL;
 	complete($1.u.boolexpr.true, $3);
 	$$.u.boolexpr.false = concat($1.u.boolexpr.false, $4.u.boolexpr.false);
 	$$.u.boolexpr.true = $4.u.boolexpr.true;
@@ -527,6 +558,7 @@ expr
 | expr OR marker expr {
 	YCHK($1.type != E_BOOL, "opérande doit être bool");
 	YCHK($4.type != E_BOOL, "opérande doit être bool");
+	$$.type = E_BOOL;
 	complete($1.u.boolexpr.false, $3);
 	$$.u.boolexpr.true = concat($1.u.boolexpr.true, $4.u.boolexpr.true);
 	$$.u.boolexpr.false = $4.u.boolexpr.false;
@@ -537,10 +569,12 @@ expr
 	entry->type->type = T_INT;
 	quadop qo = quadop_name(entry->ident);
 	gencode(quad_make(Q_MINUS, $2.u.result, quadop_empty(), qo));
+	$$.type = E_INT;
 	$$.u.result = qo;
 } %prec UMINUS
 | '!' expr %prec NOT {
 	YCHK($2.type != E_BOOL, "opérande doit être bool");
+	$$.type = E_BOOL;
 	$$.u.boolexpr.true = $2.u.boolexpr.false;
 	$$.u.boolexpr.false = $2.u.boolexpr.true;
 }
