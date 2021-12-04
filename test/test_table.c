@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     errors = 0;
 
     // TEST 1 : SINGLE VARIABLE + LOOKUP ERROR
-    
+
     context = tos_pushctx();
 
     errors += (tos_newname("var1") == NULL) ? 1 : 0;
@@ -227,8 +227,8 @@ int main(int argc, char **argv)
     errors +=  is_function_type(e1->type, R_INT, al2);
 
     // al3 != al1
-    al3 = arglist_addbegin(al3, T_BOOL);
-    al3 = arglist_addbegin(al3, T_INT);
+    al3 = arglist_addbegin(al3, E_BOOL);
+    al3 = arglist_addbegin(al3, E_INT);
 
     errors += is_function_type(e1->type, R_VOID, al3);
 
