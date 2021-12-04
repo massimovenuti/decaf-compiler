@@ -18,7 +18,7 @@ void raler(char *msg);
 	int intval;
 	quadop qoval;
 	struct {
-		enum {E_BOOL, E_INT} type;
+		enum { E_BOOL, E_INT } type;
 		union {
 			quadop result;
 			struct {

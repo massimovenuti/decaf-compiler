@@ -172,14 +172,14 @@ int main(int argc, char **argv)
 
     e1 = tos_newname("var1");
     
-    e1->type = array_type(E_INT, 10);
+    e1->type = array_type(L_INT, 10);
 
     for (i = 0; i < 10; i++)
-        errors += 1 - is_array_type(e1->type, E_INT, i);
+        errors += 1 - is_array_type(e1->type, L_INT, i);
     
-    errors += is_array_type(e1->type, E_BOOL, 0);
-    errors += is_array_type(e1->type, E_INT, -1);
-    errors += is_array_type(e1->type, E_INT, 10);
+    errors += is_array_type(e1->type, L_BOOL, 0);
+    errors += is_array_type(e1->type, L_INT, -1);
+    errors += is_array_type(e1->type, L_INT, 10);
 
     context = tos_popctx();
 
@@ -205,20 +205,20 @@ int main(int argc, char **argv)
     e1 = tos_newname("var1");
 
     // function : ret = T_VOID, args = [T_BOOL, T_INT, T_INT, T_BOOL] 
-    al1 = arglist_addbegin(al1, E_INT);
-    al1 = arglist_addbegin(al1, E_INT);
-    al1 = arglist_addbegin(al1, E_BOOL);
-    al1 = arglist_addbegin(al1, E_INT);
-    al1 = arglist_addbegin(al1, E_BOOL);
+    al1 = arglist_addbegin(al1, L_INT);
+    al1 = arglist_addbegin(al1, L_INT);
+    al1 = arglist_addbegin(al1, L_BOOL);
+    al1 = arglist_addbegin(al1, L_INT);
+    al1 = arglist_addbegin(al1, L_BOOL);
 
     e1->type = function_type(R_VOID, al1);
 
     // al2 == al1
-    al2 = arglist_addend(al2, E_BOOL);
-    al2 = arglist_addend(al2, E_INT);
-    al2 = arglist_addend(al2, E_BOOL);
-    al2 = arglist_addend(al2, E_INT);
-    al2 = arglist_addend(al2, E_INT);
+    al2 = arglist_addend(al2, L_BOOL);
+    al2 = arglist_addend(al2, L_INT);
+    al2 = arglist_addend(al2, L_BOOL);
+    al2 = arglist_addend(al2, L_INT);
+    al2 = arglist_addend(al2, L_INT);
 
     errors += 1 - is_function_type(e1->type, R_VOID, al2);
 
@@ -226,8 +226,8 @@ int main(int argc, char **argv)
     errors +=  is_function_type(e1->type, R_INT, al2);
 
     // al3 != al1
-    al3 = arglist_addbegin(al3, E_BOOL);
-    al3 = arglist_addbegin(al3, E_INT);
+    al3 = arglist_addbegin(al3, L_BOOL);
+    al3 = arglist_addbegin(al3, L_INT);
 
     errors += is_function_type(e1->type, R_VOID, al3);
 

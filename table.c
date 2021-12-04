@@ -107,7 +107,7 @@ struct s_typedesc* elementary_type(enum entry_type type)
     return desc;
 }
 
-struct s_typedesc* array_type(enum expr_type type, int size)
+struct s_typedesc* array_type(enum elem_type type, int size)
 {
     struct s_typedesc *desc = (struct s_typedesc *)malloc(sizeof(struct s_typedesc));
     desc->type = T_ARRAY;
@@ -126,7 +126,7 @@ struct s_typedesc* function_type(enum ret_type type, struct s_arglist* arglist)
     return desc;
 }
 
-struct s_arglist* arglist_addbegin(struct s_arglist *arglist, enum expr_type type)
+struct s_arglist* arglist_addbegin(struct s_arglist *arglist, enum elem_type type)
 {
     struct s_arglist *new_arg = (struct s_arglist *)malloc(sizeof(struct s_arglist));
     new_arg->type = type;
@@ -134,7 +134,7 @@ struct s_arglist* arglist_addbegin(struct s_arglist *arglist, enum expr_type typ
     return new_arg;
 }
 
-struct s_arglist* arglist_addend(struct s_arglist *arglist, enum expr_type type)
+struct s_arglist* arglist_addend(struct s_arglist *arglist, enum elem_type type)
 {
     if (arglist == NULL) return arglist_addbegin(arglist, type);
 
@@ -167,7 +167,7 @@ int is_elementary_type(struct s_typedesc *elem, enum entry_type type)
     return (elem->type != type) ? 0 : 1;
 }
 
-int is_array_type(struct s_typedesc *arr, enum expr_type type, int index)
+int is_array_type(struct s_typedesc *arr, enum elem_type type, int index)
 {
     if (arr->type != T_ARRAY || arr->u.array_info.type != type) return 0;
     return (index < 0 || index >= arr->u.array_info.size) ? 0 : 1;
