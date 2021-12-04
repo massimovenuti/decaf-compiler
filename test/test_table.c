@@ -159,7 +159,6 @@ int main(int argc, char **argv)
     if (context == NULL && !errors)  
     {
         printf("[ok]\t'elementary type constructor'\n");
-        errors = 0;
     }
     else
     {
