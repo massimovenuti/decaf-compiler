@@ -35,6 +35,14 @@ void free_entry(struct s_entry *entry)
     if (entry == NULL) return;
     free_entry(entry->next);
     free(entry->ident);
+    
+    if (entry->type != NULL)
+    {
+        if (entry->type->type == T_FUNCTION) 
+            free_arglist(entry->type->u.function_info.arglist);
+
+        free(entry->type);
+    }
     free(entry);
 }
 
@@ -64,10 +72,7 @@ struct s_entry *tos_newname(const char *ident)
     unsigned int idx = hash_idx(ident);
 
     if (lookup_entry(context->entry[idx], ident) != NULL)
-    {
-        fprintf(stderr, "error : redefinition of '%s'\n", ident);
         return NULL;
-    }
 
     struct s_entry *entry = (struct s_entry *)malloc(sizeof(struct s_entry));
     entry->ident = strdup(ident); 
@@ -93,4 +98,94 @@ struct s_entry *tos_lookup(const char *ident)
         tmp = tmp->next;
     }
     return NULL;
+}
+
+struct s_typedesc* elementary_type(enum entry_type type)
+{
+    struct s_typedesc *desc = (struct s_typedesc *)malloc(sizeof(struct s_typedesc));
+    desc->type = type;
+    return desc;
+}
+
+struct s_typedesc* array_type(enum expr_type type, int size)
+{
+    struct s_typedesc *desc = (struct s_typedesc *)malloc(sizeof(struct s_typedesc));
+    desc->type = T_ARRAY;
+    desc->u.array_info.type = type;
+    desc->u.array_info.size = size;
+    return desc;
+}
+
+struct s_typedesc* function_type(enum ret_type type, struct s_arglist* arglist)
+{
+    struct s_typedesc *desc = (struct s_typedesc *)malloc(sizeof(struct s_typedesc));
+    desc->type = T_FUNCTION;
+    desc->u.function_info.ret_type = type;
+    desc->u.function_info.arglist = arglist;
+    desc->u.function_info.arglist_size = arglist_size(arglist);
+    return desc;
+}
+
+struct s_arglist* arglist_addbegin(struct s_arglist *arglist, enum expr_type type)
+{
+    struct s_arglist *new_arg = (struct s_arglist *)malloc(sizeof(struct s_arglist));
+    new_arg->type = type;
+    new_arg->next = arglist;
+    return new_arg;
+}
+
+struct s_arglist* arglist_addend(struct s_arglist *arglist, enum expr_type type)
+{
+    if (arglist == NULL) return arglist_addbegin(arglist, type);
+
+    struct s_arglist *new_arg = (struct s_arglist *)malloc(sizeof(struct s_arglist));
+    new_arg->type = type;
+    new_arg->next = NULL;
+
+    struct s_arglist *tmp = arglist;
+    for (;tmp->next != NULL; tmp = tmp->next);
+    tmp->next = new_arg;
+
+    return arglist;
+}
+
+int arglist_size(struct s_arglist *arglist)
+{
+    return (arglist == NULL) ? 0 : 1 + arglist_size(arglist->next);
+}
+
+void free_arglist(struct s_arglist *arglist)
+{
+    if (arglist == NULL) return;
+    free_arglist(arglist->next);
+    free(arglist); 
+}
+
+int is_elementary_type(struct s_typedesc *elem, enum entry_type type)
+{
+    if (type != T_BOOL && type != T_INT) return 0;
+    return (elem->type != type) ? 0 : 1;
+}
+
+int is_array_type(struct s_typedesc *arr, enum expr_type type, int index)
+{
+    if (arr->type != T_ARRAY || arr->u.array_info.type != type) return 0;
+    return (index < 0 || index >= arr->u.array_info.size) ? 0 : 1;
+}
+
+int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglist *arglist)
+{
+    if (fun->type != T_FUNCTION) return 0;
+    if (fun->u.function_info.ret_type != type) return 0;
+    if (fun->u.function_info.arglist_size != arglist_size(arglist)) return 0;
+
+    struct s_arglist *tmp = fun->u.function_info.arglist;
+
+    while (tmp != NULL)
+    {
+        if (tmp->type != arglist->type) return 0;
+        tmp = tmp->next;
+        arglist = arglist->next;
+    }
+    return 1;
 }
