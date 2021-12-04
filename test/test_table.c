@@ -204,7 +204,7 @@ int main(int argc, char **argv)
 
     e1 = tos_newname("var1");
 
-    // function : ret = T_VOID, args = [T_BOOL, T_INT, T_INT, T_BOOL] 
+    // function : ret = T_VOID, args = [L_BOOL, L_INT, L_BOOL, L_INT, L_INT] 
     al1 = arglist_addbegin(al1, L_INT);
     al1 = arglist_addbegin(al1, L_INT);
     al1 = arglist_addbegin(al1, L_BOOL);
