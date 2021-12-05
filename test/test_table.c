@@ -173,13 +173,8 @@ int main(int argc, char **argv)
     e1 = tos_newname("var1");
     
     e1->type = array_type(E_INT, 10);
-
-    for (i = 0; i < 10; i++)
-        errors += 1 - is_array_type(e1->type, E_INT, i);
     
-    errors += is_array_type(e1->type, E_BOOL, 0);
-    errors += is_array_type(e1->type, E_INT, -1);
-    errors += is_array_type(e1->type, E_INT, 10);
+    errors += is_array_type(e1->type, E_BOOL);
 
     context = tos_popctx();
 

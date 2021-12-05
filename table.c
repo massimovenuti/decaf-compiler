@@ -163,14 +163,13 @@ void free_arglist(struct s_arglist *arglist)
 
 int is_elementary_type(struct s_typedesc *elem, enum entry_type type)
 {
-    if (type != T_BOOL && type != T_INT) return 0;
-    return (elem->type != type) ? 0 : 1;
+    // if (type != T_BOOL && type != T_INT) return 0;
+    return elem->type == type;
 }
 
-int is_array_type(struct s_typedesc *arr, enum elem_type type, int index)
+int is_array_type(struct s_typedesc *arr, enum elem_type type)
 {
-    if (arr->type != T_ARRAY || arr->u.array_info.type != type) return 0;
-    return (index < 0 || index >= arr->u.array_info.size) ? 0 : 1;
+    return arr->type == T_ARRAY && arr->u.array_info.type == type;
 }
 
 int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglist *arglist)

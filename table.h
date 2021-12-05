@@ -63,7 +63,7 @@ int arglist_size(struct s_arglist *arglist); // calcule le nombre d'éléments d
 void free_arglist(struct s_arglist *arglist); // libère l'espace mémoire occupé par une liste d'arguments
 
 int is_elementary_type(struct s_typedesc *elem, enum entry_type type); // compare type élémentaire
-int is_array_type(struct s_typedesc *arr, enum elem_type type, int index); // compare type et index
+int is_array_type(struct s_typedesc *arr, enum elem_type type); // compare type de tableau
 int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglist *arglist); // compare type de retour et liste d'arguments
 
 #endif
