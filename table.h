@@ -8,7 +8,7 @@
 #define N_HASH 100
 
 struct s_arglist {
-    enum elem_type { L_BOOL, L_INT } type;
+    enum elem_type { E_BOOL, E_INT } type;
     struct s_arglist *next;
 };
 

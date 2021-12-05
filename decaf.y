@@ -12,13 +12,17 @@ void raler(char *msg);
 // int yydebug = 1; 
 %}
 
+%code requires {
+#include "table.h"
+}
+
 %union {
 	char charval;
 	char *strval;
 	int intval;
 	quadop qoval;
 	struct {
-		enum { E_BOOL, E_INT } type;
+		enum elem_type type;
 		union {
 			quadop result;
 			struct {
@@ -35,13 +39,17 @@ void raler(char *msg);
 	struct {
 		unsigned length;
 	} listval;
+	struct s_arglist *alistval;
+	enum elem_type etypeval;
 }
 
 %type <exprval> expr
 %type <intval> marker
 %type <listval> expr_l
 %type <qoval> method_call
-%type <stateval> statement statement_l goto block
+%type <stateval> statement statement_l statement_l_ goto block
+%type <alistval> arg_l arg_l_
+%type <etypeval> arg
 
 %token CLPR							// class Program
 %token INT BOOL						// type
@@ -70,13 +78,25 @@ void raler(char *msg);
 %start program
 
 %%
-program 
-: CLPR '{' field_decl_l method_decl_l '}'
-| CLPR '{' method_decl_l '}'
-| CLPR '{' field_decl_l '}' | CLPR '{' '}' {
-	printf("Main absent\n");
-	exit(1);
+program
+: CLPR '{' pushctx decl popctx '}'
+;
+
+pushctx
+: %empty {
+	tos_pushctx();
 }
+;
+
+popctx
+: %empty {
+	tos_popctx();
+}
+;
+
+decl
+: field_decl_l method_decl_l
+| method_decl_l
 ;
 
 field_decl_l 
@@ -85,18 +105,40 @@ field_decl_l
 ;
 
 field_decl 
-: INT field_decl_elem_l ';'
-| BOOL field_decl_elem_l ';'
+: INT field_decl_int_l ';'
+| BOOL field_decl_bool_l ';'
 ;
 
-field_decl_elem_l 
-: field_decl_elem
-| field_decl_elem_l ',' field_decl_elem
+field_decl_int_l 
+: field_decl_int
+| field_decl_int_l ',' field_decl_int
 ;
 
-field_decl_elem 
-: ID
-| ID '[' INT_LITERAL ']'	//{printf("INT %d\n", $3);}
+field_decl_int 
+: ID {
+	struct s_entry *ident = tos_newname($1);
+	ident->type = elementary_type(T_INT);
+}
+| ID '[' INT_LITERAL ']' {
+	struct s_entry *ident = tos_newname($1);
+	ident->type = array_type(T_INT, $3);
+}
+;
+
+field_decl_bool_l 
+: field_decl_bool
+| field_decl_bool_l ',' field_decl_bool
+;
+
+field_decl_bool 
+: ID {
+	struct s_entry *ident = tos_newname($1);
+	ident->type = elementary_type(T_BOOL);
+}
+| ID '[' INT_LITERAL ']' {
+	struct s_entry *ident = tos_newname($1);
+	ident->type = array_type(T_BOOL, $3);
+}
 ;
 
 method_decl_l 
@@ -104,72 +146,75 @@ method_decl_l
 | method_decl_l method_decl
 ;
 
-method_decl 
-: INT ID '(' arg_l ')' {
+method_decl
+: INT ID {
+	tos_newname($2);
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
-} block {
-	YCHK($7.next_break != NULL, "break doit être dans une boucle");
-	YCHK($7.next_continue != NULL, "continue doit être dans une boucle");
+} '(' arg_l_ ')' {
+	struct s_entry *ident = tos_lookup($2);
+	ident->type = function_type(R_INT, $5);
+} block popctx {
+	YCHK($8.next_break != NULL, "break doit être dans une boucle");
+	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
 }
-| BOOL ID '(' arg_l ')' {
+| BOOL ID {
+	tos_newname($2);
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
-} block {
-	YCHK($7.next_break != NULL, "break doit être dans une boucle");
-	YCHK($7.next_continue != NULL, "continue doit être dans une boucle");
+} '(' arg_l_ ')' {
+	struct s_entry *ident = tos_lookup($2);
+	ident->type = function_type(R_BOOL, $5);
+} block popctx {
+	YCHK($8.next_break != NULL, "break doit être dans une boucle");
+	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
 }
-| VOID ID '(' arg_l ')' {
+| VOID ID {
+	tos_newname($2);
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
-} block {
-	YCHK($7.next_break != NULL, "break doit être dans une boucle");
-	YCHK($7.next_continue != NULL, "continue doit être dans une boucle");
+} '(' arg_l_ ')' {
+	struct s_entry *ident = tos_lookup($2);
+	ident->type = function_type(R_VOID, $5);
+} block popctx {
+	YCHK($8.next_break != NULL, "break doit être dans une boucle");
+	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
 }
-| INT ID '(' ')' {
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
-} block {
-	YCHK($6.next_break != NULL, "break doit être dans une boucle");
-	YCHK($6.next_continue != NULL, "continue doit être dans une boucle");
-}
-| BOOL ID '(' ')' {
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
-} block {
-	YCHK($6.next_break != NULL, "break doit être dans une boucle");
-	YCHK($6.next_continue != NULL, "continue doit être dans une boucle");
-}
-| VOID ID '(' ')' {
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
-} block {
-	YCHK($6.next_break != NULL, "break doit être dans une boucle");
-	YCHK($6.next_continue != NULL, "continue doit être dans une boucle");
-}
+;
+
+arg_l_
+: pushctx arg_l {$$ = $2;}
+| %empty {$$ = NULL;}
 ;
 
 arg_l 
-: arg
-| arg_l ',' arg
+: arg {
+	$$ = arglist_addend(NULL, $1);
+}
+| arg_l ',' arg {
+	$$ = arglist_addend($1, $3);
+}
 ;
 
 arg 
-: INT ID
-| BOOL ID
+: INT ID {
+	struct s_entry *ident = tos_newname($2);
+	ident->type = elementary_type(T_INT);
+	$$ = E_INT;
+}
+| BOOL ID {
+	struct s_entry *ident = tos_newname($2);
+	ident->type = elementary_type(T_BOOL);
+	$$ = E_BOOL;
+}
 ;
 
 block 
-: '{' var_decl_l statement_l '}' {
-	$$ = $3;
+: '{' pushctx var_decl_l_ statement_l_ popctx '}' {
+	$$ = $4;
 }
-| '{' var_decl_l '}' {
-	$$.next = NULL;
-	$$.next_break = NULL;
-	$$.next_continue = NULL;
-}
-| '{' statement_l '}' {
-	$$ = $2;
-}
-| '{' '}' {
-	$$.next = NULL;
-	$$.next_break = NULL;
-	$$.next_continue = NULL;
-}
+;
+
+var_decl_l_
+: %empty
+| var_decl_l
 ;
 
 var_decl_l 
@@ -178,13 +223,41 @@ var_decl_l
 ;
 
 var_decl 
-: INT id_l ';'
-| BOOL id_l ';'
+: INT id_int_l ';'
+| BOOL id_bool_l ';'
 ;
 
-id_l 
-: ID
-| id_l ',' ID
+id_int_l 
+: ID {
+	struct s_entry *ident = tos_newname($1);
+	ident->type = elementary_type(T_INT);
+}
+| id_int_l ',' ID {
+	struct s_entry *ident = tos_newname($3);
+	ident->type = elementary_type(T_INT);
+}
+;
+
+id_bool_l 
+: ID {
+	struct s_entry *ident = tos_newname($1);
+	ident->type = elementary_type(T_BOOL);
+}
+| id_bool_l ',' ID {
+	struct s_entry *ident = tos_newname($3);
+	ident->type = elementary_type(T_BOOL);
+}
+;
+
+statement_l_
+: %empty {
+	$$.next = NULL;
+	$$.next_break = NULL;
+	$$.next_continue = NULL;
+}
+| statement_l {
+	$$ = $1;
+}
 ;
 
 statement_l 
