@@ -9,6 +9,8 @@ extern int yylex();
 void yyerror(char *msg);
 void raler(char *msg);
 
+extern struct s_context *context;
+
 // int yydebug = 1; 
 %}
 
@@ -18,7 +20,7 @@ void raler(char *msg);
 
 %union {
 	char charval;
-	char *strval;
+	char strval[255];
 	int intval;
 	quadop qoval;
 	struct {
@@ -80,13 +82,13 @@ program
 
 pushctx
 : %empty {
-	tos_pushctx();
+	context = tos_pushctx();
 }
 ;
 
 popctx
 : %empty {
-	tos_popctx();
+	context = tos_popctx();
 }
 ;
 
@@ -132,8 +134,8 @@ field_decl_bool
 	ident->type = elementary_type(T_BOOL);
 }
 | ID '[' INT_LITERAL ']' {
-	struct s_entry *ident = tos_newname($1);
-	ident->type = array_type(T_BOOL, $3);
+	struct s_entry *id = tos_newname($1);
+	id->type = array_type(T_BOOL, $3);
 }
 ;
 
@@ -144,32 +146,32 @@ method_decl_l
 
 method_decl
 : INT ID {
-	tos_newname($2);
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+	struct s_entry *id = tos_newname($2);
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
 	struct s_entry *ident = tos_lookup($2);
 	ident->type = function_type(R_INT, $5);
-} block popctx {
+} block {
 	YCHK($8.next_break != NULL, "break doit être dans une boucle");
 	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
 }
 | BOOL ID {
-	tos_newname($2);
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+	struct s_entry *id = tos_newname($2);
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
-	struct s_entry *ident = tos_lookup($2);
-	ident->type = function_type(R_BOOL, $5);
-} block popctx {
+	struct s_entry *id = tos_lookup($2);
+	id->type = function_type(R_BOOL, $5);
+} block {
 	YCHK($8.next_break != NULL, "break doit être dans une boucle");
 	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
 }
 | VOID ID {
-	tos_newname($2);
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2)));
+	struct s_entry *id = tos_newname($2);
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
-	struct s_entry *ident = tos_lookup($2);
-	ident->type = function_type(R_VOID, $5);
-} block popctx {
+	struct s_entry *id = tos_lookup($2);
+	id->type = function_type(R_VOID, $5);
+} block {
 	YCHK($8.next_break != NULL, "break doit être dans une boucle");
 	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
 }
@@ -268,20 +270,24 @@ statement_l
 
 statement 
 : ID '=' expr ';' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la variable n'existe pas");
-	quadop id = quadop_name($1);
-	if (is_elementary_type(ident->type, T_INT)) { // cas int
+	struct s_entry *id = tos_lookup($1);
+	if (id == NULL) {
+		fprintf(stderr, "275: la variable %s n'existe pas", $1);
+		exit(EXIT_FAILURE);
+	}
+	// YCHK(id == NULL, "la variable n'existe pas");
+	quadop qid = quadop_name(id->ident);
+	if (is_elementary_type(id->type, T_INT)) { // cas int
 		YCHK($3.type != E_INT, "expression doit être int");
-		gencode(quad_make(Q_MOVE, $3.u.result, quadop_empty(), id));
-	} else if (is_elementary_type(ident->type, T_BOOL)) { // cas bool
+		gencode(quad_make(Q_MOVE, $3.u.result, quadop_empty(), qid));
+	} else if (is_elementary_type(id->type, T_BOOL)) { // cas bool
 		YCHK($3.type != E_BOOL, "expression doit être bool");
 		complete($3.u.boolexpr.true, nextquad);
-		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), id));
+		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qid));
 		$$.next = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 		complete($3.u.boolexpr.false, nextquad);
-		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), id));
+		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qid));
 	} else {
 		raler("variable doit être de type int ou bool");
 	}
@@ -290,81 +296,101 @@ statement
 	$$.next_continue = NULL;
 }
 | ID '[' expr ']' '=' expr ';' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la variable n'existe pas");
-	YCHK(!is_elementary_type(ident->type, T_ARRAY), "la variable n'est pas un tableau");
+	struct s_entry *id = tos_lookup($1);
+	if (id == NULL) {
+		fprintf(stderr, "301: la variable %s n'existe pas", $1);
+		exit(EXIT_FAILURE);
+	}
+	// YCHK(id == NULL, "la variable n'existe pas");
+	YCHK(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
 	YCHK($3.type != E_INT, "index de tableau doit être int");
-	quadop id = quadop_name($1);
-	if (is_array_type(ident->type, E_INT)) { // cas int
+	quadop qid = quadop_name(id->ident);
+	if (is_array_type(id->type, E_INT)) { // cas int
 		YCHK($6.type != E_INT, "expression doit être int");
-		gencode(quad_make(Q_SETI, id, $3.u.result, $6.u.result));	
+		gencode(quad_make(Q_SETI, qid, $3.u.result, $6.u.result));	
 	} else { // cas bool
 		YCHK($6.type != E_BOOL, "expression doit être bool");
 		complete($6.u.boolexpr.true, nextquad);
-		gencode(quad_make(Q_SETI, id, $3.u.result, quadop_bool(1)));
+		gencode(quad_make(Q_SETI, qid, $3.u.result, quadop_bool(1)));
 		complete($6.u.boolexpr.false, nextquad);
 		$$.next = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
-		gencode(quad_make(Q_SETI, id, $3.u.result, quadop_bool(0)));
+		gencode(quad_make(Q_SETI, qid, $3.u.result, quadop_bool(0)));
 	}
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
 }
 | ID ADD_ASSIGN expr ';' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la variable n'existe pas");
-	YCHK(!is_elementary_type(ident->type, T_INT), "la variable n'est pas de type int");
+	struct s_entry *id = tos_lookup($1);
+	if (id == NULL) {
+		fprintf(stderr, "327: la variable %s n'existe pas\n", $1);
+		exit(EXIT_FAILURE);
+	}
+	// YCHK(id == NULL, "la variable n'existe pas");
+	YCHK(!is_elementary_type(id->type, T_INT), "la variable n'est pas de type int");
 	YCHK($3.type != E_INT, "l'expression doit être int");
-	quadop id = quadop_name($1);
-	gencode(quad_make(Q_ADD, id, $3.u.result, id));
+	quadop qid = quadop_name(id->ident);
+	gencode(quad_make(Q_ADD, qid, $3.u.result, qid));
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
 }
 | ID '[' expr ']' ADD_ASSIGN expr ';' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la variable n'existe pas");
-	YCHK(!is_elementary_type(ident->type, T_ARRAY), "la variable n'est pas un tableau");
-	YCHK(!is_array_type(ident->type, E_INT), "la variable n'est pas un tableau de int");
+	struct s_entry *id = tos_lookup($1);
+	if (id == NULL) {
+		fprintf(stderr, "342 la variable %s n'existe pas\n", $1);
+		exit(EXIT_FAILURE);
+	}
+	// YCHK(id == NULL, "la variable n'existe pas");
+	YCHK(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
+	YCHK(!is_array_type(id->type, E_INT), "la variable n'est pas un tableau de int");
 	YCHK($3.type != E_INT, "index de tableau doit être int");
 	YCHK($6.type != E_INT, "l'expression doit être int");
-	quadop id = quadop_name($1);
+	quadop qid = quadop_name(id->ident);
 	struct s_entry *temp = newtemp(); 
 	temp->type = elementary_type(T_INT);
 	quadop qo = quadop_name(temp->ident);
-	gencode(quad_make(Q_GETI, id, $3.u.result, qo));
+	gencode(quad_make(Q_GETI, qid, $3.u.result, qo));
 	gencode(quad_make(Q_ADD, qo, $6.u.result, qo));
-	gencode(quad_make(Q_SETI, id, $3.u.result, qo));
+	gencode(quad_make(Q_SETI, qid, $3.u.result, qo));
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
 }
 | ID SUB_ASSIGN expr ';' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la variable n'existe pas");
-	YCHK(!is_elementary_type(ident->type, T_INT), "la variable n'est pas de type int");
+	struct s_entry *id = tos_lookup($1);
+	if (id == NULL) {
+		fprintf(stderr, "364: la variable %s n'existe pas\n", $1);
+		exit(EXIT_FAILURE);
+	}
+	// YCHK(id == NULL, "la variable n'existe pas");
+	YCHK(!is_elementary_type(id->type, T_INT), "la variable n'est pas de type int");
 	YCHK($3.type != E_INT, "l'expression doit être int");
-	quadop id = quadop_name($1);
-	gencode(quad_make(Q_SUB, id, $3.u.result, id));
+	quadop qid = quadop_name(id->ident);
+	gencode(quad_make(Q_SUB, qid, $3.u.result, qid));
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
 }
 | ID '[' expr ']' SUB_ASSIGN expr ';' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la variable n'existe pas");
-	YCHK(!is_elementary_type(ident->type, T_ARRAY), "la variable n'est pas un tableau");
-	YCHK(!is_array_type(ident->type, T_INT), "la variable n'est pas un tableau de int");
+	struct s_entry *id = tos_lookup($1);
+	if (id == NULL) {
+		fprintf(stderr, "379: la variable %s n'existe pas", $1);
+		exit(EXIT_FAILURE);
+	}
+	YCHK(id == NULL, "la variable n'existe pas");
+	YCHK(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
+	YCHK(!is_array_type(id->type, T_INT), "la variable n'est pas un tableau de int");
 	YCHK($3.type != E_INT, "index de tableau doit être int");
 	YCHK($6.type != E_INT, "l'expression doit être int");
-	quadop id = quadop_name($1);
+	quadop qid = quadop_name(id->ident);
 	struct s_entry *temp = newtemp(); 
 	temp->type = elementary_type(T_INT);
 	quadop qo = quadop_name(temp->ident);
-	gencode(quad_make(Q_GETI, id, $3.u.result, qo));
+	gencode(quad_make(Q_GETI, qid, $3.u.result, qo));
 	gencode(quad_make(Q_SUB, qo, $6.u.result, qo));
-	gencode(quad_make(Q_SETI, id, $3.u.result, qo));
+	gencode(quad_make(Q_SETI, qid, $3.u.result, qo));
 	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
@@ -392,16 +418,18 @@ statement
 | FOR pushctx ID '=' expr ',' expr {
 	YCHK($5.type != E_INT, "l'expression doit être int");
 	YCHK($7.type != E_INT, "l'expression doit être int");
-	struct s_entry *ident = tos_newname($3);
-	ident->type = elementary_type(T_INT);
-	gencode(quad_make(Q_MOVE, $5.u.result, quadop_empty(), quadop_name($3)));
+	struct s_entry *id = tos_newname($3);
+	id->type = elementary_type(T_INT);
+	gencode(quad_make(Q_MOVE, $5.u.result, quadop_empty(), quadop_name(id->ident)));
 } marker {
-	gencode(quad_make(Q_BGT, quadop_name($3), $7.u.result, quadop_empty()));
-} block popctx {
+	struct s_entry *id = tos_lookup($3);
+	gencode(quad_make(Q_BGT, quadop_name(id->ident), $7.u.result, quadop_empty()));
+} block {
+	struct s_entry *id = tos_lookup($3);
 	complete($11.next, nextquad);
 	complete($11.next_continue, nextquad);
-	quadop id = quadop_name($3);
-	gencode(quad_make(Q_ADD, id, quadop_cst(1), id));
+	quadop qid = quadop_name(id->ident);
+	gencode(quad_make(Q_ADD, qid, quadop_cst(1), qid));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($9)));
 	$$.next = concat(crelist($9), $11.next_break);
 	$$.next_break = NULL;
@@ -447,45 +475,53 @@ statement
 
 method_call
 : ID '(' ')' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la fonction n'existe pas");
-	YCHK(!is_elementary_type(ident->type, T_FUNCTION), "la variable n'est pas une fonction");
+	struct s_entry *id = tos_lookup($1);
+	if (id == NULL) {
+		fprintf(stderr, "480: la fonction %s n'existe pas", $1);
+		exit(EXIT_FAILURE);
+	}
+	// YCHK(id == NULL, "la fonction n'existe pas");
+	YCHK(!is_elementary_type(id->type, T_FUNCTION), "la variable n'est pas une fonction");
 	// TODO: checker la fonction
 	quadop qo;
-	if (is_function_type(ident->type, R_VOID, NULL)) { // procédure
+	if (is_function_type(id->type, R_VOID, NULL)) { // procédure
 		qo = quadop_empty();
-	} else if (is_function_type(ident->type, R_INT, NULL)) { // fonction renvoyant int
+	} else if (is_function_type(id->type, R_INT, NULL)) { // fonction renvoyant int
 		struct s_entry *temp = newtemp(); 
 		temp->type = elementary_type(T_INT);
 		qo = quadop_name(temp->ident);
-	} else if (is_function_type(ident->type, R_BOOL, NULL)) { // fonction renvoyant bool
+	} else if (is_function_type(id->type, R_BOOL, NULL)) { // fonction renvoyant bool
 		struct s_entry *temp = newtemp(); 
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
 	} else {
 		raler("arguments incorrect");
 	}
-	gencode(quad_make(Q_CALL, quadop_name($1), quadop_empty(), qo));
+	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_empty(), qo));
 	$$ = qo;
 }
 | ID '(' expr_l ')' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la fonction n'existe pas");
+	struct s_entry *id = tos_lookup($1);
+		if (id == NULL) {
+		fprintf(stderr, "506: la fonction %s n'existe pas", $1);
+		exit(EXIT_FAILURE);
+	}
+	// YCHK(id == NULL, "la fonction n'existe pas");
 	quadop qo;
-	if (is_function_type(ident->type, R_VOID, $3)) { // procédure
+	if (is_function_type(id->type, R_VOID, $3)) { // procédure
 		qo = quadop_empty();
-	} else if (is_function_type(ident->type, R_INT, $3)) { // fonction renvoyant int
+	} else if (is_function_type(id->type, R_INT, $3)) { // fonction renvoyant int
 		struct s_entry *temp = newtemp(); 
 		temp->type = elementary_type(T_INT);
 		qo = quadop_name(temp->ident);
-	} else if (is_function_type(ident->type, R_BOOL, $3)) { // fonction renvoyant bool
+	} else if (is_function_type(id->type, R_BOOL, $3)) { // fonction renvoyant bool
 		struct s_entry *temp = newtemp(); 
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
 	} else {
 		raler("arguments incorrect");
 	}
-	gencode(quad_make(Q_CALL, quadop_name($1), quadop_cst(arglist_size($3)), qo));
+	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size($3)), qo));
 	$$ = qo;
 }
 ;
@@ -511,15 +547,19 @@ expr_l
 
 expr 
 : ID {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la variable n'existe pas");
-	if (is_elementary_type(ident->type, T_INT)) { // cas int
+	struct s_entry *id = tos_lookup($1);
+	if (id == NULL) {
+		fprintf(stderr, "544: la variable %s n'existe pas", $1);
+		exit(EXIT_FAILURE);
+	}
+	// YCHK(id == NULL, "la variable n'existe pas");
+	if (is_elementary_type(id->type, T_INT)) { // cas int
 		$$.type = E_INT;
-		$$.u.result = quadop_name($1);
-	} else if (is_elementary_type(ident->type, T_BOOL)) { // cas bool
+		$$.u.result = quadop_name(id->ident);
+	} else if (is_elementary_type(id->type, T_BOOL)) { // cas bool
 		$$.type = E_BOOL;
 		$$.u.boolexpr.true = crelist(nextquad);
-		gencode(quad_make(Q_BEQ, quadop_name($1), quadop_bool(1), quadop_empty()));
+		gencode(quad_make(Q_BEQ, quadop_name(id->ident), quadop_bool(1), quadop_empty()));
 		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 	} else {
@@ -527,14 +567,18 @@ expr
 	}
 } 
 | ID '[' expr ']' {
-	struct s_entry *ident = tos_lookup($1);
-	YCHK(ident == NULL, "la variable n'existe pas");
-	YCHK(!is_elementary_type(ident->type, T_ARRAY), "la variable n'est pas un tableau");
+	struct s_entry *id = tos_lookup($1);
+	// YCHK(id == NULL, "la variable n'existe pas");
+	if (id == NULL) {
+		fprintf(stderr, "565: la variable %s n'existe pas", $1);
+		exit(EXIT_FAILURE);
+	}
+	YCHK(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
 	YCHK($3.type != E_INT, "index de tableau doit être int");
 	struct s_entry *temp = newtemp();
 	quadop qo = quadop_name(temp->ident);
-	gencode(quad_make(Q_GETI, quadop_name($1), $3.u.result, qo));
-	if (is_array_type(ident->type, T_INT)) {
+	gencode(quad_make(Q_GETI, quadop_name(id->ident), $3.u.result, qo));
+	if (is_array_type(id->type, T_INT)) {
 		$$.type = E_INT;
 		temp->type = elementary_type(T_INT);
 	}

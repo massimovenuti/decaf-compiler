@@ -1,5 +1,6 @@
 prefixe=decaf
 
+CFLAGS= -g
 # exige 3 fichiers:
 # - $(prefixe).y (fichier bison)
 # - $(prefixe).lex (fichier flex)
@@ -12,7 +13,7 @@ prefixe=decaf
 all: main
 
 main: main.o $(prefixe).tab.o lex.yy.o quad.o table.o
-	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
+	$(CC) $(LDFLAGS) $^ -g -o $@ $(LDLIBS)
 
 $(prefixe).tab.c: $(prefixe).y
 	bison -t -d --debug --verbose $(prefixe).y

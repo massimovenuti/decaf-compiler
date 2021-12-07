@@ -15,7 +15,7 @@
 // yacc check
 #define YCHK(exp, msg)                                                         \
     do {                                                                       \
-        if (!(exp)) {                                                          \
+        if ((exp)) {                                                          \
             fprintf(stderr, "%s", msg);                                        \
             exit(1);                                                           \
         }                                                                      \

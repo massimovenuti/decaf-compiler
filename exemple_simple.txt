@@ -1,0 +1,8 @@
+// Exemple de programme en DECAF
+class Program {
+
+    void main() {
+        int nombre;
+        nombre = 3;
+    }
+}

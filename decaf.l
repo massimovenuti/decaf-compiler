@@ -1,5 +1,6 @@
 %{
 #include <stdio.h>
+#include <string.h>
 #include "quad.h"
 #include "decaf.tab.h"
 %}
@@ -39,7 +40,7 @@ HEX_NUM 0x[0-9a-fA-F]+
 "+="						{return ADD_ASSIGN;}
 "-="                        {return SUB_ASSIGN;}
 
-{ID}						{return ID;}
+{ID}						{strncpy(yylval.strval, yytext, yyleng+1) ;  return ID;}
 
 [\{\}\(\)\[\]\,\;\=\+\-\*\/\%\<\>\!]		{return yytext[0];}
 

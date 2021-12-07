@@ -20,6 +20,9 @@ void gencode(quad q) {
         globalcode = realloc(globalcode, codesize * sizeof(quad));
     }
     globalcode[nextquad] = q;
+    printf("%d: ", nextquad);
+    print_quad(q);
+    printf("\n");
     nextquad++;
 }
 
@@ -136,15 +139,90 @@ void print_quadop(quadop qo) {
 }
 
 void print_quad(quad q) {
-    char quad_type_str[][10] = {
-        "add",  "sub",   "mul",  "div",    "mod", "minus", "not",
-        "move", "goto",  "blt",  "bgt",    "ble", "bge",   "beq",
-        "bne",  "param", "call", "return", "fun", "seti",  "geti"};
-    if (q.type >= Q_ADD && q.type <= Q_GETI) {
-        printf("(%s,", quad_type_str[q.type]);
-    } else {
-        printf("(?%d,", q.type);
-    }
+
+    switch (q.type)
+	{
+	case Q_ADD:
+		printf("(ADD,");
+		break;
+
+	case Q_SUB:
+		printf("(SUB,");
+		break;
+
+	case Q_MUL:
+		printf("(MUL,");
+		break;
+
+	case Q_DIV:
+		printf("(DIV,");
+		break;
+
+	case Q_MOD:
+		printf("(MOD,");
+		break;
+
+	case Q_MINUS:
+		printf("(MINUS,");
+		break;
+
+	case Q_MOVE:
+		printf("(MOVE,");
+		break;
+
+	case Q_GOTO:
+		printf("(GOTO,");
+		break;
+
+	case Q_BLT:
+		printf("(BLT,");
+		break;
+
+	case Q_BGT:
+		printf("(BGT,");
+		break;
+
+	case Q_BLE:
+		printf("(BLE,");
+		break;
+
+	case Q_BGE:
+		printf("(BGE,");
+		break;
+
+	case Q_BEQ:
+		printf("(BEQ,");
+		break;
+
+	case Q_BNE:
+		printf("(BNE,");
+		break;
+
+	case Q_PARAM:
+		printf("(PARAM,");
+		break;
+
+	case Q_CALL:
+		printf("(CALL,");
+		break;
+    
+    case Q_FUN:
+		printf("(FUN,");
+		break;
+
+	case Q_SETI:
+		printf("(SETI,");
+		break;
+
+	case Q_GETI:
+		printf("(GETI,");
+		break;
+
+	default:
+        printf("(?,");
+		break;
+	}
+
     print_quadop(q.op1);
     printf(",");
     print_quadop(q.op2);

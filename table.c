@@ -17,7 +17,7 @@ unsigned int hash_idx(const char *str)
 struct s_entry *newtemp() {
     int length = snprintf(NULL, 0, "%d", tempnum);
     char *temp = malloc((length + 2) * sizeof(char));
-    snprintf(temp, length, "$%d", tempnum);
+    snprintf(temp, length + 2, "$%d", tempnum);
     struct s_entry *entry = tos_newname(temp);
     free(temp);
     return entry;
@@ -59,11 +59,11 @@ struct s_context *tos_pushctx()
 
 struct s_context *tos_popctx()
 {
-    for (int i = 0; i < N_HASH; i++)
-        free_entry(context->entry[i]);
+    // for (int i = 0; i < N_HASH; i++)
+    //     free_entry(context->entry[i]);
 
     struct s_context *prev = context->next;
-    free(context);
+    // free(context);
     return prev;
 }
 
