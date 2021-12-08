@@ -20,6 +20,7 @@ struct s_entry *newtemp() {
     snprintf(temp, length + 2, "$%d", tempnum);
     struct s_entry *entry = tos_newname(temp);
     free(temp);
+    tempnum++;
     return entry;
 }
 
