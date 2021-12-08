@@ -16,7 +16,7 @@
 #define ERRORIF(exp, msg)                                                         \
     do {                                                                       \
         if ((exp)) {                                                          \
-            fprintf(stderr, "%s", msg);                                        \
+            fprintf(stderr, "%s\n", msg);                                        \
             exit(1);                                                           \
         }                                                                      \
     } while (0)
