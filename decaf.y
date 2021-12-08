@@ -154,6 +154,8 @@ method_decl
 } block {
 	YCHK($8.next_break != NULL, "break doit être dans une boucle");
 	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
+	if ($5 != NULL)
+		context = tos_popctx();
 }
 | BOOL ID {
 	struct s_entry *id = tos_newname($2);
@@ -164,6 +166,8 @@ method_decl
 } block {
 	YCHK($8.next_break != NULL, "break doit être dans une boucle");
 	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
+	if ($5 != NULL)
+		context = tos_popctx();
 }
 | VOID ID {
 	struct s_entry *id = tos_newname($2);
@@ -174,6 +178,8 @@ method_decl
 } block {
 	YCHK($8.next_break != NULL, "break doit être dans une boucle");
 	YCHK($8.next_continue != NULL, "continue doit être dans une boucle");
+	if ($5 != NULL)
+		context = tos_popctx();
 }
 ;
 
