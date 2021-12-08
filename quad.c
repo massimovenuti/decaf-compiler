@@ -5,7 +5,7 @@ size_t codesize = 0;  // taille du tableau globalcode
 size_t nextquad = 0;  // numéro du prochain quad généré
 
 void initcode() {
-    MCHK(globalcode = (quad *)malloc(CODE_SIZE * sizeof(quad)));
+    MEMCHECK(globalcode = (quad *)malloc(CODE_SIZE * sizeof(quad)));
     codesize = CODE_SIZE;
     nextquad = 0;
 }
@@ -58,7 +58,7 @@ quadop quadop_name(char *name) {
     qo.type = QO_NAME;
     qo.u.name = name; // ?
     // int len = strlen(name) + 1;
-    // MCHK(qo.u.name = malloc(len * sizeof(char)));
+    // MEMCHECK(qo.u.name = malloc(len * sizeof(char)));
     // snprintf(qo.u.name, len, "%s", name);
     return qo;
 }
@@ -74,8 +74,8 @@ quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3) {
 
 ilist *crelist(int label) {
     ilist *l;
-    MCHK(l = malloc(sizeof(ilist)));
-    MCHK(l->content = malloc(sizeof(int)));
+    MEMCHECK(l = malloc(sizeof(ilist)));
+    MEMCHECK(l->content = malloc(sizeof(int)));
     l->content[0] = label;
     l->size = 1;
     return l;
@@ -90,11 +90,11 @@ ilist *concat(ilist *list1, ilist *list2) {
     } else if (list2 == NULL) {
         l = list1;
     } else {
-        MCHK(l = malloc(sizeof(ilist)));
+        MEMCHECK(l = malloc(sizeof(ilist)));
         l->size = list1->size + list2->size;
-        MCHK(l->content = malloc(l->size * sizeof(int)));
-        MCHK(memcpy(l->content, list1->content, list1->size * sizeof(int)));
-        MCHK(memcpy(l->content + list1->size, list2->content,
+        MEMCHECK(l->content = malloc(l->size * sizeof(int)));
+        MEMCHECK(memcpy(l->content, list1->content, list1->size * sizeof(int)));
+        MEMCHECK(memcpy(l->content + list1->size, list2->content,
                     list2->size * sizeof(int)));
     }
     return l;

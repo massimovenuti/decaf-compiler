@@ -4,7 +4,7 @@
 #include <stdio.h>
 
 // memory check
-#define MCHK(exp)                                                              \
+#define MEMCHECK(exp)                                                              \
     do {                                                                       \
         if ((exp) == NULL) {                                                   \
             perror(#exp);                                                      \
@@ -13,7 +13,7 @@
     } while (0)
 
 // yacc check
-#define YCHK(exp, msg)                                                         \
+#define ERRORIF(exp, msg)                                                         \
     do {                                                                       \
         if ((exp)) {                                                          \
             fprintf(stderr, "%s", msg);                                        \
