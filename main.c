@@ -9,8 +9,8 @@ int main(int argc, char const *argv[]) {
     FILE*input = freopen(argv[1], "r", stdin);
     initcode();
     int res = yyparse();
+    print_globalcode();
     freecode();
     fclose(input);
-    print_globalcode();
     return res;
 }
