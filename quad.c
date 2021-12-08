@@ -166,6 +166,10 @@ void print_quad(quad q) {
 		printf("(MINUS,");
 		break;
 
+    case Q_NOT:
+		printf("(NOT,");
+		break;
+
 	case Q_MOVE:
 		printf("(MOVE,");
 		break;
@@ -204,6 +208,10 @@ void print_quad(quad q) {
 
 	case Q_CALL:
 		printf("(CALL,");
+		break;
+
+    case Q_RETURN:
+		printf("(RETURN,");
 		break;
     
     case Q_FUN:

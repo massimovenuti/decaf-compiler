@@ -482,11 +482,7 @@ statement
 method_call
 : ID '(' ')' {
 	struct s_entry *id = tos_lookup($1);
-	if (id == NULL) {
-		fprintf(stderr, "480: la fonction %s n'existe pas", $1);
-		exit(EXIT_FAILURE);
-	}
-	// YCHK(id == NULL, "la fonction n'existe pas");
+	YCHK(id == NULL, "la fonction n'existe pas");
 	YCHK(!is_elementary_type(id->type, T_FUNCTION), "la variable n'est pas une fonction");
 	// TODO: checker la fonction
 	quadop qo;
@@ -508,11 +504,9 @@ method_call
 }
 | ID '(' expr_l ')' {
 	struct s_entry *id = tos_lookup($1);
-		if (id == NULL) {
-		fprintf(stderr, "506: la fonction %s n'existe pas", $1);
-		exit(EXIT_FAILURE);
-	}
-	// YCHK(id == NULL, "la fonction n'existe pas");
+	YCHK(id == NULL, "la fonction n'existe pas");
+	YCHK(!is_elementary_type(id->type, T_FUNCTION), "la variable n'est pas une fonction");
+	// TODO: checker la fonction
 	quadop qo;
 	if (is_function_type(id->type, R_VOID, $3)) { // procédure
 		qo = quadop_empty();
@@ -596,11 +590,21 @@ expr
 }
 | method_call {
 	YCHK($1.type == QO_EMPTY, "appel de procédure dans expression");
-	if ($1.type == QO_CST)
+	if ($1.type == QO_CST) {
 		$$.type = E_INT;
-	else
+		$$.u.result = $1;
+	} else {
 		$$.type = E_BOOL;
-	$$.u.result = $1;
+		if ($1.u.boolean) {
+			$$.u.boolexpr.true = crelist(nextquad);
+			$$.u.boolexpr.false = NULL;
+		}
+		else {
+			$$.u.boolexpr.false = crelist(nextquad);
+			$$.u.boolexpr.true = NULL;
+		}
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	}
 }
 | INT_LITERAL {
 	$$.type = E_INT;
@@ -612,10 +616,14 @@ expr
 }
 | BOOL_LITERAL {
 	$$.type = E_BOOL;
-	if ($1)
+	if ($1) {
 		$$.u.boolexpr.true = crelist(nextquad);
-	else
+		$$.u.boolexpr.false = NULL;
+	}
+	else {
 		$$.u.boolexpr.false = crelist(nextquad);
+		$$.u.boolexpr.true = NULL;
+	}
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | expr '+' expr {
