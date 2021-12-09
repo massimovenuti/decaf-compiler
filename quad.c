@@ -20,9 +20,10 @@ void gencode(quad q) {
         globalcode = realloc(globalcode, codesize * sizeof(quad));
     }
     globalcode[nextquad] = q;
-    printf("%ld: ", nextquad);
-    print_quad(q);
-    printf("\n");
+    // debug
+    // printf("%ld: ", nextquad);
+    // print_quad(q);
+    // printf("\n");
     nextquad++;
 }
 
@@ -253,7 +254,7 @@ void print_globalcode() {
     if (globalcode == NULL)
         return;
     for (size_t i = 0; i < nextquad; i++) {
-        printf("%ld: ", i);
+        printf("%ld:\t", i);
         print_quad(globalcode[i]);
         printf("\n");
     }

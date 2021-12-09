@@ -424,11 +424,12 @@ statement
 	} else { // cas bool
 		complete($2.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(1)));
-		$$.next = crelist(nextquad);
-		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+		// $$.next = crelist(nextquad);
+		// gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 		complete($2.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(0)));
 	}
+	$$.next = NULL;
 	$$.next_break = NULL;
 	$$.next_continue = NULL;
 }
