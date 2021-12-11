@@ -155,7 +155,7 @@ method_decl_l
 method_decl
 : INT ID {
 	struct s_entry *id = tos_newname($2);
-	// todo: check name doesn't exist
+	ERRORIF(id == NULL, "la fonction existe déjà");
 	infunction = 1;
 	infunction_type = R_INT;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
@@ -163,15 +163,13 @@ method_decl
 	struct s_entry *ident = tos_lookup($2);
 	ident->type = function_type(R_INT, $5);
 } block {
-	// ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
-	// ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
 	infunction = 0;
 	if ($5 != NULL)
 		context = tos_popctx();
 }
 | BOOL ID {
 	struct s_entry *id = tos_newname($2);
-	// todo: check name doesn't exist
+	ERRORIF(id == NULL, "la fonction existe déjà");
 	infunction = 1;
 	infunction_type = R_BOOL;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
@@ -179,15 +177,13 @@ method_decl
 	struct s_entry *id = tos_lookup($2);
 	id->type = function_type(R_BOOL, $5);
 } block {
-	// ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
-	// ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
 	infunction = 0;
 	if ($5 != NULL)
 		context = tos_popctx();
 }
 | VOID ID {
 	struct s_entry *id = tos_newname($2);
-	// todo: check name doesn't exist
+	ERRORIF(id == NULL, "la fonction existe déjà");
 	infunction = 1;
 	infunction_type = R_VOID;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
@@ -195,8 +191,6 @@ method_decl
 	struct s_entry *id = tos_lookup($2);
 	id->type = function_type(R_VOID, $5);
 } block {
-	// ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
-	// ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
 	infunction = 0;
 	if ($5 != NULL)
 		context = tos_popctx();
@@ -220,11 +214,13 @@ arg_l
 arg 
 : INT ID {
 	struct s_entry *ident = tos_newname($2);
+	ERRORIF(ident == NULL, "argument déjà utilisé");
 	ident->type = elementary_type(T_INT);
 	$$ = E_INT;
 }
 | BOOL ID {
 	struct s_entry *ident = tos_newname($2);
+	ERRORIF(ident == NULL, "argument déjà utilisé");
 	ident->type = elementary_type(T_BOOL);
 	$$ = E_BOOL;
 }
