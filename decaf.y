@@ -11,6 +11,10 @@ void raler(char *msg);
 struct s_statement new_statement();
 struct s_expr new_expr();
 
+unsigned inloop = 0;
+unsigned infunction = 0;
+enum ret_type infunction_type;
+
 extern struct s_context *context;
 
 // int yydebug = 1; 
@@ -39,8 +43,8 @@ extern struct s_context *context;
 		ilist *next;
 		ilist *next_break;
 		ilist *next_continue;
-		int has_return;
-		enum ret_type return_type;
+		// int has_return;
+		// enum ret_type return_type;
 	} stateval;
 	struct s_arglist *alistval;
 	enum elem_type etypeval;
@@ -151,37 +155,49 @@ method_decl_l
 method_decl
 : INT ID {
 	struct s_entry *id = tos_newname($2);
+	// todo: check name doesn't exist
+	infunction = 1;
+	infunction_type = R_INT;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
 	struct s_entry *ident = tos_lookup($2);
 	ident->type = function_type(R_INT, $5);
 } block {
-	ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
-	ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
+	// ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
+	// ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
+	infunction = 0;
 	if ($5 != NULL)
 		context = tos_popctx();
 }
 | BOOL ID {
 	struct s_entry *id = tos_newname($2);
+	// todo: check name doesn't exist
+	infunction = 1;
+	infunction_type = R_BOOL;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
 	struct s_entry *id = tos_lookup($2);
 	id->type = function_type(R_BOOL, $5);
 } block {
-	ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
-	ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
+	// ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
+	// ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
+	infunction = 0;
 	if ($5 != NULL)
 		context = tos_popctx();
 }
 | VOID ID {
 	struct s_entry *id = tos_newname($2);
+	// todo: check name doesn't exist
+	infunction = 1;
+	infunction_type = R_VOID;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
 	struct s_entry *id = tos_lookup($2);
 	id->type = function_type(R_VOID, $5);
 } block {
-	ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
-	ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
+	// ERRORIF($8.next_break != NULL, "break doit être dans une boucle");
+	// ERRORIF($8.next_continue != NULL, "continue doit être dans une boucle");
+	infunction = 0;
 	if ($5 != NULL)
 		context = tos_popctx();
 }
@@ -389,56 +405,66 @@ statement
 	$$.next_break = concat($6.next_break, $10.next_break);
 	$$.next_continue = concat($6.next_continue, $10.next_continue);
 }
-| FOR pushctx ID '=' expr ',' expr {
-	ERRORIF($5.type != E_INT, "l'expression doit être int");
-	ERRORIF($7.type != E_INT, "l'expression doit être int");
-	struct s_entry *id = tos_newname($3);
+| FOR {
+	inloop = 1;
+} pushctx ID '=' expr ',' expr {
+	ERRORIF($6.type != E_INT, "l'expression doit être int");
+	ERRORIF($8.type != E_INT, "l'expression doit être int");
+	struct s_entry *id = tos_newname($4);
 	id->type = elementary_type(T_INT);
-	gencode(quad_make(Q_MOVE, $5.u.result, quadop_empty(), quadop_name(id->ident)));
+	gencode(quad_make(Q_MOVE, $6.u.result, quadop_empty(), quadop_name(id->ident)));
 } marker {
-	struct s_entry *id = tos_lookup($3);
-	gencode(quad_make(Q_BGT, quadop_name(id->ident), $7.u.result, quadop_empty()));
+	struct s_entry *id = tos_lookup($4);
+	gencode(quad_make(Q_BGT, quadop_name(id->ident), $8.u.result, quadop_empty()));
 } block {
-	struct s_entry *id = tos_lookup($3);
-	complete($11.next, nextquad);
-	complete($11.next_continue, nextquad);
+	struct s_entry *id = tos_lookup($4);
+	complete($12.next, nextquad);
+	complete($12.next_continue, nextquad);
 	quadop qid = quadop_name(id->ident);
 	gencode(quad_make(Q_ADD, qid, quadop_cst(1), qid));
-	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($9)));
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($10)));
 	$$ = new_statement();
-	$$.next = concat(crelist($9), $11.next_break);
+	$$.next = concat(crelist($10), $12.next_break);
+	inloop = 0;
 }
 | RETURN expr ';' {
+	ERRORIF(!infunction, "return doit être appelé dans une fonction");
 	$$ = new_statement();
 	if ($2.type == E_INT) { // cas int
+		ERRORIF(infunction_type != R_INT, "mauvais type de retour");
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), $2.u.result));
-		$$.return_type = R_INT;
+		// $$.return_type = R_INT;
 	} else { // cas bool
+		ERRORIF(infunction_type != R_BOOL, "mauvais type de retour");
 		complete($2.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(1)));
 		// $$.next = crelist(nextquad);
 		// gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 		complete($2.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(0)));
-		$$.return_type = R_BOOL;
+		// $$.return_type = R_BOOL;
 	}
-	$$.has_return = 1;
+	// $$.has_return = 1;
 }
 | RETURN ';' {
-	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
+	ERRORIF(!infunction, "return doit être appelé dans une fonction");
+	ERRORIF(infunction_type != R_VOID, "mauvais type de retour");
 	$$ = new_statement();
-	$$.has_return = 1;
-	$$.return_type = R_VOID;
+	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
+	// $$.has_return = 1;
+	// $$.return_type = R_VOID;
 }
 | BREAK ';' {
-	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	ERRORIF(!inloop, "break doit être appelé dans une boucle");
 	$$ = new_statement();
 	$$.next_break = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | CONTINUE ';' {
-	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+	ERRORIF(!inloop, "continue doit être appelé dans une boucle");
 	$$ = new_statement();
 	$$.next_continue = crelist(nextquad);
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | block {
 	$$ = $1;
@@ -772,7 +798,7 @@ struct s_statement new_statement() {
 		.next=NULL,
 		.next_break=NULL,
 		.next_continue=NULL,
-		.has_return = 0,
+		/* .has_return = 0 */
 	};
 }
 
@@ -780,7 +806,7 @@ struct s_expr new_expr() {
 	return (struct s_expr) {
 		.u.boolexpr = {
 			.true=NULL,
-			.false=NULL,
+			.false=NULL
 		}
 	};
 }
