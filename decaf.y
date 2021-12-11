@@ -123,10 +123,12 @@ field_decl_int_l
 field_decl_int 
 : ID {
 	struct s_entry *ident = tos_newname($1);
+	ERRORIF(ident == NULL, "la variable existe déjà");
 	ident->type = elementary_type(T_INT);
 }
 | ID '[' INT_LITERAL ']' {
 	struct s_entry *ident = tos_newname($1);
+	ERRORIF(ident == NULL, "le tableau existe déjà");
 	ident->type = array_type(T_INT, $3);
 }
 ;
@@ -139,10 +141,12 @@ field_decl_bool_l
 field_decl_bool 
 : ID {
 	struct s_entry *ident = tos_newname($1);
+	ERRORIF(ident == NULL, "la variable existe déjà");
 	ident->type = elementary_type(T_BOOL);
 }
 | ID '[' INT_LITERAL ']' {
 	struct s_entry *id = tos_newname($1);
+	ERRORIF(id == NULL, "le tableau existe déjà");
 	id->type = array_type(T_BOOL, $3);
 }
 ;
