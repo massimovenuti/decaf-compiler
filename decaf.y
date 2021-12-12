@@ -43,8 +43,6 @@ extern struct s_context *context;
 		ilist *next;
 		ilist *next_break;
 		ilist *next_continue;
-		// int has_return;
-		// enum ret_type return_type;
 	} stateval;
 	struct s_arglist *alistval;
 	enum elem_type etypeval;
@@ -254,10 +252,12 @@ var_decl
 id_int_l 
 : ID {
 	struct s_entry *ident = tos_newname($1);
+	ERRORIF(ident == NULL, "la variable existe déjà");
 	ident->type = elementary_type(T_INT);
 }
 | id_int_l ',' ID {
 	struct s_entry *ident = tos_newname($3);
+	ERRORIF(ident == NULL, "la variable existe déjà");
 	ident->type = elementary_type(T_INT);
 }
 ;
@@ -265,19 +265,19 @@ id_int_l
 id_bool_l 
 : ID {
 	struct s_entry *ident = tos_newname($1);
+	ERRORIF(ident == NULL, "la variable existe déjà");
 	ident->type = elementary_type(T_BOOL);
 }
 | id_bool_l ',' ID {
 	struct s_entry *ident = tos_newname($3);
+	ERRORIF(ident == NULL, "la variable existe déjà");
 	ident->type = elementary_type(T_BOOL);
 }
 ;
 
 statement_l_
 : %empty {
-	$$.next = NULL;
-	$$.next_break = NULL;
-	$$.next_continue = NULL;
+	$$ = new_statement();
 }
 | statement_l {
 	$$ = $1;
