@@ -433,26 +433,19 @@ statement
 	if ($2.type == E_INT) { // cas int
 		ERRORIF(infunction_type != R_INT, "mauvais type de retour");
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), $2.u.result));
-		// $$.return_type = R_INT;
 	} else { // cas bool
 		ERRORIF(infunction_type != R_BOOL, "mauvais type de retour");
 		complete($2.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(1)));
-		// $$.next = crelist(nextquad);
-		// gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 		complete($2.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(0)));
-		// $$.return_type = R_BOOL;
 	}
-	// $$.has_return = 1;
 }
 | RETURN ';' {
 	ERRORIF(!infunction, "return doit être appelé dans une fonction");
 	ERRORIF(infunction_type != R_VOID, "mauvais type de retour");
 	$$ = new_statement();
 	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
-	// $$.has_return = 1;
-	// $$.return_type = R_VOID;
 }
 | BREAK ';' {
 	ERRORIF(!inloop, "break doit être appelé dans une boucle");
@@ -715,7 +708,7 @@ expr
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 
 	} else {
-		// TODO
+		// TODO: cas bool
 	}
 }
 | expr NEQ expr {
@@ -728,7 +721,7 @@ expr
 		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 	} else {
-		// TODO
+		// TODO: cas bool
 	}
 }
 | expr AND marker expr {
