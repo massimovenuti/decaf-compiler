@@ -119,22 +119,22 @@ void freelist(ilist *list) {
 void print_quadop(quadop qo) {
     switch (qo.type) {
     case QO_CST:
-        printf("(cst:%d)", qo.u.cst);
+        printf("%d", qo.u.cst);
         break;
     case QO_LABEL:
-        printf("(label:%d)", qo.u.label);
+        printf("%d", qo.u.label);
         break;
     case QO_BOOL:
-        printf("(bool:%s)", qo.u.boolean ? "true" : "false");
+        printf("%d", qo.u.boolean);
         break;
     case QO_NAME:
-        printf("(name,%s)", qo.u.name);
+        printf("%s", qo.u.name);
         break;
     case QO_EMPTY:
         printf("_");
         break;
     default:
-        printf("(?%d)", qo.type);
+        printf("?:%d", qo.type);
         break;
     }
 }
@@ -144,100 +144,177 @@ void print_quad(quad q) {
     switch (q.type)
 	{
 	case Q_ADD:
-		printf("(ADD,");
+        print_quadop(q.op3);
+        printf(" = ");
+        print_quadop(q.op1);
+		printf(" + ");
+        print_quadop(q.op2);
 		break;
 
 	case Q_SUB:
-		printf("(SUB,");
+        print_quadop(q.op3);
+        printf(" = ");
+        print_quadop(q.op1);
+		printf(" - ");
+        print_quadop(q.op2);
 		break;
 
 	case Q_MUL:
-		printf("(MUL,");
+        print_quadop(q.op3);
+        printf(" = ");
+        print_quadop(q.op1);
+		printf(" * ");
+        print_quadop(q.op2);
 		break;
 
 	case Q_DIV:
-		printf("(DIV,");
+        print_quadop(q.op3);
+        printf(" = ");
+        print_quadop(q.op1);
+		printf(" / ");
+        print_quadop(q.op2);
 		break;
 
 	case Q_MOD:
-		printf("(MOD,");
+        print_quadop(q.op3);
+        printf(" = ");
+        print_quadop(q.op1);
+		printf(" %% ");
+        print_quadop(q.op2);
 		break;
 
 	case Q_MINUS:
-		printf("(MINUS,");
+        print_quadop(q.op3);
+        printf(" = ");
+		printf(" - ");
+        print_quadop(q.op1);
 		break;
 
-    case Q_NOT:
-		printf("(NOT,");
-		break;
+    // case Q_NOT:
+    //     print_quadop(q.op3);
+    //     printf(" = ");
+	// 	printf(" ! ");
+    //     print_quadop(q.op1);
+	// 	break;
 
 	case Q_MOVE:
-		printf("(MOVE,");
+		print_quadop(q.op3);
+        printf(" = ");
+        print_quadop(q.op1);
 		break;
 
 	case Q_GOTO:
-		printf("(GOTO,");
+        printf("goto ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_BLT:
-		printf("(BLT,");
+        printf("if ");
+		print_quadop(q.op1);
+        printf(" < ");
+		print_quadop(q.op2);
+        printf(" goto ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_BGT:
-		printf("(BGT,");
+        printf("if ");
+		print_quadop(q.op1);
+        printf(" > ");
+		print_quadop(q.op2);
+        printf(" goto ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_BLE:
-		printf("(BLE,");
+        printf("if ");
+		print_quadop(q.op1);
+        printf(" <= ");
+		print_quadop(q.op2);
+        printf(" goto ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_BGE:
-		printf("(BGE,");
+        printf("if ");
+		print_quadop(q.op1);
+        printf(" >= ");
+		print_quadop(q.op2);
+        printf(" goto ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_BEQ:
-		printf("(BEQ,");
+        printf("if ");
+		print_quadop(q.op1);
+        printf(" == ");
+		print_quadop(q.op2);
+        printf(" goto ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_BNE:
-		printf("(BNE,");
+        printf("if ");
+		print_quadop(q.op1);
+        printf(" > ");
+		print_quadop(q.op2);
+        printf(" != ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_PARAM:
-		printf("(PARAM,");
+		printf("param ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_CALL:
-		printf("(CALL,");
+        if (q.op3.type != QO_EMPTY) {
+		    print_quadop(q.op3);
+    		printf(" = ");
+        }
+		printf("call ");
+		print_quadop(q.op2);
+		printf(" ");
+        print_quadop(q.op1);
 		break;
 
     case Q_RETURN:
-		printf("(RETURN,");
+		printf("return ");
+		print_quadop(q.op3);
 		break;
     
     case Q_FUN:
-		printf("(FUN,");
+		printf("def ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_SETI:
-		printf("(SETI,");
+		print_quadop(q.op1);
+        printf("[");
+		print_quadop(q.op2);
+        printf("] = ");
+		print_quadop(q.op3);
 		break;
 
 	case Q_GETI:
-		printf("(GETI,");
+		print_quadop(q.op3);
+        printf(" = ");
+        print_quadop(q.op1);
+        printf("[");
+		print_quadop(q.op2);
+		printf("]");
 		break;
 
 	default:
-        printf("(?,");
+        printf("(?:%d,", q.type);
+        print_quadop(q.op1);
+        printf(",");
+        print_quadop(q.op2);
+        printf(",");
+        print_quadop(q.op3);
+        printf(")");
 		break;
 	}
-
-    print_quadop(q.op1);
-    printf(",");
-    print_quadop(q.op2);
-    printf(",");
-    print_quadop(q.op3);
-    printf(")");
 }
 
 void print_ilist(ilist *l) {
