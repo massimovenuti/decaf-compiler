@@ -713,31 +713,76 @@ expr
 	$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
-| expr EQ expr {
-	ERRORIF($1.type != $3.type, "les opérandes doivent être de même type");
+| expr EQ marker expr {
+	ERRORIF($1.type != $4.type, "les opérandes doivent être de même type");
 	$$ = new_expr();
 	$$.type = E_BOOL;
-	if ($1.type == E_INT) {
+	if ($1.type == E_INT) { // cas int
 		$$.u.boolexpr.true = crelist(nextquad);
-		gencode(quad_make(Q_BEQ, $1.u.result, $3.u.result, quadop_empty()));
+		gencode(quad_make(Q_BEQ, $1.u.result, $4.u.result, quadop_empty()));
 		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
-
-	} else {
-		// TODO: cas bool
+	} else { // cas bool
+		// left
+		struct s_entry *temp_l = newtemp();
+		temp_l->type = elementary_type(E_BOOL);
+		quadop qtemp_l = quadop_name(temp_l->ident);
+		complete($1.u.boolexpr.true, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp_l));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($3)));
+		complete($1.u.boolexpr.false, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp_l));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($3)));
+		// right
+		struct s_entry *temp_r = newtemp();
+		temp_r->type = elementary_type(E_BOOL);
+		quadop qtemp_r = quadop_name(temp_r->ident);
+		complete($4.u.boolexpr.true, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp_r));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 1)));
+		complete($4.u.boolexpr.false, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp_r));
+		// test equality
+		$$.u.boolexpr.true = crelist(nextquad);
+		gencode(quad_make(Q_BEQ, qtemp_l, qtemp_r, quadop_empty()));
+		$$.u.boolexpr.false = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
 }
-| expr NEQ expr {
-	ERRORIF($1.type != $3.type, "les opérandes doivent être de même type");
+| expr NEQ marker expr {
+	ERRORIF($1.type != $4.type, "les opérandes doivent être de même type");
 	$$ = new_expr();
 	$$.type = E_BOOL;
-	if ($1.type == E_INT) {
+	if ($1.type == E_INT) { // cas int
 		$$.u.boolexpr.true = crelist(nextquad);
-		gencode(quad_make(Q_BNE, $1.u.result, $3.u.result, quadop_empty()));
+		gencode(quad_make(Q_BNE, $1.u.result, $4.u.result, quadop_empty()));
 		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
-	} else {
-		// TODO: cas bool
+	} else { // cas bool
+		// left
+		struct s_entry *temp_l = newtemp();
+		temp_l->type = elementary_type(E_BOOL);
+		quadop qtemp_l = quadop_name(temp_l->ident);
+		complete($1.u.boolexpr.true, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp_l));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($3)));
+		complete($1.u.boolexpr.false, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp_l));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($3)));
+		// right
+		struct s_entry *temp_r = newtemp();
+		temp_r->type = elementary_type(E_BOOL);
+		quadop qtemp_r = quadop_name(temp_r->ident);
+		complete($4.u.boolexpr.true, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp_r));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 1)));
+		complete($4.u.boolexpr.false, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp_r));
+		// test equality
+		$$.u.boolexpr.true = crelist(nextquad);
+		gencode(quad_make(Q_BNE, qtemp_l, qtemp_r, quadop_empty()));
+		$$.u.boolexpr.false = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
 }
 | expr AND marker expr {
