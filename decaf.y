@@ -513,19 +513,35 @@ method_call
 
 expr_l 
 : expr {
-	// TODO: gérer cas int / bool
 	$$ = arglist_addend(NULL, $1.type);
-	if ($1.type == E_INT) {
-		gencode(quad_make(Q_PARAM, $1.u.result, quadop_empty(), quadop_empty()));
-	} else {
+	if ($1.type == E_INT) { // cas int
+		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), $1.u.result));
+	} else { // cas bool
+		struct s_entry *temp = newtemp();
+		temp->type = elementary_type(E_BOOL);
+		quadop qtemp = quadop_name(temp->ident);
+		complete($1.u.boolexpr.true, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 1)));
+		complete($1.u.boolexpr.false, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp));
+		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), qtemp));
 	}
 }
 | expr_l ',' expr {
-	// TODO: gérer cas int / bool
 	$$ = arglist_addend($1, $3.type);
-	if ($3.type == E_INT) {
-		gencode(quad_make(Q_PARAM, $3.u.result, quadop_empty(), quadop_empty()));
-	} else {
+	if ($3.type == E_INT) { // cas int
+		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), $3.u.result));
+	} else { // cas bool
+		struct s_entry *temp = newtemp();
+		temp->type = elementary_type(E_BOOL);
+		quadop qtemp = quadop_name(temp->ident);
+		complete($3.u.boolexpr.true, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 1)));
+		complete($3.u.boolexpr.false, nextquad);
+		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp));
+		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), qtemp));
 	}
 }
 ;
