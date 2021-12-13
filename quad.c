@@ -64,6 +64,13 @@ quadop quadop_name(char *name) {
     return qo;
 }
 
+quadop quadop_context(struct s_context *context) {
+    quadop qo;
+    qo.type = QO_CONTEXT;
+    qo.u.context = context;
+    return qo;
+}
+
 quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3) {
     quad q;
     q.type = type;
@@ -132,6 +139,9 @@ void print_quadop(quadop qo) {
         break;
     case QO_EMPTY:
         printf("_");
+        break;
+    case QO_CONTEXT:
+        printf("0x%x", qo.u.context);
         break;
     default:
         printf("?:%d", qo.type);
@@ -303,6 +313,15 @@ void print_quad(quad q) {
         printf("[");
 		print_quadop(q.op2);
 		printf("]");
+		break;
+    
+    case Q_BCTX:
+        printf("Context = ");
+		print_quadop(q.op3);
+		break;
+    
+    case Q_ECTX:
+        printf("Fin Context");
 		break;
 
 	default:

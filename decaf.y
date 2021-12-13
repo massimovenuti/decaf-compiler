@@ -89,12 +89,14 @@ program
 pushctx
 : %empty {
 	context = tos_pushctx();
+	gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
 }
 ;
 
 popctx
 : %empty {
 	context = tos_popctx();
+	gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
 }
 ;
 
@@ -166,8 +168,10 @@ method_decl
 	ident->type = function_type(R_INT, $5);
 } block {
 	infunction = 0;
-	if ($5 != NULL)
+	if ($5 != NULL) {
 		context = tos_popctx();
+		gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
+	}
 }
 | BOOL ID {
 	struct s_entry *id = tos_newname($2);
@@ -180,8 +184,10 @@ method_decl
 	id->type = function_type(R_BOOL, $5);
 } block {
 	infunction = 0;
-	if ($5 != NULL)
+	if ($5 != NULL) {
 		context = tos_popctx();
+		gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
+	}
 }
 | VOID ID {
 	struct s_entry *id = tos_newname($2);
@@ -194,8 +200,10 @@ method_decl
 	id->type = function_type(R_VOID, $5);
 } block {
 	infunction = 0;
-	if ($5 != NULL)
+	if ($5 != NULL) {
 		context = tos_popctx();
+		gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
+	}
 }
 ;
 

@@ -2,6 +2,7 @@
 #define __QUAD_H__
 
 #include "utils.h"
+#include "table.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,12 +11,13 @@
 #define LIST_SIZE 255
 
 struct quadop {
-    enum quadop_type { QO_EMPTY, QO_CST, QO_BOOL, QO_LABEL, QO_NAME } type;
+    enum quadop_type { QO_EMPTY, QO_CST, QO_BOOL, QO_LABEL, QO_NAME, QO_CONTEXT } type;
     union {
         int cst;
         int boolean;
         int label;
         char *name;
+        struct s_context *context;
     } u;
 };
 
@@ -43,7 +45,9 @@ struct quad {
         Q_RETURN, // retour de fonction
         Q_FUN, // début de fonction
         Q_SETI, // affectation et indice de tableau
-        Q_GETI
+        Q_GETI,
+        Q_BCTX,
+        Q_ECTX
     } type;
     quadop op1, op2, op3;
 };
@@ -63,6 +67,7 @@ quadop quadop_cst(int cst);      // crée un quadop de type constante
 quadop quadop_bool(int boolean); // crée un quadop de type booléen
 quadop quadop_label(int label);  // crée un quadop de type label
 quadop quadop_name(char *name);  // crée un quadop de type nom
+quadop quadop_context(struct s_context *context); 
 
 quad quad_make(enum quad_type type, quadop op1, quadop op2,
                quadop op3); // crée un quad
