@@ -13,8 +13,9 @@ int main(int argc, char **argv)
     test = 0;
     errors = 0;
 
+    //--------------------------------------------------------------
     // TEST 1 : SINGLE VARIABLE + LOOKUP ERROR
-
+    //--------------------------------------------------------------
     context = tos_pushctx();
 
     errors += (tos_newname("var1") == NULL) ? 1 : 0;
@@ -36,8 +37,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    //--------------------------------------------------------------
     // TEST 2 : HASHTABLE OVERFLOW
-
+    //--------------------------------------------------------------
     context = tos_pushctx();
 
     for (i = 0; i < 10; i++)
@@ -65,8 +67,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    //--------------------------------------------------------------
     // TEST 3 : REDEFINITION ERROR
-
+    //--------------------------------------------------------------
     context = tos_pushctx();
 
     errors += (tos_newname("var1") == NULL) ? 1 : 0;
@@ -88,8 +91,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    //--------------------------------------------------------------
     // TEST 4 : SAME VARIABLE NAME, DIFFERENT CONTEXT
-
+    //--------------------------------------------------------------
     context = tos_pushctx();
 
     e1 = tos_newname("var1");
@@ -127,8 +131,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    //--------------------------------------------------------------
     // TEST 5 : ELEMENTARY TYPE CONSTRUCTOR
-
+    //--------------------------------------------------------------
     context = tos_pushctx();
 
     e1 = tos_newname("var1");
@@ -166,8 +171,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    //--------------------------------------------------------------
     // TEST 6 : ARRAY TYPE CONSTRUCTOR
-    
+    //--------------------------------------------------------------
     context = tos_pushctx();
 
     e1 = tos_newname("var1");
@@ -189,8 +195,9 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    //--------------------------------------------------------------
     // TEST 7 : FUNCTION TYPE CONSTRUCTOR
-    
+    //--------------------------------------------------------------
     al1 = NULL;
     al2 = NULL;
     al3 = NULL;

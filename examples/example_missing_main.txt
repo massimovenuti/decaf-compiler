@@ -1,0 +1,5 @@
+// Exemple de programme en DECAF
+
+class Program {
+
+}

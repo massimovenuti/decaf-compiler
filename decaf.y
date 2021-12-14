@@ -83,7 +83,7 @@ extern struct s_context *context;
 
 %%
 program
-: CLPR '{' pushctx decl popctx '}'
+: CLPR '{' pushctx decl check_main popctx '}'
 ;
 
 pushctx
@@ -100,9 +100,21 @@ popctx
 }
 ;
 
+check_main
+: %empty {
+    struct s_entry *id = tos_lookup("main");
+    ERRORIF(id == NULL, "la fonction main n'a pas été définie dans le programme");
+    // vérifier si id->type == NULL ? (ne devrait pas arriver)
+    ERRORIF(id->type->type != T_FUNCTION, "l'identificateur main déclaré n'est pas une fonction");
+    ERRORIF(id->type->u.function_info.ret_type != R_VOID, "la fonction main doit avoir le type de retour void");
+    ERRORIF(id->type->u.function_info.arglist != NULL, "la fonction main ne doit pas prendre d'arguments en paramètre");
+}
+
 decl
 : field_decl_l method_decl_l
+| field_decl_l
 | method_decl_l
+| %empty
 ;
 
 field_decl_l 
@@ -129,7 +141,7 @@ field_decl_int
 | ID '[' INT_LITERAL ']' {
 	struct s_entry *ident = tos_newname($1);
 	ERRORIF(ident == NULL, "le tableau existe déjà");
-	ident->type = array_type(T_INT, $3);
+	ident->type = array_type(E_INT, $3);
 }
 ;
 
@@ -147,7 +159,7 @@ field_decl_bool
 | ID '[' INT_LITERAL ']' {
 	struct s_entry *id = tos_newname($1);
 	ERRORIF(id == NULL, "le tableau existe déjà");
-	id->type = array_type(T_BOOL, $3);
+	id->type = array_type(E_BOOL, $3);
 }
 ;
 
@@ -381,7 +393,7 @@ statement
 	struct s_entry *id = tos_lookup($1);
 	ERRORIF(id == NULL, "la variable n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
-	ERRORIF(!is_array_type(id->type, T_INT), "la variable n'est pas un tableau de int");
+	ERRORIF(!is_array_type(id->type, E_INT), "la variable n'est pas un tableau de int");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
 	$$ = new_statement();
@@ -581,7 +593,7 @@ expr
 	struct s_entry *temp = newtemp();
 	quadop qo = quadop_name(temp->ident);
 	gencode(quad_make(Q_GETI, quadop_name(id->ident), $3.u.result, qo));
-	if (is_array_type(id->type, T_INT)) {
+	if (is_array_type(id->type, E_INT)) {
 		$$.type = E_INT;
 		temp->type = elementary_type(T_INT);
 	}
@@ -857,9 +869,9 @@ void raler(char *msg) {
 
 struct s_statement new_statement() {
 	return (struct s_statement) {
-		.next=NULL,
-		.next_break=NULL,
-		.next_continue=NULL,
+		.next = NULL,
+		.next_break = NULL,
+		.next_continue = NULL,
 		/* .has_return = 0 */
 	};
 }
@@ -867,8 +879,8 @@ struct s_statement new_statement() {
 struct s_expr new_expr() {
 	return (struct s_expr) {
 		.u.boolexpr = {
-			.true=NULL,
-			.false=NULL
+			.true = NULL,
+			.false = NULL
 		}
 	};
 }

@@ -3,6 +3,10 @@
 struct s_context *context = NULL;
 unsigned tempnum = 0;
 
+//--------------------------------------------------------------
+// TABLE DE SYMBOLES
+//--------------------------------------------------------------
+
 unsigned int hash_idx(const char *str)
 {
     int i = 0;
@@ -14,7 +18,8 @@ unsigned int hash_idx(const char *str)
     return hash % N_HASH;
 }
 
-struct s_entry *newtemp() {
+struct s_entry *newtemp() 
+{
     int length = snprintf(NULL, 0, "%d", tempnum);
     char *temp = malloc((length + 2) * sizeof(char));
     snprintf(temp, length + 2, "$%d", tempnum);
@@ -100,6 +105,10 @@ struct s_entry *tos_lookup(const char *ident)
     }
     return NULL;
 }
+
+//--------------------------------------------------------------
+// TYPES
+//--------------------------------------------------------------
 
 struct s_typedesc* elementary_type(enum entry_type type)
 {

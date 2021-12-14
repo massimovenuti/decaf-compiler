@@ -4,21 +4,21 @@
 #include <stdio.h>
 
 // memory check
-#define MEMCHECK(exp)                                                              \
-    do {                                                                       \
-        if ((exp) == NULL) {                                                   \
-            perror(#exp);                                                      \
-            exit(1);                                                           \
-        }                                                                      \
+#define MEMCHECK(exp)                       \
+    do {                                    \
+        if ((exp) == NULL) {                \
+            perror(#exp);                   \
+            exit(1);                        \
+        }                                   \
     } while (0)
 
 // yacc check
-#define ERRORIF(exp, msg)                                                         \
-    do {                                                                       \
-        if ((exp)) {                                                          \
-            fprintf(stderr, "%s\n", msg);                                        \
-            exit(1);                                                           \
-        }                                                                      \
+#define ERRORIF(exp, msg)                   \
+    do {                                    \
+        if ((exp)) {                        \
+            fprintf(stderr, "%s\n", msg);   \
+            exit(1);                        \
+        }                                   \
     } while (0)
 
 #endif
