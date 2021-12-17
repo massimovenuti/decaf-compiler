@@ -57,7 +57,7 @@ HEX_NUM 0x[0-9a-fA-F]+
 								return INT_LITERAL;
 							}
 {HEX_NUM}					{
-								if (sscanf(yytext, "%x", &yylval) != 1) {
+								if (sscanf(yytext, "%x", &yylval.intval) != 1) {
 									fprintf(stderr, "%s not hex\n", yytext);
 									exit(EXIT_FAILURE);
 								}

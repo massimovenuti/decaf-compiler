@@ -141,7 +141,7 @@ void print_quadop(quadop qo) {
         printf("_");
         break;
     case QO_CONTEXT:
-        printf("0x%x", qo.u.context);
+        printf("%p", qo.u.context);
         break;
     default:
         printf("?:%d", qo.type);

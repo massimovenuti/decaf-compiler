@@ -18,17 +18,6 @@ unsigned int hash_idx(const char *str)
     return hash % N_HASH;
 }
 
-struct s_entry *newtemp() 
-{
-    int length = snprintf(NULL, 0, "%d", tempnum);
-    char *temp = malloc((length + 2) * sizeof(char));
-    snprintf(temp, length + 2, "$%d", tempnum);
-    struct s_entry *entry = tos_newname(temp);
-    free(temp);
-    tempnum++;
-    return entry;
-}
-
 struct s_entry *lookup_entry(struct s_entry *entry, const char *ident)
 {
     if (entry == NULL) return NULL;
@@ -52,48 +41,70 @@ void free_entry(struct s_entry *entry)
     free(entry);
 }
 
-struct s_context *tos_pushctx()
+struct s_context *tos_pushctx(struct s_context *ctx)
 {
     struct s_context *new_ctx = (struct s_context *)malloc(sizeof(struct s_context));
 
     for (int i = 0; i < N_HASH; i++)
         new_ctx->entry[i] = NULL;
 
-    new_ctx->next = context;
+    new_ctx->next = ctx;
     return new_ctx;
 }
 
-struct s_context *tos_popctx()
+struct s_context *tos_popctx(struct s_context *ctx)
 {
-    // for (int i = 0; i < N_HASH; i++)
-    //     free_entry(context->entry[i]);
-
-    struct s_context *prev = context->next;
-    // free(context);
-    return prev;
+    return ctx->next;
 }
 
-struct s_entry *tos_newname(const char *ident)
+void tos_freectx(struct s_context *ctx)
+{
+    for (int i = 0; i < N_HASH; i++)
+        free_entry(ctx->entry[i]);
+
+    free(context);
+}
+
+struct s_context *tos_popfreectx(struct s_context *ctx)
+{
+    struct s_context *next = ctx->next;
+    tos_freectx(ctx);
+    return next;
+}
+
+struct s_entry *tos_newname(struct s_context *ctx, const char *ident)
 {
     unsigned int idx = hash_idx(ident);
 
-    if (lookup_entry(context->entry[idx], ident) != NULL)
+    if (lookup_entry(ctx->entry[idx], ident) != NULL)
         return NULL;
 
     struct s_entry *entry = (struct s_entry *)malloc(sizeof(struct s_entry));
     entry->ident = strdup(ident); 
     entry->type = NULL;
-    entry->next = context->entry[idx];
+    entry->next = ctx->entry[idx];
 
-    context->entry[idx] = entry;
+    ctx->entry[idx] = entry;
     return entry;
 }
 
-struct s_entry *tos_lookup(const char *ident)
+struct s_entry *tos_newtemp(struct s_context *ctx)
+{
+    int length = snprintf(NULL, 0, "%d", tempnum);
+    char *temp = malloc((length + 2) * sizeof(char));
+    snprintf(temp, length + 2, "$%d", tempnum);
+    
+    struct s_entry *entry = tos_newname(ctx, temp);
+    free(temp);
+    tempnum++;
+    return entry;
+}
+
+struct s_entry *tos_lookup(struct s_context *ctx, const char *ident)
 {
     unsigned int idx = hash_idx(ident);
     
-    struct s_context *tmp = context;
+    struct s_context *tmp = ctx;
     struct s_entry *look = NULL;
 
     while (tmp != NULL)
@@ -103,8 +114,6 @@ struct s_entry *tos_lookup(const char *ident)
         
         tmp = tmp->next;
     }
-    
-    fprintf(stderr, "error : '%s' undeclared variable\n", ident);
     return NULL;
 }
 
@@ -175,7 +184,6 @@ void free_arglist(struct s_arglist *arglist)
 
 int is_elementary_type(struct s_typedesc *elem, enum entry_type type)
 {
-    // if (type != T_BOOL && type != T_INT) return 0;
     return elem->type == type;
 }
 

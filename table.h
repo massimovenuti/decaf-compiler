@@ -36,7 +36,7 @@ struct s_entry {
     struct s_entry *next;
 };
 
-// pile de table de symboles
+// pile de tables de symboles
 struct s_context {
     struct s_entry *entry[N_HASH];
     struct s_context *next;
@@ -56,14 +56,9 @@ extern unsigned tempnum; // numéro du prochain identificateur temporaire
 unsigned int hash_idx(const char *str);
 
 /**
-* @brief Génère un nouvel identificateur temporaire
-*/
-struct s_entry *newtemp();
-
-/**
-* @brief Cherche une entrée dans la table des symboles
+* @brief Cherche une entrée dans la pile de table de symboles
 * @param entry Une entrée
-* @param ident L'identificateur correspondant à l'entrée
+* @param ident L'identificateur de l'entrée dans la pile de table de symboles
 */
 struct s_entry *lookup_entry(struct s_entry *entry, const char *ident);
 
@@ -75,25 +70,48 @@ void free_entry(struct s_entry *entry);
 
 /**
 * @brief Empile une nouvelle table de symboles vide
+* @param ctx Une pile de tables de symboles
 */
-struct s_context *tos_pushctx();
+struct s_context *tos_pushctx(struct s_context *ctx);
 
 /**
 * @brief Dépile une table de symboles
+* @param ctx Une pile de tables de symboles
 */
-struct s_context *tos_popctx();
+struct s_context *tos_popctx(struct s_context *ctx);
+
+/**
+* @brief Dépile une table de symboles et libère l'espace mémoire occupée par celle-ci
+* @param ctx Une pile de tables de symboles
+*/
+void tos_freectx(struct s_context *ctx);
+
+/**
+* @brief Dépile une table de symboles et libère l'espace mémoire occupée par celle-ci
+* @param ctx Une pile de tables de symboles
+* @warning Utilisée uniquement pour simplifier les tests
+*/
+struct s_context *tos_popfreectx(struct s_context *ctx);
+
+/**
+* @brief Génère un nouvel identificateur temporaire et ajoute l'entrée correspondante dans la pile de tables de symboles
+* @param ctx Une pile de tables de symboles
+*/
+struct s_entry *tos_newtemp(struct s_context *ctx);
 
 /**
 * @brief Ajoute une nouvelle entrée dans la table au sommet de la pile
-* @param ident L'identificateur correspondant à l'entrée
+* @param ctx Une pile de tables de symboles
+* @param ident L'identificateur de l'entrée dans la pile de table de symboles
 */
-struct s_entry *tos_newname(const char *ident);
+struct s_entry *tos_newname(struct s_context *ctx, const char *ident);
 
 /**
-* @brief Teste si une entrée existe dans une table de la pile
-* @param ident L'identificateur correspondant à l'entrée
+* @brief Teste si une entrée existe dans un niveau de la pile de tables de symboles
+* @param ctx Une pile de tables de symboles
+* @param ident L'identificateur de l'entrée dans la pile de table de symboles
 */
-struct s_entry *tos_lookup(const char *ident);
+struct s_entry *tos_lookup(struct s_context *ctx, const char *ident);
 
 //--------------------------------------------------------------
 // TYPES

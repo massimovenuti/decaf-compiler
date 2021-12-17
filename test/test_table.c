@@ -1,33 +1,40 @@
 # include "../table.h"
 
+#define NB_NEWTEMP 100
+
+extern struct s_context *context;
+
 int main(int argc, char **argv)
 {
     (void)argc; (void)argv;
 
+    int i, test, errors;
     struct s_entry *e1, *e2, *e3;
-    
-    char var[5] = "var";
+    struct s_arglist *al1, *al2, *al3;
 
-    int i, j, errors = 0;
-    freopen("/dev/null", "w", stderr); // disabling stderr
-    
-    // test 1 : 1 variable + undeclared error
-    table = tos_pushctx(table);
+    test = 0;
+    errors = 0;
+
+    e1 = NULL;
+    e2 = NULL;
+    e3 = NULL;
+
+    al1 = NULL;
+    al2 = NULL;
+    al3 = NULL;
 
     //--------------------------------------------------------------
     // TEST 1 : SINGLE VARIABLE + LOOKUP ERROR
     //--------------------------------------------------------------
-    context = tos_pushctx();
+    context = tos_pushctx(context);
 
-    // error expected here ...
-    errors += (tos_lookup (table, "var2") != NULL) ? 1 : 0;
+    errors += (tos_newname(context, "var1") == NULL) ? 1 : 0;
+    errors += (tos_lookup(context, "var1") == NULL) ? 1 : 0;
 
-    table = tos_popctx(table);
+    // lookup error
+    errors += (tos_lookup(context, "var2") != NULL) ? 1 : 0;
 
-    // error expected here ...
-    errors += (tos_lookup("var2") != NULL) ? 1 : 0;
-
-    context = tos_popctx();
+    context = tos_popfreectx(context);
 
     printf("test %d\t", ++test);
     if (context == NULL && !errors)  
@@ -40,47 +47,47 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
-    // test 2 : 100 variables
-    table = tos_pushctx(table);
+    //--------------------------------------------------------------
+    // TEST 2 : HASHTABLE OVERFLOW USING NEWTEMP
+    //--------------------------------------------------------------
+    context = tos_pushctx(context);
 
-    for (i = 0; i < 10; i++)
+    for (i = 0; i < NB_NEWTEMP; i++)
     {
-        var[3] = i + '0';
-        for (j = 0; j < 10; j++)
-        {
-            var[4] = j + '0';
-            e1 = tos_newname(table, var);
-            e2 = tos_lookup (table, var);
-            errors += (e1 == NULL || e1 != e2) ? 1 : 0;
-        }
+        e1 = tos_newtemp(context);
+        // printf("%s\t", e1->ident);
+        e2 = tos_lookup(context, e1->ident);
+        errors += (e1 == NULL || e1 != e2) ? 1 : 0;
     }
+    // printf("\n");
 
-    table = tos_popctx(table);
+    context = tos_popfreectx(context);
 
-    if (table == NULL && !errors)  
+    printf("test %d\t", ++test);
+    if (context == NULL && !errors)  
     {
-        printf("[ok]\t'hashtable overflow'\n");
+        printf("[ok]\t'hashtable overflow using newtemp'\n");
     }
     else
     {
-        printf("[ko]\t'hashtable overflow'\n");
+        printf("[ko]\t'hashtable overflow using newtemp'\n");
         exit(EXIT_FAILURE);
     }
 
     //--------------------------------------------------------------
     // TEST 3 : REDEFINITION ERROR
     //--------------------------------------------------------------
-    context = tos_pushctx();
+    context = tos_pushctx(context);
 
-    errors += (tos_newname("var1") == NULL) ? 1 : 0;
-    errors += (tos_lookup("var1") == NULL) ? 1 : 0;    
+    errors += (tos_newname(context, "var1") == NULL) ? 1 : 0;
+    errors += (tos_lookup(context, "var1") == NULL) ? 1 : 0;    
 
-    // error expected here ...
-    errors += (tos_newname("var1") != NULL) ? 1 : 0;
+    // newname error
+    errors += (tos_newname(context, "var1") != NULL) ? 1 : 0;
 
-    context = tos_popctx();
+    context = tos_popfreectx(context);
     
-        printf("test %d\t", ++test);
+    printf("test %d\t", ++test);
     if (context == NULL && !errors)  
     {
         printf("[ok]\t'redefinition error'\n");
@@ -94,31 +101,31 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------
     // TEST 4 : SAME VARIABLE NAME, DIFFERENT CONTEXT
     //--------------------------------------------------------------
-    context = tos_pushctx();
+    context = tos_pushctx(context);
 
-    e1 = tos_newname("var1");
-    e2 = tos_lookup("var1");
+    e1 = tos_newname(context, "var1");
+    e2 = tos_lookup(context, "var1");
 
     errors += (e1 == NULL || e1 != e2)? 1 : 0;
 
-    context = tos_pushctx();
+    context = tos_pushctx(context);
     
-    e2 = tos_lookup (table, "var1");
+    e2 = tos_lookup(context, "var1");
 
     errors += (e1 != e2)? 1 : 0;
 
-    e2 = tos_newname(table, "var1");
-    e3 = tos_lookup (table, "var1");
+    e2 = tos_newname(context, "var1");
+    e3 = tos_lookup(context, "var1");
 
     errors += (e2 != e3)? 1 : 0;
     errors += (e1 == e3)? 1 : 0;
 
-    context = tos_popctx();
+    context = tos_popfreectx(context);
 
-    // error expected here ...
-    errors += (tos_newname("var1") != NULL) ? 1 : 0;
+    // newname error
+    errors += (tos_newname(context, "var1") != NULL) ? 1 : 0;
 
-    context = tos_popctx();
+    context = tos_popfreectx(context);
     
     printf("test %d\t", ++test);
     if (context == NULL && !errors)  
@@ -134,33 +141,31 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------
     // TEST 5 : ELEMENTARY TYPE CONSTRUCTOR
     //--------------------------------------------------------------
-    context = tos_pushctx();
+    context = tos_pushctx(context);
 
-    e1 = tos_newname("var1");
-    
+    e1 = tos_newname(context, "var1");
     e1->type = elementary_type(T_BOOL);
     
     errors += 1 - is_elementary_type(e1->type, T_BOOL);
     errors += is_elementary_type(e1->type, T_INT);
 
-    e3 = tos_lookup("var1");
+    e3 = tos_lookup(context, "var1");
     errors += 1 - is_elementary_type(e3->type, T_BOOL);
     errors += is_elementary_type(e3->type, T_INT);
 
-    e2 = tos_newname("var2");
-    
+    e2 = tos_newname(context, "var2");
     e2->type = elementary_type(T_INT);
     
     errors += is_elementary_type(e2->type, T_BOOL);
     errors += 1 - is_elementary_type(e2->type, T_INT);
 
-    e3 = tos_lookup("var2");
+    e3 = tos_lookup(context, "var2");
     errors += is_elementary_type(e3->type, T_BOOL);
     errors += 1 - is_elementary_type(e3->type, T_INT);
 
-    context = tos_popctx();
+    context = tos_popfreectx(context);
     
-        printf("test %d\t", ++test);
+    printf("test %d\t", ++test);
     if (context == NULL && !errors)  
     {
         printf("[ok]\t'elementary type constructor'\n");
@@ -174,15 +179,14 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------
     // TEST 6 : ARRAY TYPE CONSTRUCTOR
     //--------------------------------------------------------------
-    context = tos_pushctx();
+    context = tos_pushctx(context);
 
-    e1 = tos_newname("var1");
-    
+    e1 = tos_newname(context, "var1");
     e1->type = array_type(E_INT, 10);
     
     errors += is_array_type(e1->type, E_BOOL);
 
-    context = tos_popctx();
+    context = tos_popfreectx(context);
 
     printf("test %d\t", ++test);
     if (context == NULL && !errors)  
@@ -198,13 +202,10 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------
     // TEST 7 : FUNCTION TYPE CONSTRUCTOR
     //--------------------------------------------------------------
-    al1 = NULL;
-    al2 = NULL;
-    al3 = NULL;
 
-    context = tos_pushctx();
+    context = tos_pushctx(context);
 
-    e1 = tos_newname("var1");
+    e1 = tos_newname(context, "var1");
 
     // function : ret = T_VOID, args = [E_BOOL, E_INT, E_BOOL, E_INT, E_INT] 
     al1 = arglist_addbegin(al1, E_INT);
@@ -233,7 +234,7 @@ int main(int argc, char **argv)
 
     errors += is_function_type(e1->type, R_VOID, al3);
 
-    context = tos_popctx();
+    context = tos_popfreectx(context);
 
     free_arglist(al2);
     free_arglist(al3);
