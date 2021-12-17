@@ -12,7 +12,7 @@ CFLAGS= -g
 
 all: main
 
-main: main.o $(prefixe).tab.o lex.yy.o quad.o table.o
+main: main.o $(prefixe).tab.o lex.yy.o quad.o table.o quad2mips.o
 	$(CC) $(LDFLAGS) $^ -g -o $@ $(LDLIBS)
 
 $(prefixe).tab.c: $(prefixe).y

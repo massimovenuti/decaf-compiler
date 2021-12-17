@@ -5,11 +5,11 @@
 
 #include "quad.h"
 
-void load_quadop(quadop qo, const char *registre, FILE *output);
+void load_quadop(quadop qo, const char *registre, struct s_context *t, FILE *output);
 
-void save(quadop qo, const char *registre, FILE *output);
+void save(quadop qo, const char *registre, struct s_context *t, FILE *output);
 
-void quad2mips(quad q, FILE *output);
+void quad2mips(quad q, struct s_context **t, FILE *output);
 
 void gen_mips(quad *quadcode, size_t len, FILE *output);
 

@@ -96,7 +96,7 @@ pushctx
 popctx
 : %empty {
 	context = tos_popctx(context);
-	gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
+	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 ;
 

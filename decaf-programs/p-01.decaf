@@ -4,6 +4,10 @@ class Program {
     
     void main() {
         int nombre;
+        int a;
         nombre = 3;
+        nombre += 10;
+        a = nombre;
+        a = nombre * 2 + 3;
     }
 }

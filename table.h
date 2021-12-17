@@ -34,6 +34,7 @@ struct s_entry {
     char *ident;
     struct s_typedesc *type;
     struct s_entry *next;
+    unsigned int off;    
 };
 
 // pile de tables de symboles
