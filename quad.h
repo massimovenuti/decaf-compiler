@@ -47,7 +47,12 @@ struct quad {
         Q_SETI, // affectation et indice de tableau
         Q_GETI,
         Q_BCTX,
-        Q_ECTX
+        Q_ECTX,
+        Q_WINT,
+        Q_WBOOL,
+        Q_WSTR,
+        Q_RINT,
+        Q_EXIT
     } type;
     quadop op1, op2, op3;
 };
