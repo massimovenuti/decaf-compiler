@@ -340,8 +340,8 @@ statement
 	ERRORIF(id == NULL, "la variable n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
-	gencode(quad_make(Q_BLT, $3.result, quadop_cst(0), nextquad + 1));
-	gencode(quad_make(Q_BLT, $3.result, quadop_cst(id->u.array_info.size), nextquad + 1));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 1)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 1)));
 	// TODO: faire afficher un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
@@ -375,8 +375,8 @@ statement
 	ERRORIF(!is_array_type(id->type, E_INT), "la variable n'est pas un tableau de int");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
-	gencode(quad_make(Q_BLT, $3.result, quadop_cst(0), nextquad + 1));
-	gencode(quad_make(Q_BLT, $3.result, quadop_cst(id->u.array_info.size), nextquad + 1));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 1)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 1)));
 	// TODO: faire afficher un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
@@ -404,8 +404,8 @@ statement
 	ERRORIF(!is_array_type(id->type, E_INT), "la variable n'est pas un tableau de int");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
-	gencode(quad_make(Q_BLT, $3.result, quadop_cst(0), nextquad + 1));
-	gencode(quad_make(Q_BLT, $3.result, quadop_cst(id->u.array_info.size), nextquad + 1));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 1)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 1)));
 	// TODO: faire afficher un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
@@ -601,8 +601,8 @@ expr
 	ERRORIF(id == NULL, "la variable n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
-	gencode(quad_make(Q_BLT, $3.result, quadop_cst(0), nextquad + 1));
-	gencode(quad_make(Q_BLT, $3.result, quadop_cst(id->u.array_info.size), nextquad + 1));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 1)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 1)));
 	// TODO: faire afficher un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_expr();
