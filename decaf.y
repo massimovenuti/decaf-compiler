@@ -142,6 +142,7 @@ field_decl_int
 | ID '[' INT_LITERAL ']' {
 	struct s_entry *ident = tos_newname(context, $1);
 	ERRORIF(ident == NULL, "le tableau existe déjà");
+	ERRORIF($3 <= 0, "taille de tableau doit être supérieure à 0");
 	ident->type = array_type(E_INT, $3);
 }
 ;
