@@ -9,7 +9,7 @@ void comput_entry_off(struct s_entry *e, unsigned int *next_off, FILE *output)
 
 	if (e->type->type != T_FUNCTION)
 	{
-		e->off = *next_off;
+		e->offset = *next_off;
 		*next_off += 4;
 	}
 	comput_entry_off(e->next, next_off, output);
@@ -29,7 +29,7 @@ unsigned int max_entry_off(struct s_entry *e)
 	
 
 	unsigned int res = max_entry_off(e->next);
-	return (e->off < res) ? res : e->off;
+	return (e->offset < res) ? res : e->offset;
 }
 
 void alloc_tab(struct s_context *t, FILE *output)
@@ -65,7 +65,7 @@ void load_quadop(quadop qo, const char *registre, struct s_context *t, FILE *out
 		break;
 
 	case QO_NAME:
-		fprintf(output, "lw %s, %d($sp)\n", registre, tos_lookup(t, qo.u.name)->off);
+		fprintf(output, "lw %s, %d($sp)\n", registre, tos_lookup(t, qo.u.name)->offset);
 		break;
 
 	default:
@@ -75,7 +75,7 @@ void load_quadop(quadop qo, const char *registre, struct s_context *t, FILE *out
 
 void save(quadop qo, const char *registre, struct s_context *t, FILE *output)
 {
-	fprintf(output, "sw %s, %d($sp)\n", registre, tos_lookup(t, qo.u.name)->off);
+	fprintf(output, "sw %s, %d($sp)\n", registre, tos_lookup(t, qo.u.name)->offset);
 }
 
 void quad2mips(quad q, struct s_context **t, FILE *output)
@@ -211,7 +211,7 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	{
 		if (quadcode[i].type != Q_BCTX && quadcode[i].type != Q_ECTX)
 		{
-			fprintf(output, "Q%d:\n", i);
+			fprintf(output, "Q%ld:\n", i);
 		}
 		quad2mips(quadcode[i], &t, output);
 	}

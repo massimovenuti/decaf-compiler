@@ -1,7 +1,7 @@
 # include "table.h"
 
 struct s_context *context = NULL;
-unsigned tempnum = 0;
+unsigned int tempnum = 0;
 
 //--------------------------------------------------------------
 // TABLE DE SYMBOLES
@@ -210,4 +210,43 @@ int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglis
         arglist = arglist->next;
     }
     return 1;
+}
+
+//--------------------------------------------------------------
+// TABLE DE CHAINES DE CARACTERES
+//--------------------------------------------------------------
+
+struct s_stringtable *new_string(struct s_stringtable *st, const char *content)
+{
+    struct s_stringtable *new_st = (struct s_stringtable *)malloc(sizeof(struct s_stringtable));
+    new_st->content = strdup(content);
+    new_st->next = NULL;
+
+    if (st == NULL) return new_st;
+
+    struct s_stringtable *tmp = st;
+    for (;tmp->next != NULL; tmp = tmp->next);
+    tmp->next = new_st;
+    return st;
+}
+
+char *get_content(struct s_stringtable *st, unsigned int idx)
+{
+    struct s_stringtable *tmp = st;
+    for (int i = 0; i < (int)idx && tmp != NULL; i++, tmp = tmp->next);
+    if (tmp != NULL) return tmp->content;
+    return NULL;
+}
+
+unsigned int count_stringtable(struct s_stringtable *st)
+{
+    return (st == NULL) ? 0 : 1 + count_stringtable(st->next);
+}
+
+void free_stringtable(struct s_stringtable *st)
+{
+    if (st == NULL) return;
+    free_stringtable(st->next);
+    free(st->content);
+    free(st);
 }

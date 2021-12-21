@@ -1,6 +1,6 @@
 # include "../table.h"
 
-#define NB_NEWTEMP 200
+#define NB_NEWTEMP 101
 
 extern struct s_context *context;
 
@@ -8,7 +8,9 @@ int main(int argc, char **argv)
 {
     (void)argc; (void)argv;
 
+    char *content;
     int i, test, errors;
+    struct s_stringtable *st;
     struct s_entry *e1, *e2, *e3;
     struct s_arglist *al1, *al2, *al3;
 
@@ -23,8 +25,11 @@ int main(int argc, char **argv)
     al2 = NULL;
     al3 = NULL;
 
+    st = NULL;
+    content = NULL;
+
     //--------------------------------------------------------------
-    // TEST 1 : SINGLE VARIABLE + LOOKUP ERROR
+    // TEST 1 : SINGLE VARIABLE AND LOOKUP ERROR
     //--------------------------------------------------------------
     context = tos_pushctx(context);
 
@@ -39,11 +44,11 @@ int main(int argc, char **argv)
     printf("test %d\t", ++test);
     if (context == NULL && !errors)  
     {
-        printf("[ok]\t'single declaration + lookup error'\n");
+        printf("[ok]\t'single declaration and lookup error'\n");
     }
     else
     {
-        printf("[ko]\t'single declaration + lookup error'\n");
+        printf("[ko]\t'single declaration and lookup error'\n");
         exit(EXIT_FAILURE);
     }
 
@@ -246,6 +251,44 @@ int main(int argc, char **argv)
     else
     {
         printf("[ko]\t'function type constructor'\n");
+        exit(EXIT_FAILURE);
+    }
+
+    //--------------------------------------------------------------
+    // TEST 8 : STRING TABLE
+    //--------------------------------------------------------------
+    st = new_string(st, "Il faut saisir ");
+    st = new_string(st, "valeurs entières\n");
+    st = new_string(st, "Entrez la valeur ");
+    st = new_string(st, " : \n");
+    st = new_string(st, "Les valeurs doivent être strictement positives ! \n");
+    st = new_string(st, "Nombre de valeurs : ");
+    st = new_string(st, "Moyenne  = ");
+    st = new_string(st, "\n");
+
+    errors += (count_stringtable(st) != 8)? 1 : 0; 
+
+    content = get_content(st, 0);
+    errors += (strcmp("Il faut saisir ", content) != 0)? 1 : 0;
+
+    content = get_content(st, 2);
+    errors += (strcmp("Entrez la valeur ", content) != 0)? 1 : 0;
+
+    content = get_content(st, 7);
+    errors += (strcmp("\n", content) != 0)? 1 : 0;
+
+    errors += (get_content(st, 8) != NULL)? 1 : 0;
+
+    free_stringtable(st);
+
+    printf("test %d\t", ++test);
+    if (!errors)
+    {
+        printf("[ok]\t'string table'\n");
+    }
+    else
+    {
+        printf("[ko]\t'string table'\n");
         exit(EXIT_FAILURE);
     }
 

@@ -7,6 +7,11 @@
 
 #define N_HASH 100  // taille de la table de hachage
 
+struct s_stringtable {
+    char *content;
+    struct s_stringtable *next;
+};
+
 // liste d'arguments
 struct s_arglist {
     enum elem_type { E_BOOL, E_INT } type;
@@ -52,7 +57,7 @@ extern unsigned tempnum; // numéro du prochain identificateur temporaire
 //--------------------------------------------------------------
 
 /**
-* @brief Calcule l'indice de hachage d'une chaine de caractères
+* @brief Calcule l'indice de hachage d'une chaîne de caractères
 * @param str Une chaîne de caractères
 */
 unsigned int hash_idx(const char *str);
@@ -187,5 +192,35 @@ int is_array_type(struct s_typedesc *arr, enum elem_type type);
 * @param arglist La liste des arguments de la fonction
 */
 int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglist *arglist);
+
+//--------------------------------------------------------------
+// TABLE DE CHAINES DE CARACTERES
+//--------------------------------------------------------------
+
+/**
+* @brief Ajoute une nouvelle de chaîne de caractères en fin d'une table de chaînes de caractères
+* @param st Une table de chaînes de caractères
+* @param content Le contenu de la chaîne de caractères
+*/
+struct s_stringtable *new_string(struct s_stringtable *st, const char *content);
+
+/**
+* @brief Récupère le contenu d'une chaîne de caractères par son indice dans une table de chaînes de caractères
+* @param st Une table de chaînes de caractères
+* @param idx L'indice correspondant à l'adresse de la chaîne de caractères dans la table
+*/
+char *get_content(struct s_stringtable *st, unsigned int idx);
+
+/**
+* @brief Récupère le nombre d'éléments dans une table de chaînes de caractères
+* @param st Une table de chaînes de caractères
+*/
+unsigned int count_stringtable(struct s_stringtable *st);
+
+/**
+* @brief Libère l'espace mémoire occupé par une table de chaînes de caractères
+* @param st Une table de chaînes de caractères
+*/
+void free_stringtable(struct s_stringtable *st);
 
 #endif
