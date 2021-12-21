@@ -19,12 +19,12 @@ struct s_typedesc {
     union {
         struct {
             enum elem_type type;
-            int size;
+            unsigned int size;
         } array_info;
         struct {
             enum ret_type { R_BOOL, R_INT, R_VOID } ret_type;
             struct s_arglist *arglist;
-            int arglist_size;
+            unsigned int arglist_size;
         } function_info;
     } u;
 };
@@ -33,13 +33,14 @@ struct s_typedesc {
 struct s_entry {
     char *ident;
     struct s_typedesc *type;
+    unsigned int offset;
     struct s_entry *next;
-    unsigned int off;    
 };
 
 // pile de tables de symboles
 struct s_context {
     struct s_entry *entry[N_HASH];
+    unsigned int count;
     struct s_context *next;
 };
 
@@ -157,7 +158,7 @@ struct s_arglist* arglist_addend(struct s_arglist *arglist, enum elem_type type)
 * @brief Calcule le nombre d'éléments d'une liste d'arguments
 * @param arglist Une liste d'arguments
 */
-int arglist_size(struct s_arglist *arglist);
+unsigned int arglist_size(struct s_arglist *arglist);
 
 /**
 * @brief Libère l'espace mémoire occupé par une liste d'arguments

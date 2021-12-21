@@ -1,6 +1,6 @@
 # include "../table.h"
 
-#define NB_NEWTEMP 100
+#define NB_NEWTEMP 200
 
 extern struct s_context *context;
 
@@ -202,7 +202,6 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------
     // TEST 7 : FUNCTION TYPE CONSTRUCTOR
     //--------------------------------------------------------------
-
     context = tos_pushctx(context);
 
     e1 = tos_newname(context, "var1");

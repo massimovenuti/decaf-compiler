@@ -12,7 +12,7 @@ unsigned int hash_idx(const char *str)
     int i = 0;
     unsigned long hash = 5381;
 
-	while (str[i] != '\0')
+    while (str[i] != '\0')
         hash = ((hash << 5) + hash) + str[i++];
 	
     return hash % N_HASH;
@@ -48,6 +48,7 @@ struct s_context *tos_pushctx(struct s_context *ctx)
     for (int i = 0; i < N_HASH; i++)
         new_ctx->entry[i] = NULL;
 
+    new_ctx->count = 0;
     new_ctx->next = ctx;
     return new_ctx;
 }
@@ -82,9 +83,11 @@ struct s_entry *tos_newname(struct s_context *ctx, const char *ident)
     struct s_entry *entry = (struct s_entry *)malloc(sizeof(struct s_entry));
     entry->ident = strdup(ident); 
     entry->type = NULL;
+    entry->offset = ctx->count;
     entry->next = ctx->entry[idx];
 
     ctx->entry[idx] = entry;
+    ctx->count++;
     return entry;
 }
 
@@ -170,7 +173,7 @@ struct s_arglist* arglist_addend(struct s_arglist *arglist, enum elem_type type)
     return arglist;
 }
 
-int arglist_size(struct s_arglist *arglist)
+unsigned int arglist_size(struct s_arglist *arglist)
 {
     return (arglist == NULL) ? 0 : 1 + arglist_size(arglist->next);
 }
