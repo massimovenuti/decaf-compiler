@@ -11,13 +11,14 @@
 #define LIST_SIZE 255
 
 struct quadop {
-    enum quadop_type { QO_EMPTY, QO_CST, QO_BOOL, QO_LABEL, QO_NAME, QO_CONTEXT } type;
+    enum quadop_type { QO_EMPTY, QO_CST, QO_BOOL, QO_LABEL, QO_NAME, QO_CONTEXT, QO_STRING } type;
     union {
         int cst;
         int boolean;
         int label;
         char *name;
         struct s_context *context;
+        int string;
     } u;
 };
 
@@ -72,7 +73,8 @@ quadop quadop_cst(int cst);      // crée un quadop de type constante
 quadop quadop_bool(int boolean); // crée un quadop de type booléen
 quadop quadop_label(int label);  // crée un quadop de type label
 quadop quadop_name(char *name);  // crée un quadop de type nom
-quadop quadop_context(struct s_context *context); 
+quadop quadop_context(struct s_context *context); // crée un quadop de type context
+quadop quadop_str(int string);    // crée un quadop de type string
 
 quad quad_make(enum quad_type type, quadop op1, quadop op2,
                quadop op3); // crée un quad

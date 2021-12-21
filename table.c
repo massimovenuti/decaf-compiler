@@ -2,6 +2,7 @@
 
 struct s_context *context = NULL;
 unsigned int tempnum = 0;
+struct s_stringtable *strings;
 
 //--------------------------------------------------------------
 // TABLE DE SYMBOLES

@@ -14,7 +14,7 @@ struct s_stringtable {
 
 // liste d'arguments
 struct s_arglist {
-    enum elem_type { E_BOOL, E_INT } type;
+    enum elem_type { E_BOOL, E_INT, E_STR } type;
     struct s_arglist *next;
 };
 
@@ -51,6 +51,7 @@ struct s_context {
 
 extern struct s_context *context; // pointeur sur la table de symboles
 extern unsigned tempnum; // numéro du prochain identificateur temporaire
+extern struct s_stringtable *strings; // pointeur sur la table de strings
 
 //--------------------------------------------------------------
 // TABLE DE SYMBOLES

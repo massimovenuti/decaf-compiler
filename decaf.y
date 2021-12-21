@@ -26,6 +26,7 @@ extern struct s_context *context;
 
 %union {
 	char charval;
+	// TODO: rendre dynamique
 	char strval[255];
 	int intval;
 	quadop qoval;
@@ -68,7 +69,7 @@ extern struct s_context *context;
 %token AND OR						// '&&' '||'
 %token <intval> INT_LITERAL BOOL_LITERAL		// ...
 %token <charval> CHAR_LITERAL 
-%token STRING_LITERAL	// ...
+%token <strval> STRING_LITERAL	// ...
 
 %left '+' '-'
 %nonassoc NOT
@@ -526,6 +527,8 @@ method_call
 	// TODO: checker la fonction
 	quadop qo;
 	if (is_function_type(id->type, R_VOID, $3)) { // procédure
+		// TODO: gérer WriteInt, WriteBool, etc...
+		// TODO: checker si on appelle main ?
 		qo = quadop_empty();
 	} else if (is_function_type(id->type, R_INT, $3)) { // fonction renvoyant int
 		struct s_entry *temp = tos_newtemp(context); 
@@ -546,7 +549,7 @@ method_call
 expr_l 
 : expr {
 	$$ = arglist_addend(NULL, $1.type);
-	if ($1.type == E_INT) { // cas int
+	if ($1.type == E_INT || $1.type == E_STR) { // cas int et string
 		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), $1.u.result));
 	} else { // cas bool
 		struct s_entry *temp = tos_newtemp(context);
@@ -562,7 +565,7 @@ expr_l
 }
 | expr_l ',' expr {
 	$$ = arglist_addend($1, $3.type);
-	if ($3.type == E_INT) { // cas int
+	if ($3.type == E_INT || $3.type == E_STR) { // cas int et string
 		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), $3.u.result));
 	} else { // cas bool
 		struct s_entry *temp = tos_newtemp(context);
@@ -652,6 +655,12 @@ expr
 	else
 		$$.u.boolexpr.false = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+| STRING_LITERAL {
+	$$ = new_expr();
+	struct s_stringtable *string = new_string(strings, $1);
+	$$.type = E_STR;
+	$$.u.result = quadop_str(string->index);
 }
 | expr '+' expr {
 	ERRORIF($1.type != E_INT, "opérande doit être int");

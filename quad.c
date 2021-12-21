@@ -71,6 +71,13 @@ quadop quadop_context(struct s_context *context) {
     return qo;
 }
 
+quadop quadop_str(int string) {
+    quadop qo;
+    qo.type = QO_STRING;
+    qo.u.string = index;
+    return qo;
+}
+
 quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3) {
     quad q;
     q.type = type;
