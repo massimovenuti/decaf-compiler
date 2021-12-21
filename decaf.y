@@ -84,7 +84,7 @@ extern struct s_context *context;
 
 %%
 program
-: CLPR '{' pushctx decl check_main popctx '}'
+: CLPR '{' pushctx init decl check_main popctx '}'
 ;
 
 pushctx
@@ -98,6 +98,20 @@ popctx
 : %empty {
 	context = tos_popctx(context);
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+}
+;
+
+init
+: %empty {
+	struct s_entry *id;
+	id = tos_newname(context, "WriteInt");
+	id->type = function_type(R_VOID, arglist_addbegin(NULL, E_INT));
+	id = tos_newname(context, "WriteBool");
+	id->type = function_type(R_VOID, arglist_addbegin(NULL, E_BOOL));
+	id = tos_newname(context, "WriteString");
+	id->type = function_type(R_VOID, arglist_addbegin(NULL, E_STR));
+	id = tos_newname(context, "ReadInt");
+	id->type = function_type(R_VOID, arglist_addbegin(NULL, E_INT));
 }
 ;
 
