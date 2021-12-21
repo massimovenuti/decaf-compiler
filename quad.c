@@ -74,7 +74,7 @@ quadop quadop_context(struct s_context *context) {
 quadop quadop_str(int string) {
     quadop qo;
     qo.type = QO_STRING;
-    qo.u.string = index;
+    qo.u.string = string;
     return qo;
 }
 

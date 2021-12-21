@@ -660,12 +660,11 @@ expr
 	$$ = new_expr();
 	struct s_stringtable *string = new_string(strings, $1);
 	$$.type = E_STR;
-	$$.u.result = quadop_str(string->index);
+	$$.u.result = quadop_str(string->idx);
 }
 | expr '+' expr {
 	ERRORIF($1.type != E_INT, "opérande doit être int");
 	ERRORIF($3.type != E_INT, "opérande doit être int");
-		$$.u.boolexpr.true = NULL;
 	$$ = new_expr();
 	struct s_entry *temp = tos_newtemp(context); 
 	temp->type = elementary_type(T_INT);
