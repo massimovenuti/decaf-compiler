@@ -9,6 +9,7 @@
 
 struct s_stringtable {
     char *content;
+    unsigned int idx;
     struct s_stringtable *next;
 };
 

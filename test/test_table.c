@@ -10,6 +10,7 @@ int main(int argc, char **argv)
 
     char *content;
     int i, test, errors;
+    unsigned int idx1, idx2;
     struct s_stringtable *st;
     struct s_entry *e1, *e2, *e3;
     struct s_arglist *al1, *al2, *al3;
@@ -111,7 +112,7 @@ int main(int argc, char **argv)
     e1 = tos_newname(context, "var1");
     e2 = tos_lookup(context, "var1");
 
-    errors += (e1 == NULL || e1 != e2)? 1 : 0;
+    errors += (e1 == NULL || e1 != e2) ? 1 : 0;
 
     context = tos_pushctx(context);
     
@@ -260,22 +261,23 @@ int main(int argc, char **argv)
     st = new_string(st, "Il faut saisir ");
     st = new_string(st, "valeurs entières\n");
     st = new_string(st, "Entrez la valeur ");
+    idx1 = st->idx;
+
     st = new_string(st, " : \n");
     st = new_string(st, "Les valeurs doivent être strictement positives ! \n");
     st = new_string(st, "Nombre de valeurs : ");
+    idx2 = st->idx;
+
     st = new_string(st, "Moyenne  = ");
     st = new_string(st, "\n");
 
-    errors += (count_stringtable(st) != 8)? 1 : 0; 
+    errors += (count_stringtable(st) != 8) ? 1 : 0; 
 
-    content = get_content(st, 0);
-    errors += (strcmp("Il faut saisir ", content) != 0)? 1 : 0;
+    content = get_content(st, idx1);
+    errors += (strcmp("Entrez la valeur ", content) != 0) ? 1 : 0;
 
-    content = get_content(st, 2);
-    errors += (strcmp("Entrez la valeur ", content) != 0)? 1 : 0;
-
-    content = get_content(st, 7);
-    errors += (strcmp("\n", content) != 0)? 1 : 0;
+    content = get_content(st, idx2);
+    errors += (strcmp("Nombre de valeurs : ", content) != 0) ? 1 : 0;
 
     errors += (get_content(st, 8) != NULL)? 1 : 0;
 
