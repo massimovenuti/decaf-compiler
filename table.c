@@ -161,7 +161,8 @@ struct s_arglist* arglist_addbegin(struct s_arglist *arglist, enum elem_type typ
 
 struct s_arglist* arglist_addend(struct s_arglist *arglist, enum elem_type type)
 {
-    if (arglist == NULL) return arglist_addbegin(arglist, type);
+    if (arglist == NULL) 
+        return arglist_addbegin(arglist, type);
 
     struct s_arglist *new_arg = (struct s_arglist *)malloc(sizeof(struct s_arglist));
     new_arg->type = type;
@@ -206,7 +207,9 @@ int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglis
 
     while (tmp != NULL)
     {
-        if (tmp->type != arglist->type) return 0;
+        if (tmp->type != arglist->type) 
+            return 0;
+        
         tmp = tmp->next;
         arglist = arglist->next;
     }
@@ -221,21 +224,22 @@ struct s_stringtable *new_string(struct s_stringtable *st, const char *content)
 {
     struct s_stringtable *new_st = (struct s_stringtable *)malloc(sizeof(struct s_stringtable));
     new_st->content = strdup(content);
-    new_st->next = NULL;
-
-    if (st == NULL) return new_st;
-
-    struct s_stringtable *tmp = st;
-    for (;tmp->next != NULL; tmp = tmp->next);
-    tmp->next = new_st;
-    return st;
+    new_st->idx = (st == NULL) ? 0 : 1 + st->idx;
+    new_st->next = st;
+    return new_st;
 }
 
 char *get_content(struct s_stringtable *st, unsigned int idx)
 {
     struct s_stringtable *tmp = st;
-    for (int i = 0; i < (int)idx && tmp != NULL; i++, tmp = tmp->next);
-    if (tmp != NULL) return tmp->content;
+    
+    while (tmp != NULL)
+    {
+        if (tmp->idx == idx) 
+            return tmp->content;
+        
+        tmp = tmp->next;
+    }
     return NULL;
 }
 
