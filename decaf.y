@@ -157,7 +157,8 @@ field_decl_int
 | ID '[' INT_LITERAL ']' {
 	struct s_entry *ident = tos_newname(context, $1);
 	ERRORIF(ident == NULL, "le tableau existe déjà");
-	ERRORIF($3 <= 0, "taille de tableau doit être supérieure à 0");
+	// INT_LITERAL est forcément un entier positif
+	// ERRORIF($3 <= 0, "taille de tableau doit être supérieure à 0");
 	ident->type = array_type(E_INT, $3);
 }
 ;
@@ -176,7 +177,8 @@ field_decl_bool
 | ID '[' INT_LITERAL ']' {
 	struct s_entry *id = tos_newname(context, $1);
 	ERRORIF(id == NULL, "le tableau existe déjà");
-	ERRORIF($3 <= 0, "taille de tableau doit être supérieure à 0");
+	// INT_LITERAL est forcément un entier positif
+	// ERRORIF($3 <= 0, "taille de tableau doit être supérieure à 0");
 	id->type = array_type(E_BOOL, $3);
 }
 ;
