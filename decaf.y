@@ -16,6 +16,7 @@ unsigned infunction = 0;
 enum ret_type infunction_type;
 
 extern struct s_context *context;
+extern struct s_stringtable *strings;
 
 // int yydebug = 1; 
 %}
