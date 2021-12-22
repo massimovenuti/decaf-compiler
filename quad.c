@@ -331,6 +331,10 @@ void print_quad(quad q) {
         printf("Fin Context");
 		break;
 
+    case Q_EXIT:
+        printf("exit");
+		break;
+
 	default:
         printf("(?:%d,", q.type);
         print_quadop(q.op1);
