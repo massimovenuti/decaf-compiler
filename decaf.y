@@ -5,18 +5,18 @@
 #include "table.h"
 #include "decaf.tab.h"
 
-extern int yylex();
-void yyerror(char *msg);
-void raler(char *msg);
-struct s_statement new_statement();
-struct s_expr new_expr();
+extern struct s_context *context;
+extern struct s_stringtable *strings;
 
 unsigned inloop = 0;
 unsigned infunction = 0;
 enum ret_type infunction_type;
 
-extern struct s_context *context;
-extern struct s_stringtable *strings;
+extern int yylex();
+
+void yyerror(char *msg);
+struct s_statement new_statement();
+struct s_expr new_expr();
 
 // int yydebug = 1; 
 %}
@@ -349,7 +349,8 @@ statement
 		complete($3.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qid));
 	} else {
-		raler("variable doit être de type int ou bool");
+		yyerror("variable doit être de type int ou bool");
+		YYERROR;
 	}
 }
 | ID '[' expr ']' '=' expr ';' {
@@ -531,7 +532,8 @@ method_call
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
 	} else {
-		raler("arguments incorrect");
+		yyerror("arguments incorrect");
+		YYERROR;
 	}
 	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_empty(), qo));
 	$$ = qo;
@@ -555,7 +557,8 @@ method_call
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
 	} else {
-		raler("arguments incorrect");
+		yyerror("arguments incorrect");
+		YYERROR;
 	}
 	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size($3)), qo));
 	$$ = qo;
@@ -612,7 +615,8 @@ expr
 		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 	} else {
-		raler("expression doit être int ou bool");
+		yyerror("expression doit être int ou bool");
+		YYERROR;
 	}
 } 
 | ID '[' expr ']' {
@@ -902,17 +906,11 @@ void yyerror(char *msg) {
 	printf("Error: %s\n", msg);
 }
 
-void raler(char *msg) {
-	printf("%s\n", msg);
-	exit(1);
-}
-
 struct s_statement new_statement() {
 	return (struct s_statement) {
 		.next = NULL,
 		.next_break = NULL,
-		.next_continue = NULL,
-		/* .has_return = 0 */
+		.next_continue = NULL
 	};
 }
 
