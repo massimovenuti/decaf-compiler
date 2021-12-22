@@ -176,6 +176,7 @@ field_decl_bool
 | ID '[' INT_LITERAL ']' {
 	struct s_entry *id = tos_newname(context, $1);
 	ERRORIF(id == NULL, "le tableau existe déjà");
+	ERRORIF($3 <= 0, "taille de tableau doit être supérieure à 0");
 	id->type = array_type(E_BOOL, $3);
 }
 ;
@@ -358,8 +359,8 @@ statement
 	ERRORIF(id == NULL, "la variable n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 1)));
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 1)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 2)));
 	// TODO: faire afficher un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
@@ -393,8 +394,8 @@ statement
 	ERRORIF(!is_array_type(id->type, E_INT), "la variable n'est pas un tableau de int");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 1)));
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 1)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 2)));
 	// TODO: faire afficher un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
@@ -422,8 +423,8 @@ statement
 	ERRORIF(!is_array_type(id->type, E_INT), "la variable n'est pas un tableau de int");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 1)));
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 1)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 2)));
 	// TODO: faire afficher un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
@@ -576,7 +577,7 @@ expr_l
 		quadop qtemp = quadop_name(temp->ident);
 		complete($1.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp));
-		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 1)));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 2)));
 		complete($1.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp));
 		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), qtemp));
@@ -592,7 +593,7 @@ expr_l
 		quadop qtemp = quadop_name(temp->ident);
 		complete($3.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp));
-		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 1)));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 2)));
 		complete($3.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp));
 		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), qtemp));
@@ -624,8 +625,8 @@ expr
 	ERRORIF(id == NULL, "la variable n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_ARRAY), "la variable n'est pas un tableau");
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 1)));
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 1)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 2)));
 	// TODO: faire afficher un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_expr();
@@ -803,7 +804,7 @@ expr
 		quadop qtemp_r = quadop_name(temp_r->ident);
 		complete($4.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp_r));
-		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 1)));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 2)));
 		complete($4.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp_r));
 		// test equality
@@ -839,7 +840,7 @@ expr
 		quadop qtemp_r = quadop_name(temp_r->ident);
 		complete($4.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp_r));
-		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 1)));
+		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 2)));
 		complete($4.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp_r));
 		// test equality
