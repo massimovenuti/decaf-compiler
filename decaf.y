@@ -13,6 +13,7 @@ unsigned infunction = 0;
 enum ret_type infunction_type;
 
 extern int yylex();
+extern int yylineno;
 
 void yyerror(char *msg);
 struct s_statement new_statement();
@@ -20,6 +21,8 @@ struct s_expr new_expr();
 
 // int yydebug = 1; 
 %}
+
+%locations
 
 %code requires {
 #include "table.h"
@@ -912,7 +915,7 @@ goto
 %%
 
 void yyerror(char *msg) {
-	printf("Error: %s\n", msg);
+	fprintf(stderr,"Line %d: error: %s\n", yylineno, msg);
 }
 
 struct s_statement new_statement() {

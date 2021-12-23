@@ -5,7 +5,7 @@
 #include "decaf.tab.h"
 %}
 
-%option nounput noyywrap
+%option nounput noyywrap yylineno
 
 ID [[:alpha:]_][[:alnum:]_]*
 
