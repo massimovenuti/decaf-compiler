@@ -26,7 +26,7 @@
 ID [[:alpha:]_][[:alnum:]_]*
 
 SPECIAL_CHAR \\\"|\\'|\\\\|"\t"|"\n"
-CHAR {SPECIAL_CHAR}|[ -\[\]-~]
+CHAR {SPECIAL_CHAR}|[ !#-&\(-\[\]-~]
 
 NUM [[:digit:]][[:digit:]]* 
 HEX_NUM 0x[0-9a-fA-F]+ 
