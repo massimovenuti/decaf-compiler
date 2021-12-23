@@ -35,7 +35,7 @@ HEX_NUM 0x[0-9a-fA-F]+
 
 "boolean"					{return BOOL;}
 "break"						{return BREAK;}
-"class Program"				{return CLPR;}
+"class"						{return CLASS;}
 "continue"					{return CONTINUE;}
 "else"						{return ELSE;}
 "true"						{yylval.intval = 1; return BOOL_LITERAL;}

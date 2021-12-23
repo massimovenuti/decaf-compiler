@@ -60,7 +60,7 @@ struct s_expr new_expr();
 %type <alistval> arg_l arg_l_ expr_l
 %type <etypeval> arg
 
-%token CLPR							// class Program
+%token CLASS							// class 
 %token INT BOOL						// type
 %token VOID							// void
 %token <strval> ID							// id
@@ -88,7 +88,7 @@ struct s_expr new_expr();
 
 %%
 program
-: CLPR '{' pushctx init decl check_main popctx '}'
+: CLASS ID '{' pushctx init decl check_main popctx '}'
 ;
 
 pushctx
