@@ -84,11 +84,10 @@ struct s_entry *tos_newname(struct s_context *ctx, const char *ident)
     struct s_entry *entry = (struct s_entry *)malloc(sizeof(struct s_entry));
     entry->ident = strdup(ident); 
     entry->type = NULL;
-    entry->offset = ctx->count;
+    entry->offset = ctx->count++;
     entry->next = ctx->entry[idx];
 
     ctx->entry[idx] = entry;
-    ctx->count++;
     return entry;
 }
 
