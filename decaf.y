@@ -30,7 +30,7 @@ struct s_expr new_expr();
 	// TODO: rendre dynamique
 	char strval[255];
 	int intval;
-	quadop qoval;
+	// quadop qoval;
 	struct s_expr {
 		enum elem_type type;
 		union {
@@ -46,13 +46,14 @@ struct s_expr new_expr();
 		ilist *next_break;
 		ilist *next_continue;
 	} stateval;
+	struct s_entry *entryval;
 	struct s_arglist *alistval;
 	enum elem_type etypeval;
 }
 
 %type <exprval> expr
 %type <intval> marker
-%type <qoval> method_call
+%type <entryval> method_call
 %type <stateval> statement statement_l statement_l_ goto block
 %type <alistval> arg_l arg_l_ expr_l
 %type <etypeval> arg
@@ -526,20 +527,23 @@ method_call
 	quadop qo;
 	if (is_function_type(id->type, R_VOID, NULL)) { // procédure
 		qo = quadop_empty();
+		$$ = NULL;
 	} else if (is_function_type(id->type, R_INT, NULL)) { // fonction renvoyant int
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_INT);
 		qo = quadop_name(temp->ident);
+		$$ = temp;
 	} else if (is_function_type(id->type, R_BOOL, NULL)) { // fonction renvoyant bool
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
+		$$ = temp;
 	} else {
 		yyerror("arguments incorrect");
 		YYERROR;
 	}
 	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_empty(), qo));
-	$$ = qo;
+	// $$ = qo;
 }
 | ID '(' expr_l ')' {
 	struct s_entry *id = tos_lookup(context, $1);
@@ -551,20 +555,23 @@ method_call
 		// TODO: gérer WriteInt, WriteBool, etc...
 		// TODO: checker si on appelle main ?
 		qo = quadop_empty();
+		$$ = NULL;
 	} else if (is_function_type(id->type, R_INT, $3)) { // fonction renvoyant int
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_INT);
 		qo = quadop_name(temp->ident);
+		$$ = temp;
 	} else if (is_function_type(id->type, R_BOOL, $3)) { // fonction renvoyant bool
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
+		$$ = temp;
 	} else {
 		yyerror("arguments incorrect");
 		YYERROR;
 	}
 	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size($3)), qo));
-	$$ = qo;
+	// $$ = qo;
 }
 ;
 
@@ -646,17 +653,16 @@ expr
 	$$.u.result = qo;
 }
 | method_call {
-	ERRORIF($1.type == QO_EMPTY, "appel de procédure dans expression");
+	ERRORIF($1 == NULL, "appel de procédure dans expression");
 	$$ = new_expr();
-	if ($1.type == QO_CST) {
+	if (is_elementary_type($1->type, T_INT)) { // cas int
 		$$.type = E_INT;
-		$$.u.result = $1;
-	} else {
+		$$.u.result = quadop_name($1->ident);
+	} else if (is_elementary_type($1->type, T_BOOL)) { // cas bool
 		$$.type = E_BOOL;
-		if ($1.u.boolean)
-			$$.u.boolexpr.true = crelist(nextquad);
-		else
-			$$.u.boolexpr.false = crelist(nextquad);
+		$$.u.boolexpr.true = crelist(nextquad);
+		gencode(quad_make(Q_BEQ, quadop_name($1->ident), quadop_bool(1), quadop_empty()));
+		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
 }
