@@ -1,6 +1,6 @@
 # include "../table.h"
 
-#define NB_NEWTEMP 101
+#define NB_NEWTEMP 200
 
 extern struct s_context *context;
 
@@ -61,11 +61,11 @@ int main(int argc, char **argv)
     for (i = 0; i < NB_NEWTEMP; i++)
     {
         e1 = tos_newtemp(context);
-        // printf("%s\t", e1->ident);
+        // printf("%s %d\t", e1->ident, e1->offset);
         e2 = tos_lookup(context, e1->ident);
         errors += (e1 == NULL || e1 != e2) ? 1 : 0;
     }
-    // printf("\n");
+    // printf("%d\n", context->count);
 
     context = tos_popfreectx(context);
 

@@ -7,6 +7,7 @@
 
 #define N_HASH 100  // taille de la table de hachage
 
+// table de chaînes de caractères
 struct s_stringtable {
     char *content;
     unsigned int idx;
@@ -52,7 +53,7 @@ struct s_context {
 
 extern struct s_context *context; // pointeur sur la table de symboles
 extern unsigned tempnum; // numéro du prochain identificateur temporaire
-extern struct s_stringtable *strings; // pointeur sur la table de strings
+extern struct s_stringtable *strings; // pointeur sur la table de chaînes de caractères
 
 //--------------------------------------------------------------
 // TABLE DE SYMBOLES
@@ -67,7 +68,7 @@ unsigned int hash_idx(const char *str);
 /**
 * @brief Cherche une entrée dans la pile de table de symboles
 * @param entry Une entrée
-* @param ident L'identificateur de l'entrée dans la pile de table de symboles
+* @param ident L'identificateur de l'entrée dans la pile de tables de symboles
 */
 struct s_entry *lookup_entry(struct s_entry *entry, const char *ident);
 
@@ -111,17 +112,22 @@ struct s_entry *tos_newtemp(struct s_context *ctx);
 /**
 * @brief Ajoute une nouvelle entrée dans la table au sommet de la pile
 * @param ctx Une pile de tables de symboles
-* @param ident L'identificateur de l'entrée dans la pile de table de symboles
+* @param ident L'identificateur de l'entrée dans la pile de tables de symboles
 */
 struct s_entry *tos_newname(struct s_context *ctx, const char *ident);
 
 /**
 * @brief Teste si une entrée existe dans un niveau de la pile de tables de symboles
 * @param ctx Une pile de tables de symboles
-* @param ident L'identificateur de l'entrée dans la pile de table de symboles
+* @param ident L'identificateur de l'entrée dans la pile de tables de symboles
 */
 struct s_entry *tos_lookup(struct s_context *ctx, const char *ident);
 
+/**
+* @brief ...
+* @param ctx Une pile de tables de symboles
+* @param ident L'identificateur de l'entrée dans la pile de tables de symboles
+*/
 int tos_getoff(struct s_context *ctx, const char *ident);
 
 //--------------------------------------------------------------
