@@ -1,5 +1,7 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
 #include <string.h>
 #include "quad.h"
 
@@ -66,18 +68,27 @@ HEX_NUM 0x[0-9a-fA-F]+
 \"{CHAR}*\"					{return STRING_LITERAL;}
 
 {NUM}						{
-								if (sscanf(yytext, "%d", &yylval.intval) != 1) {
+								long x = strtol(yytext, NULL, 10);
+								fprintf(stderr,"\n\n\n%ld\n\n\n", x);
+								if (x < INT_MIN || x > INT_MAX) {
+									// TODO: gérer l'erreur dans le yacc ? dans main ?
 									fprintf(stderr, "%s not int\n", yytext);
 									exit(EXIT_FAILURE);
+								} else {
+									yylval.intval = (int) x;
+									return INT_LITERAL;
 								}
-								return INT_LITERAL;
 							}
 {HEX_NUM}					{
-								if (sscanf(yytext, "%x", &yylval.intval) != 1) {
-									fprintf(stderr, "%s not hex\n", yytext);
+								long x = strtol(yytext, NULL, 16);
+								if (x < INT_MIN || x > INT_MAX) {
+									// TODO: gérer l'erreur dans le yacc ? dans main ?
+									fprintf(stderr, "%s not int\n", yytext);
 									exit(EXIT_FAILURE);
+								} else {
+									yylval.intval = (int) x;
+									return INT_LITERAL;
 								}
-								return INT_LITERAL;
 							}
 
 [[:space:]]					{;}
