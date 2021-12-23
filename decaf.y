@@ -879,7 +879,7 @@ expr
 	$$.u.boolexpr.false = $4.u.boolexpr.false;
 }
 | '-' expr {
-	ERRORIF($2.type != E_BOOL, "opérande doit être int");
+	ERRORIF($2.type != E_INT, "opérande doit être int");
 	$$ = new_expr();
 	struct s_entry *temp = tos_newtemp(context); 
 	temp->type = elementary_type(T_INT);
