@@ -33,7 +33,6 @@ struct s_expr new_expr();
 	// TODO: rendre dynamique
 	char strval[255];
 	int intval;
-	// quadop qoval;
 	struct s_expr {
 		enum elem_type type;
 		union {

@@ -2,6 +2,22 @@
 #include <stdio.h>
 #include <string.h>
 #include "quad.h"
+
+#define YY_USER_ACTION                                       \
+  yylloc.first_line = yylloc.last_line;                      \
+  yylloc.first_column = yylloc.last_column;                  \
+  if (yylloc.first_line == yylineno)                         \
+     yylloc.last_column += yyleng;                           \
+  else {                                                     \
+     int col;                                                \
+     for (col = 1; yytext[yyleng - col] != '\n'; ++col) {}   \
+     yylloc.last_column = col;                               \
+     yylloc.last_line = yylineno;                            \
+  }
+
+// exemple d'utilisation:
+// {printf("col: %d\n", @1.first_column);}
+
 #include "decaf.tab.h"
 %}
 
