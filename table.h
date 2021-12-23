@@ -122,6 +122,8 @@ struct s_entry *tos_newname(struct s_context *ctx, const char *ident);
 */
 struct s_entry *tos_lookup(struct s_context *ctx, const char *ident);
 
+int tos_getoff(struct s_context *ctx, const char *ident);
+
 //--------------------------------------------------------------
 // TYPES
 //--------------------------------------------------------------

@@ -9,7 +9,7 @@ void load_quadop(quadop qo, const char *registre, struct s_context *t, FILE *out
 
 void save(quadop qo, const char *registre, struct s_context *t, FILE *output);
 
-void quad2mips(quad q, struct s_context **t, FILE *output);
+void quad2mips(quad q, struct s_context **t, int *is_def, FILE *output);
 
 void gen_mips(quad *quadcode, size_t len, FILE *output);
 

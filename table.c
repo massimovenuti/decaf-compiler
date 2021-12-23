@@ -121,6 +121,26 @@ struct s_entry *tos_lookup(struct s_context *ctx, const char *ident)
     return NULL;
 }
 
+int tos_getoff(struct s_context *ctx, const char *ident)
+{
+    unsigned int idx = hash_idx(ident);
+    
+    struct s_context *tmp = ctx;
+    struct s_entry *look = NULL;
+    int off_pading = 0;
+
+    while (tmp != NULL)
+    {
+        if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
+        {
+            return look->offset + off_pading;
+        }
+        off_pading -= tmp->count;
+        tmp = tmp->next;
+    }
+    return -255;
+}
+
 //--------------------------------------------------------------
 // TYPES
 //--------------------------------------------------------------

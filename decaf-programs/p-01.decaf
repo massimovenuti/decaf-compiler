@@ -1,13 +1,12 @@
 // Exemple de programme en DECAF
 
 class Program {
-    
+    int test(int a) {
+        return a + a;
+    }
+
     void main() {
-        int nombre;
         int a;
-        nombre = 3;
-        nombre += 10;
-        a = nombre;
-        a = nombre * 2 + 3;
+        a = test(2);
     }
 }
