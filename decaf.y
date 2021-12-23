@@ -75,14 +75,13 @@ struct s_expr new_expr();
 %token <charval> CHAR_LITERAL 
 %token <strval> STRING_LITERAL	// ...
 
-%left '+' '-'
-%nonassoc NOT
-%left '*' '/' '%'
-%left '<' '>' LEQ BEQ
-%left EQ NEQ
-%left AND
+
 %left OR
-%nonassoc UMINUS
+%left AND
+%left '<' '>' LEQ BEQ EQ NEQ
+%left '+' '-'
+%left '*' '/' '%'
+%nonassoc NOT UMINUS
 
 %start program
 
