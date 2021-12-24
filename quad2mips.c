@@ -136,24 +136,25 @@ void quad2mips(quad q, struct s_context **t, int *is_def, FILE *output)
 		break;
 
 	case Q_PARAM:
-		load_quadop(q.op3, "0($sp)", *t, output);
 		fprintf(output, "subi $sp, $sp, 4\n");
+		load_quadop(q.op3, "$t0", *t, output);
+		fprintf(output, "sw $t0, 0($sp)\n");
 		break;
 
 	case Q_CALL:
 		fprintf(output, "jal %s\n", q.op1.u.name);
+		fprintf(output, "addi $sp, $sp, %d\n", q.op2.u.cst * 4);
 		if (q.op3.type != QO_EMPTY)
 		{
 			save(q.op3, "$v0", *t, output);
 		}
 		// free_tab(*t, output);
-		fprintf(output, "addi $sp, $sp, %d\n", q.op2.u.cst * 4);
 		break;
 	
 	case Q_RETURN:
 		if (q.op3.type != QO_EMPTY)
 		{
-			save(q.op3, "$v0", *t, output);
+			load_quadop(q.op3, "$v0", *t, output);
 		}
 		free_tab(*t, output);
 		fprintf(output, "jr $ra\n");

@@ -7,6 +7,10 @@ class Program {
 
     void main() {
         int a;
+        int b;
+        int c;
+        b = 5;
         a = test(2);
+        c = a + b;
     }
 }

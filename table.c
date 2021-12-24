@@ -133,7 +133,7 @@ int tos_getoff(struct s_context *ctx, const char *ident)
         if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
             return look->offset + offset;
         
-        offset -= tmp->count;
+        offset += tmp->count;
         tmp = tmp->next;
     }
     return -255;
