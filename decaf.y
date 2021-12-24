@@ -687,10 +687,10 @@ expr
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | STRING_LITERAL {
-	$$ = new_expr();
-	struct s_stringtable *string = new_string(strings, $1);
-	$$.type = E_STR;
-	$$.u.result = quadop_str(string->idx);
+    $$ = new_expr();
+    strings = new_string(strings, $1);
+    $$.type = E_STR;
+    $$.u.result = quadop_str(strings->idx);
 }
 | expr '+' expr {
 	ERRORIF($1.type != E_INT, "opérande doit être int");

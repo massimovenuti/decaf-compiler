@@ -12,5 +12,7 @@ class Program {
         b = 5;
         a = test(2);
         c = a + b;
+        WriteString("Resultat\n");
+        WriteInt(c);
     }
 }

@@ -4,6 +4,7 @@
 #include <stdio.h>
 
 #include "quad.h"
+#include "table.h"
 
 void load_quadop(quadop qo, const char *registre, struct s_context *t, FILE *output);
 

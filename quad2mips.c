@@ -1,5 +1,12 @@
 #include "quad2mips.h"
 
+void init_string(struct s_stringtable *st, FILE *output) {
+	for (struct s_stringtable * tmp = st; tmp != NULL; tmp = tmp->next)
+	{
+		fprintf(output, "_S%d: .asciiz \"%s\"\n", tmp->idx, tmp->content);
+	}
+}
+
 void alloc_tab(struct s_context *t, FILE *output)
 {
 	fprintf(output, "subi $sp, $sp, %d\n", t->count * 4);
@@ -24,6 +31,10 @@ void load_quadop(quadop qo, const char *registre, struct s_context *t, FILE *out
 
 	case QO_NAME:
 		fprintf(output, "lw %s, %d($sp)\n", registre, tos_getoff(t, qo.u.name) * 4);
+		break;
+
+	case QO_STRING:
+		fprintf(output, "la %s, _S%d\n", registre, qo.u.string);
 		break;
 
 	default:
@@ -192,6 +203,15 @@ void quad2mips(quad q, struct s_context **t, int *is_def, FILE *output)
 
 void gen_mips(quad *quadcode, size_t len, FILE *output)
 {
+	fprintf(output,".data\n");
+	init_string(strings, output);
+
+	char * mips_WriteInt = "WriteInt:\nli $v0 1\nlw $a0 0($sp)\nsyscall\njr $ra\n";
+	char * mips_WriteString = "WriteString:\nli $v0 4\nlw $a0 0($sp)\nsyscall\njr $ra\n";
+	char * mips_ReadInt = "ReadInt:\nli $v0 5\nsyscall\njr $ra\n";
+
+	fprintf(output, ".text\nj main\n%s\n%s\n%s\n", mips_WriteInt, mips_WriteString, mips_ReadInt);
+
 	struct s_context *t = NULL;
 	int is_def = 0;
 	for (size_t i = 0; i < len; i++)
