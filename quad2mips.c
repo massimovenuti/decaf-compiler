@@ -9,7 +9,7 @@ void init_string(struct s_stringtable *st, FILE *output) {
 
 void alloc_tab(struct s_context *t, FILE *output)
 {
-	fprintf(output, "subi $sp, $sp, %d\n", t->count * 4);
+	fprintf(output, "addi $sp, $sp, -%d\n", t->count * 4);
 }
 
 void free_tab(struct s_context *t, FILE *output)
@@ -99,43 +99,43 @@ void quad2mips(quad q, struct s_context **t, int *is_def, FILE *output)
 		break;
 
 	case Q_GOTO:
-		fprintf(output, "j Q%d\n", q.op3.u.label);
+		fprintf(output, "j _Q%d\n", q.op3.u.label);
 		break;
 
 	case Q_BLT:
 		load_quadop(q.op1, "$t0", *t, output);
 		load_quadop(q.op2, "$t1", *t, output);
-		fprintf(output, "blt $t0, $t1, Q%d\n", q.op3.u.label);
+		fprintf(output, "blt $t0, $t1, _Q%d\n", q.op3.u.label);
 		break;
 
 	case Q_BGT:
 		load_quadop(q.op1, "$t0", *t, output);
 		load_quadop(q.op2, "$t1", *t, output);
-		fprintf(output, "bgt $t0, $t1, Q%d\n", q.op3.u.label);
+		fprintf(output, "bgt $t0, $t1, _Q%d\n", q.op3.u.label);
 		break;
 
 	case Q_BLE:
 		load_quadop(q.op1, "$t0", *t, output);
 		load_quadop(q.op2, "$t1", *t, output);
-		fprintf(output, "ble $t0, $t1, Q%d\n", q.op3.u.label);
+		fprintf(output, "ble $t0, $t1, _Q%d\n", q.op3.u.label);
 		break;
 
 	case Q_BGE:
 		load_quadop(q.op1, "$t0", *t, output);
 		load_quadop(q.op2, "$t1", *t, output);
-		fprintf(output, "bge $t0, $t1, Q%d\n", q.op3.u.label);
+		fprintf(output, "bge $t0, $t1, _Q%d\n", q.op3.u.label);
 		break;
 
 	case Q_BEQ:
 		load_quadop(q.op1, "$t0", *t, output);
 		load_quadop(q.op2, "$t1", *t, output);
-		fprintf(output, "beq $t0, $t1, Q%d\n", q.op3.u.label);
+		fprintf(output, "beq $t0, $t1, _Q%d\n", q.op3.u.label);
 		break;
 
 	case Q_BNE:
 		load_quadop(q.op1, "$t0", *t, output);
 		load_quadop(q.op2, "$t1", *t, output);
-		fprintf(output, "bne $t0, $t1, Q%d\n", q.op3.u.label);
+		fprintf(output, "bne $t0, $t1, _Q%d\n", q.op3.u.label);
 		break;
 
 	case Q_FUN:
@@ -147,7 +147,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, FILE *output)
 		break;
 
 	case Q_PARAM:
-		fprintf(output, "subi $sp, $sp, 4\n");
+		fprintf(output, "addi $sp, $sp, -4\n");
 		load_quadop(q.op3, "$t0", *t, output);
 		fprintf(output, "sw $t0, 0($sp)\n");
 		break;
@@ -218,7 +218,7 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	{
 		if (quadcode[i].type != Q_BCTX && quadcode[i].type != Q_ECTX)
 		{
-			fprintf(output, "Q%ld:\n", i);
+			fprintf(output, "_Q%ld:\n", i);
 		}
 		quad2mips(quadcode[i], &t, &is_def, output);
 	}
