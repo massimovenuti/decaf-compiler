@@ -1,15 +1,19 @@
 #include "quad2mips.h"
 
-void init_string(struct s_stringtable *st, FILE *output) {
-	for (struct s_stringtable * tmp = st; tmp != NULL; tmp = tmp->next)
+void init_string(struct s_stringtable *st, FILE *output)
+{
+	for (struct s_stringtable *tmp = st; tmp != NULL; tmp = tmp->next)
 	{
-		fprintf(output, "_S%d: .asciiz \"%s\"\n", tmp->idx, tmp->content);
+		fprintf(output, "_S%d: .asciiz %s\n", tmp->idx, tmp->content);
 	}
 }
 
 void alloc_tab(struct s_context *t, FILE *output)
 {
-	fprintf(output, "addi $sp, $sp, -%d\n", t->count * 4);
+	if (t->next != NULL)
+	{
+		fprintf(output, "addi $sp, $sp, -%d\n", t->count * 4);
+	}
 }
 
 void free_tab(struct s_context *t, FILE *output)
@@ -161,7 +165,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, FILE *output)
 		}
 		// free_tab(*t, output);
 		break;
-	
+
 	case Q_RETURN:
 		if (q.op3.type != QO_EMPTY)
 		{
@@ -203,12 +207,13 @@ void quad2mips(quad q, struct s_context **t, int *is_def, FILE *output)
 
 void gen_mips(quad *quadcode, size_t len, FILE *output)
 {
-	fprintf(output,".data\n");
+	fprintf(output, ".data\n");
 	init_string(strings, output);
 
-	char * mips_WriteInt = "WriteInt:\nli $v0 1\nlw $a0 0($sp)\nsyscall\njr $ra\n";
-	char * mips_WriteString = "WriteString:\nli $v0 4\nlw $a0 0($sp)\nsyscall\njr $ra\n";
-	char * mips_ReadInt = "ReadInt:\nli $v0 5\nsyscall\njr $ra\n";
+	char *mips_WriteInt = "WriteInt:\nli $v0 1\nlw $a0 0($sp)\nsyscall\njr $ra\n";
+	char *mips_WriteString = "WriteString:\nli $v0 4\nlw $a0 0($sp)\nsyscall\njr $ra\n";
+	char *mips_ReadInt = "ReadInt:\nli $v0 5\nsyscall\njr $ra\n";
+	char *mips_exit = "li $v0 10\nsyscall";
 
 	fprintf(output, ".text\nj main\n%s\n%s\n%s\n", mips_WriteInt, mips_WriteString, mips_ReadInt);
 
@@ -216,10 +221,9 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	int is_def = 0;
 	for (size_t i = 0; i < len; i++)
 	{
-		if (quadcode[i].type != Q_BCTX && quadcode[i].type != Q_ECTX)
-		{
-			fprintf(output, "_Q%ld:\n", i);
-		}
+		fprintf(output, "_Q%ld:\n", i);
 		quad2mips(quadcode[i], &t, &is_def, output);
 	}
+
+	fprintf(output, "%s\n", mips_exit);
 }
