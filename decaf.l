@@ -69,7 +69,7 @@ HEX_NUM 0x[0-9a-fA-F]+
 
 {NUM}						{
 								long x = strtol(yytext, NULL, 10);
-								fprintf(stderr,"\n\n\n%ld\n\n\n", x);
+								// fprintf(stderr,"\n\n\n%ld\n\n\n", x);
 								if (x < INT_MIN || x > INT_MAX) {
 									// TODO: gérer l'erreur dans le yacc ? dans main ?
 									fprintf(stderr, "%s not int\n", yytext);
