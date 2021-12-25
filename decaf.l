@@ -65,7 +65,7 @@ HEX_NUM 0x[0-9a-fA-F]+
 "//"[^\n]*"\n"				{;}
 
 '{CHAR}' 					{yylval.charval = yytext[1]; return CHAR_LITERAL;}
-\"{CHAR}*\"					{return STRING_LITERAL;}
+\"{CHAR}*\"					{strncpy(yylval.strval, yytext, yyleng+1); return STRING_LITERAL;}
 
 {NUM}						{
 								long x = strtol(yytext, NULL, 10);
