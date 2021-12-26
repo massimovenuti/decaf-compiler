@@ -215,7 +215,7 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	char *mips_ReadInt = "ReadInt:\nli $v0 5\nsyscall\njr $ra\n";
 	char *mips_exit = "li $v0 10\nsyscall";
 
-	fprintf(output, ".text\nj main\n%s\n%s\n%s\n", mips_WriteInt, mips_WriteString, mips_ReadInt);
+	fprintf(output, ".text\n.globl main\nj main\n%s\n%s\n%s\n", mips_WriteInt, mips_WriteString, mips_ReadInt);
 
 	struct s_context *t = NULL;
 	int is_def = 0;
