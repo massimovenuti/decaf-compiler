@@ -472,6 +472,10 @@ statement
 } pushctx ID '=' expr ',' expr {
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
 	ERRORIF($8.type != E_INT, "l'expression doit être int");
+	struct s_entry *tmp = tos_newtemp(context);
+	tmp->type = elementary_type(T_INT);
+	gencode(quad_make(Q_MOVE, $8.u.result, quadop_empty(), quadop_name(tmp->ident)));
+	$8.u.result = quadop_name(tmp->ident);
 	struct s_entry *id = tos_newname(context, $4);
 	id->type = elementary_type(T_INT);
 	gencode(quad_make(Q_MOVE, $6.u.result, quadop_empty(), quadop_name(id->ident)));
