@@ -45,7 +45,7 @@ int main(int argc, char const *argv[])
     FILE *input = freopen(inname, "r", stdin);
     initcode();
     int res = yyparse();
-    // print_globalcode();
+    print_globalcode();
     FILE *output = fopen(outname, "w");
     gen_mips(globalcode, nextquad, output);
     freecode();

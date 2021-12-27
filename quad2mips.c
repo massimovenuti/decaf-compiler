@@ -8,16 +8,42 @@ void init_string(struct s_stringtable *st, FILE *output)
 	}
 }
 
+void init_glob(struct s_context *c, FILE *output)
+{
+	for (int i = 0; i < N_HASH; i++)
+	{
+		for (struct s_entry *e = c->entry[i]; e != NULL; e = e->next)
+		{
+			if (e->ident != NULL && (e->type->type == T_INT || e->type->type == T_BOOL))
+			{
+				fprintf(output, "_G%s: .word 0\n", e->ident);
+			}
+			else if (e->ident != NULL && e->type->type == T_ARRAY)
+			{
+				fprintf(output, "_A%s: .space %d\n", e->ident, e->type->u.array_info.size * 4);
+			}
+		}
+	}
+}
+
 void alloc_tab(struct s_context *t, FILE *output)
 {
 	if (t->next != NULL)
 	{
 		fprintf(output, "addi $sp, $sp, -%d\n", t->count * 4);
 	}
+	else
+	{
+		init_glob(t, output);
+	}
 }
 
 void free_tab(struct s_context *t, FILE *output)
 {
+	for (size_t i = 0; i < t->count; i++)
+	{
+		fprintf(output, "sw $zero, %d($sp)\n", i*4);
+	}
 	fprintf(output, "addi $sp, $sp, %d\n", t->count * 4);
 }
 
@@ -34,7 +60,15 @@ void load_quadop(quadop qo, const char *registre, unsigned int my_off, struct s_
 		break;
 
 	case QO_NAME:
-		fprintf(output, "lw %s, %d($sp)\n", registre, tos_getoff(t, qo.u.name) * 4 + my_off);
+		int off = tos_getoff(t, qo.u.name);
+		if (off < 0)
+		{
+			fprintf(output, "lw %s, _G%s\n", registre, qo.u.name);
+		}
+		else
+		{
+			fprintf(output, "lw %s, %d($sp)\n", registre, off * 4 + my_off);
+		}
 		break;
 
 	case QO_STRING:
@@ -48,7 +82,15 @@ void load_quadop(quadop qo, const char *registre, unsigned int my_off, struct s_
 
 void save(quadop qo, const char *registre, struct s_context *t, FILE *output)
 {
-	fprintf(output, "sw %s, %d($sp)\n", registre, tos_getoff(t, qo.u.name) * 4);
+	int off = tos_getoff(t, qo.u.name);
+	if (off < 0)
+	{
+		fprintf(output, "sw %s, _G%s\n", registre, qo.u.name);
+	}
+	else
+	{
+		fprintf(output, "sw %s, %d($sp)\n", registre, tos_getoff(t, qo.u.name) * 4);
+	}
 }
 
 void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, FILE *output)
@@ -163,6 +205,10 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		*my_off = 0;
 		fprintf(output, "jal %s\n", q.op1.u.name);
 		fprintf(output, "lw $ra, 0($sp)\n");
+		for (size_t i = 0; i < (q.op2.u.cst + 1); i++)
+		{
+			fprintf(output, "sw $zero, %d($sp)\n", i*4);
+		}
 		fprintf(output, "addi $sp, $sp, %d\n", (q.op2.u.cst + 1) * 4);
 		if (q.op3.type != QO_EMPTY)
 		{
@@ -181,11 +227,17 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		break;
 
 	case Q_SETI:
-		//TODO
+		load_quadop(q.op2, "$t0", *my_off, *t, output);
+		fprintf(output, "mul $t0, $t0, 4\n");
+		load_quadop(q.op3, "$t1", *my_off, *t, output);
+		fprintf(output, "sw $t1, _A%s($t0)\n", q.op1.u.name);
 		break;
 
 	case Q_GETI:
-		//TODO
+		load_quadop(q.op2, "$t0", *my_off, *t, output);
+		fprintf(output, "mul $t0, $t0, 4\n");
+		fprintf(output, "lw $t1, _A%s($t0)\n", q.op1.u.name);
+		save(q.op3, "$t1", *t, output);
 		break;
 
 	case Q_BCTX:
@@ -222,12 +274,16 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	char *mips_ReadInt = "ReadInt:\nli $v0 5\nsyscall\njr $ra\n";
 	char *mips_exit = "li $v0 17\nli $a0 0\nsyscall";
 
-	fprintf(output, ".text\n.globl main\nj main\n%s\n%s\n%s\n%s\n", mips_WriteInt, mips_WriteString, mips_WriteBool, mips_ReadInt);
-
 	struct s_context *t = NULL;
 	int is_def = 0;
 	int my_off = 0;
-	for (size_t i = 0; i < len; i++)
+
+	fprintf(output, ".align 2\n");
+	quad2mips(quadcode[0], &t, &is_def, &my_off, output);
+
+	fprintf(output, ".text\n.globl main\nj main\n%s\n%s\n%s\n%s\n", mips_WriteInt, mips_WriteString, mips_WriteBool, mips_ReadInt);
+	fprintf(output, "_Q0:\n");
+	for (size_t i = 1; i < len; i++)
 	{
 		fprintf(output, "_Q%ld:\n", i);
 		quad2mips(quadcode[i], &t, &is_def, &my_off, output);

@@ -1,4 +1,4 @@
-# include "table.h"
+#include "table.h"
 
 struct s_context *context = NULL;
 unsigned int tempnum = 0;
@@ -15,26 +15,29 @@ unsigned int hash_idx(const char *str)
 
     while (str[i] != '\0')
         hash = ((hash << 5) + hash) + str[i++];
-	
+
     return hash % N_HASH;
 }
 
 struct s_entry *lookup_entry(struct s_entry *entry, const char *ident)
 {
-    if (entry == NULL) return NULL;
-    if (strcmp(ident, entry->ident) == 0) return entry;
+    if (entry == NULL)
+        return NULL;
+    if (strcmp(ident, entry->ident) == 0)
+        return entry;
     return lookup_entry(entry->next, ident);
 }
 
 void free_entry(struct s_entry *entry)
 {
-    if (entry == NULL) return;
+    if (entry == NULL)
+        return;
     free_entry(entry->next);
     free(entry->ident);
-    
+
     if (entry->type != NULL)
     {
-        if (entry->type->type == T_FUNCTION) 
+        if (entry->type->type == T_FUNCTION)
             free_arglist(entry->type->u.function_info.arglist);
 
         free(entry->type);
@@ -82,7 +85,7 @@ struct s_entry *tos_newname(struct s_context *ctx, const char *ident)
         return NULL;
 
     struct s_entry *entry = (struct s_entry *)malloc(sizeof(struct s_entry));
-    entry->ident = strdup(ident); 
+    entry->ident = strdup(ident);
     entry->type = NULL;
     entry->offset = ctx->count++;
     entry->next = ctx->entry[idx];
@@ -96,7 +99,7 @@ struct s_entry *tos_newtemp(struct s_context *ctx)
     int length = snprintf(NULL, 0, "%d", tempnum);
     char *temp = malloc((length + 2) * sizeof(char));
     snprintf(temp, length + 2, "$%d", tempnum);
-    
+
     struct s_entry *entry = tos_newname(ctx, temp);
     free(temp);
     tempnum++;
@@ -106,7 +109,7 @@ struct s_entry *tos_newtemp(struct s_context *ctx)
 struct s_entry *tos_lookup(struct s_context *ctx, const char *ident)
 {
     unsigned int idx = hash_idx(ident);
-    
+
     struct s_context *tmp = ctx;
     struct s_entry *look = NULL;
 
@@ -114,7 +117,7 @@ struct s_entry *tos_lookup(struct s_context *ctx, const char *ident)
     {
         if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
             return look;
-        
+
         tmp = tmp->next;
     }
     return NULL;
@@ -123,7 +126,7 @@ struct s_entry *tos_lookup(struct s_context *ctx, const char *ident)
 int tos_getoff(struct s_context *ctx, const char *ident)
 {
     unsigned int idx = hash_idx(ident);
-    
+
     struct s_context *tmp = ctx;
     struct s_entry *look = NULL;
     int offset = 0;
@@ -131,8 +134,14 @@ int tos_getoff(struct s_context *ctx, const char *ident)
     while (tmp != NULL)
     {
         if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
+        {
+            if (tmp->next == NULL)
+            {
+                return -1;
+            }
             return look->offset + offset;
-        
+        }
+
         offset += tmp->count;
         tmp = tmp->next;
     }
@@ -143,14 +152,14 @@ int tos_getoff(struct s_context *ctx, const char *ident)
 // TYPES
 //--------------------------------------------------------------
 
-struct s_typedesc* elementary_type(enum entry_type type)
+struct s_typedesc *elementary_type(enum entry_type type)
 {
     struct s_typedesc *desc = (struct s_typedesc *)malloc(sizeof(struct s_typedesc));
     desc->type = type;
     return desc;
 }
 
-struct s_typedesc* array_type(enum elem_type type, int size)
+struct s_typedesc *array_type(enum elem_type type, int size)
 {
     struct s_typedesc *desc = (struct s_typedesc *)malloc(sizeof(struct s_typedesc));
     desc->type = T_ARRAY;
@@ -159,7 +168,7 @@ struct s_typedesc* array_type(enum elem_type type, int size)
     return desc;
 }
 
-struct s_typedesc* function_type(enum ret_type type, struct s_arglist* arglist)
+struct s_typedesc *function_type(enum ret_type type, struct s_arglist *arglist)
 {
     struct s_typedesc *desc = (struct s_typedesc *)malloc(sizeof(struct s_typedesc));
     desc->type = T_FUNCTION;
@@ -169,7 +178,7 @@ struct s_typedesc* function_type(enum ret_type type, struct s_arglist* arglist)
     return desc;
 }
 
-struct s_arglist* arglist_addbegin(struct s_arglist *arglist, enum elem_type type)
+struct s_arglist *arglist_addbegin(struct s_arglist *arglist, enum elem_type type)
 {
     struct s_arglist *new_arg = (struct s_arglist *)malloc(sizeof(struct s_arglist));
     new_arg->type = type;
@@ -177,9 +186,9 @@ struct s_arglist* arglist_addbegin(struct s_arglist *arglist, enum elem_type typ
     return new_arg;
 }
 
-struct s_arglist* arglist_addend(struct s_arglist *arglist, enum elem_type type)
+struct s_arglist *arglist_addend(struct s_arglist *arglist, enum elem_type type)
 {
-    if (arglist == NULL) 
+    if (arglist == NULL)
         return arglist_addbegin(arglist, type);
 
     struct s_arglist *new_arg = (struct s_arglist *)malloc(sizeof(struct s_arglist));
@@ -187,7 +196,8 @@ struct s_arglist* arglist_addend(struct s_arglist *arglist, enum elem_type type)
     new_arg->next = NULL;
 
     struct s_arglist *tmp = arglist;
-    for (;tmp->next != NULL; tmp = tmp->next);
+    for (; tmp->next != NULL; tmp = tmp->next)
+        ;
     tmp->next = new_arg;
 
     return arglist;
@@ -200,9 +210,10 @@ unsigned int arglist_size(struct s_arglist *arglist)
 
 void free_arglist(struct s_arglist *arglist)
 {
-    if (arglist == NULL) return;
+    if (arglist == NULL)
+        return;
     free_arglist(arglist->next);
-    free(arglist); 
+    free(arglist);
 }
 
 int is_elementary_type(struct s_typedesc *elem, enum entry_type type)
@@ -217,17 +228,20 @@ int is_array_type(struct s_typedesc *arr, enum elem_type type)
 
 int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglist *arglist)
 {
-    if (fun->type != T_FUNCTION) return 0;
-    if (fun->u.function_info.ret_type != type) return 0;
-    if (fun->u.function_info.arglist_size != arglist_size(arglist)) return 0;
+    if (fun->type != T_FUNCTION)
+        return 0;
+    if (fun->u.function_info.ret_type != type)
+        return 0;
+    if (fun->u.function_info.arglist_size != arglist_size(arglist))
+        return 0;
 
     struct s_arglist *tmp = fun->u.function_info.arglist;
 
     while (tmp != NULL)
     {
-        if (tmp->type != arglist->type) 
+        if (tmp->type != arglist->type)
             return 0;
-        
+
         tmp = tmp->next;
         arglist = arglist->next;
     }
@@ -250,12 +264,12 @@ struct s_stringtable *new_string(struct s_stringtable *st, const char *content)
 char *get_content(struct s_stringtable *st, unsigned int idx)
 {
     struct s_stringtable *tmp = st;
-    
+
     while (tmp != NULL)
     {
-        if (tmp->idx == idx) 
+        if (tmp->idx == idx)
             return tmp->content;
-        
+
         tmp = tmp->next;
     }
     return NULL;
@@ -268,7 +282,8 @@ unsigned int count_stringtable(struct s_stringtable *st)
 
 void free_stringtable(struct s_stringtable *st)
 {
-    if (st == NULL) return;
+    if (st == NULL)
+        return;
     free_stringtable(st->next);
     free(st->content);
     free(st);

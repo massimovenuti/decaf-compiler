@@ -204,7 +204,7 @@ method_decl
 	infunction = 0;
 	if ($5 != NULL) {
 		context = tos_popctx(context);
-		gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
+		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
 }
 | BOOL ID {
@@ -220,7 +220,7 @@ method_decl
 	infunction = 0;
 	if ($5 != NULL) {
 		context = tos_popctx(context);
-		gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
+		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
 }
 | VOID ID {
@@ -235,8 +235,9 @@ method_decl
 } block {
 	infunction = 0;
 	if ($5 != NULL) {
+		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
 		context = tos_popctx(context);
-		gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
+		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
 }
 ;
@@ -549,7 +550,7 @@ method_call
 		yyerror("arguments incorrect");
 		YYERROR;
 	}
-	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_empty(), qo));
+	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(0), qo));
 	// $$ = qo;
 }
 | ID '(' expr_l ')' {
