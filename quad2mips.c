@@ -1,5 +1,14 @@
 #include "quad2mips.h"
 
+void compute_funoff(struct s_context *t) {
+	for (int i = 0; i < N_HASH; i++)
+	{
+		for (struct s_entry *e = t->entry[i]; e != NULL; e = e->next) {
+			e->offset = t->count - e->offset - 1; 
+		}	
+	}
+}
+
 void init_string(struct s_stringtable *st, FILE *output)
 {
 	for (struct s_stringtable *tmp = st; tmp != NULL; tmp = tmp->next)
@@ -213,17 +222,17 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		*my_off = 0;
 		if (*first_param)
 		{
-			fprintf(output, "addi $sp, $sp, -4\n");
 			fprintf(output, "sw $ra, 0($sp)\n");
 		}
 		*first_param = 1;
 		fprintf(output, "jal %s\n", q.op1.u.name);
-		fprintf(output, "lw $ra, %d($sp)\n", q.op2.u.cst * 4);
-		for (size_t i = 0; i < (q.op2.u.cst + 1); i++)
+		for (size_t i = 0; i < (q.op2.u.cst); i++)
 		{
 			fprintf(output, "sw $zero, %d($sp)\n", i * 4);
 		}
-		fprintf(output, "addi $sp, $sp, %d\n", (q.op2.u.cst + 1) * 4);
+		fprintf(output, "addi $sp, $sp, %d\n", (q.op2.u.cst) * 4);
+		fprintf(output, "lw $ra, 0($sp)\n");
+		fprintf(output, "addi $sp, $sp, 4\n");
 		if (q.op3.type != QO_EMPTY)
 		{
 			save(q.op3, "$v0", *t, output);
@@ -236,6 +245,10 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 			load_quadop(q.op3, "$v0", *my_off, *t, output);
 		}
 		free_tab(*t, output);
+		fprintf(output, "jr $ra\n");
+		break;
+	
+	case Q_DRETURN:
 		fprintf(output, "jr $ra\n");
 		break;
 
@@ -262,6 +275,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		else
 		{
 			*is_def = 0;
+			compute_funoff(*t);			
 		}
 		break;
 
@@ -302,7 +316,7 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	fprintf(output, ".align 2\n");
 	quad2mips(quadcode[0], &t, &is_def, &my_off, &first_param, output);
 
-	fprintf(output, ".text\n.globl main\nj main\n%s\n%s\n%s\n%s\n", mips_WriteInt, mips_WriteString, mips_WriteBool, mips_ReadInt);
+	fprintf(output, ".text\n.globl start\nstart:\njal main\n%s\n%s\n%s\n%s\n%s\n", mips_exit, mips_WriteInt, mips_WriteString, mips_WriteBool, mips_ReadInt);
 	fprintf(output, "_Q0:\n");
 	for (size_t i = 1; i < len; i++)
 	{
@@ -310,5 +324,5 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 		quad2mips(quadcode[i], &t, &is_def, &first_param, &my_off, output);
 	}
 
-	fprintf(output, "%s\n", mips_exit);
+	// fprintf(output, "%s\n", mips_exit);
 }

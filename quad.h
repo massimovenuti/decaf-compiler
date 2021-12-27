@@ -53,7 +53,8 @@ struct quad {
         Q_WBOOL,
         Q_WSTR,
         Q_RINT,
-        Q_EXIT
+        Q_EXIT,
+        Q_DRETURN
     } type;
     quadop op1, op2, op3;
 };

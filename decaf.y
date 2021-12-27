@@ -206,6 +206,8 @@ method_decl
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
+	// faire print un message d'erreur
+	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | BOOL ID {
 	struct s_entry *id = tos_newname(context, $2);
@@ -222,6 +224,8 @@ method_decl
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
+	// faire print un message d'erreur
+	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | VOID ID {
 	struct s_entry *id = tos_newname(context, $2);
@@ -234,11 +238,11 @@ method_decl
 	id->type = function_type(R_VOID, $5);
 } block {
 	infunction = 0;
+	gencode(quad_make(Q_DRETURN, quadop_empty(), quadop_empty(), quadop_empty()));
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
-	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 ;
 
