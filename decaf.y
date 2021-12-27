@@ -235,10 +235,10 @@ method_decl
 } block {
 	infunction = 0;
 	if ($5 != NULL) {
-		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
+	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 ;
 
