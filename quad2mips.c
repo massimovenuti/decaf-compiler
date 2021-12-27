@@ -189,7 +189,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 
 	case Q_FUN:
 		fprintf(output, "%s:\n", q.op3.u.name);
-		if (strcmp(q.op3.u.name, "main"))
+		if (tos_lookup(*t, q.op3.u.name)->type->u.function_info.arglist != NULL)
 		{
 			*is_def = 1;
 		}
@@ -211,6 +211,11 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 
 	case Q_CALL:
 		*my_off = 0;
+		if (*first_param)
+		{
+			fprintf(output, "addi $sp, $sp, -4\n");
+			fprintf(output, "sw $ra, 0($sp)\n");
+		}
 		*first_param = 1;
 		fprintf(output, "jal %s\n", q.op1.u.name);
 		fprintf(output, "lw $ra, %d($sp)\n", q.op2.u.cst * 4);
