@@ -251,8 +251,8 @@ arg_l
 : arg {
 	$$ = arglist_addend(NULL, $1);
 }
-| arg ',' arg_l {
-	$$ = arglist_addend($3, $1);
+| arg_l ',' arg {
+	$$ = arglist_addend($1, $3);
 }
 ;
 
@@ -605,18 +605,18 @@ expr_l
 		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), qtemp));
 	}
 }
-| expr ',' expr_l {
-	$$ = arglist_addend($3, $1.type);
-	if ($1.type == E_INT || $1.type == E_STR) { // cas int et string
-		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), $1.u.result));
+| expr_l ',' expr {
+	$$ = arglist_addend($1, $3.type);
+	if ($3.type == E_INT || $3.type == E_STR) { // cas int et string
+		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), $3.u.result));
 	} else { // cas bool
 		struct s_entry *temp = tos_newtemp(context);
 		temp->type = elementary_type(E_BOOL);
 		quadop qtemp = quadop_name(temp->ident);
-		complete($1.u.boolexpr.true, nextquad);
+		complete($3.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qtemp));
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label(nextquad + 2)));
-		complete($1.u.boolexpr.false, nextquad);
+		complete($3.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qtemp));
 		gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), qtemp));
 	}
