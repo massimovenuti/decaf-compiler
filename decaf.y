@@ -243,14 +243,8 @@ method_decl
 ;
 
 arg_l_
-: pushctx set_ra arg_l {$$ = $3;}
+: pushctx arg_l {$$ = $2;}
 | %empty {$$ = NULL;}
-;
-
-set_ra
-: %empty {
-	struct s_entry *ra = tos_newname(context, "_ra");
-}
 ;
 
 arg_l 

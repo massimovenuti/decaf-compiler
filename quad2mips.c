@@ -40,11 +40,14 @@ void alloc_tab(struct s_context *t, FILE *output)
 
 void free_tab(struct s_context *t, FILE *output)
 {
-	for (size_t i = 0; i < t->count; i++)
+	if (t->next != NULL)
 	{
-		fprintf(output, "sw $zero, %d($sp)\n", i*4);
+		for (size_t i = 0; i < t->count; i++)
+		{
+			fprintf(output, "sw $zero, %d($sp)\n", i * 4);
+		}
+		fprintf(output, "addi $sp, $sp, %d\n", t->count * 4);
 	}
-	fprintf(output, "addi $sp, $sp, %d\n", t->count * 4);
 }
 
 void load_quadop(quadop qo, const char *registre, unsigned int my_off, struct s_context *t, FILE *output)
@@ -93,7 +96,7 @@ void save(quadop qo, const char *registre, struct s_context *t, FILE *output)
 	}
 }
 
-void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, FILE *output)
+void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsigned int *my_off, FILE *output)
 {
 	switch (q.type)
 	{
@@ -193,6 +196,13 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		break;
 
 	case Q_PARAM:
+		if (*first_param)
+		{
+			fprintf(output, "addi $sp, $sp, -4\n");
+			fprintf(output, "sw $ra, 0($sp)\n");
+			*first_param = 0;
+			*my_off += 4;
+		}
 		fprintf(output, "addi $sp, $sp, -4\n");
 		*my_off += 4;
 		load_quadop(q.op3, "$t0", *my_off, *t, output);
@@ -200,14 +210,13 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		break;
 
 	case Q_CALL:
-		fprintf(output, "addi $sp, $sp, -4\n");
-		fprintf(output, "sw $ra, 0($sp)\n");
 		*my_off = 0;
+		*first_param = 1;
 		fprintf(output, "jal %s\n", q.op1.u.name);
-		fprintf(output, "lw $ra, 0($sp)\n");
+		fprintf(output, "lw $ra, %d($sp)\n", q.op2.u.cst * 4);
 		for (size_t i = 0; i < (q.op2.u.cst + 1); i++)
 		{
-			fprintf(output, "sw $zero, %d($sp)\n", i*4);
+			fprintf(output, "sw $zero, %d($sp)\n", i * 4);
 		}
 		fprintf(output, "addi $sp, $sp, %d\n", (q.op2.u.cst + 1) * 4);
 		if (q.op3.type != QO_EMPTY)
@@ -268,25 +277,26 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	fprintf(output, "_STRUE: .asciiz \"true\"\n_SFALSE: .asciiz \"false\"\n");
 	init_string(strings, output);
 
-	char *mips_WriteInt = "WriteInt:\nli $v0 1\nlw $a0 4($sp)\nsyscall\njr $ra\n";
-	char *mips_WriteString = "WriteString:\nli $v0 4\nlw $a0 4($sp)\nsyscall\njr $ra\n";
-	char *mips_WriteBool = "WriteBool:\nli $v0 4\nlw $t0 4($sp)\nbnez $t0,  _True\nla $a0 _SFALSE\nsyscall\njr $ra\n_True:\nla $a0 _STRUE\nsyscall\njr $ra\n";
+	char *mips_WriteInt = "WriteInt:\nli $v0 1\nlw $a0 0($sp)\nsyscall\njr $ra\n";
+	char *mips_WriteString = "WriteString:\nli $v0 4\nlw $a0 0($sp)\nsyscall\njr $ra\n";
+	char *mips_WriteBool = "WriteBool:\nli $v0 4\nlw $t0 0($sp)\nbnez $t0,  _True\nla $a0 _SFALSE\nsyscall\njr $ra\n_True:\nla $a0 _STRUE\nsyscall\njr $ra\n";
 	char *mips_ReadInt = "ReadInt:\nli $v0 5\nsyscall\njr $ra\n";
 	char *mips_exit = "li $v0 17\nli $a0 0\nsyscall";
 
 	struct s_context *t = NULL;
 	int is_def = 0;
+	int first_param = 1;
 	int my_off = 0;
 
 	fprintf(output, ".align 2\n");
-	quad2mips(quadcode[0], &t, &is_def, &my_off, output);
+	quad2mips(quadcode[0], &t, &is_def, &my_off, &first_param, output);
 
 	fprintf(output, ".text\n.globl main\nj main\n%s\n%s\n%s\n%s\n", mips_WriteInt, mips_WriteString, mips_WriteBool, mips_ReadInt);
 	fprintf(output, "_Q0:\n");
 	for (size_t i = 1; i < len; i++)
 	{
 		fprintf(output, "_Q%ld:\n", i);
-		quad2mips(quadcode[i], &t, &is_def, &my_off, output);
+		quad2mips(quadcode[i], &t, &is_def, &first_param, &my_off, output);
 	}
 
 	fprintf(output, "%s\n", mips_exit);
