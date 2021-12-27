@@ -266,6 +266,10 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		*t = (*t)->next;
 		break;
 
+	case Q_EXIT:
+		fprintf(output, "li $v0 17\nli $a0 0\nsyscall\n");
+		break;
+
 	default:
 		break;
 	}

@@ -251,8 +251,8 @@ arg_l
 : arg {
 	$$ = arglist_addend(NULL, $1);
 }
-| arg_l ',' arg {
-	$$ = arglist_addend($1, $3);
+| arg ',' arg_l {
+	$$ = arglist_addend($3, $1);
 }
 ;
 
@@ -272,8 +272,11 @@ arg
 ;
 
 block 
-: '{' pushctx var_decl_l_ statement_l_ popctx '}' {
-	$$ = $4;
+: '{' pushctx var_decl_l_ statement_l_ marker popctx '}' {
+  complete($4.next, $5);  
+  $$ = new_statement();
+  $$.next_break = $4.next_break;
+  $$.next_continue = $4.next_continue;
 }
 ;
 
@@ -476,7 +479,7 @@ statement
 } marker {
 	struct s_entry *id = tos_lookup(context, $4);
 	gencode(quad_make(Q_BGT, quadop_name(id->ident), $8.u.result, quadop_empty()));
-} block popctx {
+} block {
 	struct s_entry *id = tos_lookup(context, $4);
 	complete($12.next, nextquad);
 	complete($12.next_continue, nextquad);
@@ -484,8 +487,12 @@ statement
 	gencode(quad_make(Q_ADD, qid, quadop_cst(1), qid));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($10)));
 	$$ = new_statement();
-	$$.next = concat(crelist($10), $12.next_break);
+	// $$.next = concat(crelist($10), $12.next_break);
 	inloop = 0;
+	complete(crelist($10), nextquad);
+	complete($12.next_break, nextquad);
+	context = tos_popctx(context);
+	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | RETURN expr ';' {
 	ERRORIF(!infunction, "return doit être appelé dans une fonction");

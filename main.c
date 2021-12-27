@@ -45,6 +45,10 @@ int main(int argc, char const *argv[])
     FILE *input = freopen(inname, "r", stdin);
     initcode();
     int res = yyparse();
+    if (res == 1)
+    {
+        exit(EXIT_FAILURE);
+    }
     print_globalcode();
     FILE *output = fopen(outname, "w");
     gen_mips(globalcode, nextquad, output);
