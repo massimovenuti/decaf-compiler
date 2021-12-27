@@ -476,7 +476,7 @@ statement
 } marker {
 	struct s_entry *id = tos_lookup(context, $4);
 	gencode(quad_make(Q_BGT, quadop_name(id->ident), $8.u.result, quadop_empty()));
-} block {
+} block popctx {
 	struct s_entry *id = tos_lookup(context, $4);
 	complete($12.next, nextquad);
 	complete($12.next_continue, nextquad);
