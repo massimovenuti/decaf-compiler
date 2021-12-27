@@ -92,7 +92,7 @@ void save(quadop qo, const char *registre, struct s_context *t, FILE *output)
 	}
 	else
 	{
-		fprintf(output, "sw %s, %d($sp)\n", registre, tos_getoff(t, qo.u.name) * 4);
+		fprintf(output, "sw %s, %d($sp)\n", registre, off * 4);
 	}
 }
 
@@ -223,7 +223,6 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		{
 			save(q.op3, "$v0", *t, output);
 		}
-		// free_tab(*t, output);
 		break;
 
 	case Q_RETURN:
@@ -263,7 +262,9 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 
 	case Q_ECTX:
 		free_tab(*t, output);
+		struct s_context *tmp = *t;
 		*t = (*t)->next;
+		tos_freectx(tmp);
 		break;
 
 	case Q_EXIT:
@@ -280,6 +281,7 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	fprintf(output, ".data\n");
 	fprintf(output, "_STRUE: .asciiz \"true\"\n_SFALSE: .asciiz \"false\"\n");
 	init_string(strings, output);
+	free_stringtable(strings);
 
 	char *mips_WriteInt = "WriteInt:\nli $v0 1\nlw $a0 0($sp)\nsyscall\njr $ra\n";
 	char *mips_WriteString = "WriteString:\nli $v0 4\nlw $a0 0($sp)\nsyscall\njr $ra\n";

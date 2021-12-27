@@ -91,7 +91,7 @@ struct s_context *tos_pushctx(struct s_context *ctx);
 struct s_context *tos_popctx(struct s_context *ctx);
 
 /**
-* @brief Dépile une table de symboles et libère l'espace mémoire occupée par celle-ci
+* @brief Libère l'espace mémoire occupée par celle-ci
 * @param ctx Une pile de tables de symboles
 */
 void tos_freectx(struct s_context *ctx);
