@@ -6,10 +6,11 @@
 extern int yyparse();
 extern int yydebug;
 
+const char *inname = NULL;
+
 int main(int argc, char const *argv[])
 {
     char *outname = "a.mips";
-    const char *inname = NULL;
 
     int c;
     while (1)

@@ -17,10 +17,10 @@
      yylloc.last_line = yylineno;                            \
   }
 
-// exemple d'utilisation:
-// {printf("col: %d\n", @1.first_column);}
-
 #include "decaf.tab.h"
+
+extern YYLTYPE token_yylloc; 
+extern void yyerror(char *msg);
 %}
 
 %option nounput noyywrap yylineno
@@ -69,10 +69,9 @@ HEX_NUM 0x[0-9a-fA-F]+
 
 {NUM}						{
 								long x = strtol(yytext, NULL, 10);
-								// fprintf(stderr,"\n\n\n%ld\n\n\n", x);
 								if (x < INT_MIN || x > INT_MAX) {
-									// TODO: gérer l'erreur dans le yacc ? dans main ?
-									fprintf(stderr, "%s not int\n", yytext);
+									token_yylloc = yylloc;
+									yyerror("not int");
 									exit(EXIT_FAILURE);
 								} else {
 									yylval.intval = (int) x;
@@ -82,8 +81,8 @@ HEX_NUM 0x[0-9a-fA-F]+
 {HEX_NUM}					{
 								long x = strtol(yytext, NULL, 16);
 								if (x < INT_MIN || x > INT_MAX) {
-									// TODO: gérer l'erreur dans le yacc ? dans main ?
-									fprintf(stderr, "%s not int\n", yytext);
+									token_yylloc = yylloc;
+									yyerror("not int");
 									exit(EXIT_FAILURE);
 								} else {
 									yylval.intval = (int) x;
