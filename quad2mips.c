@@ -276,6 +276,11 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		}
 		break;
 
+	case Q_PECTX:
+		struct s_context *tp = q.op3.u.context;
+		free_tab(tp, output);
+		break;
+
 	case Q_ECTX:
 		free_tab(*t, output);
 		struct s_context *tmp = *t;

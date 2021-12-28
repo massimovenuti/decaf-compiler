@@ -49,6 +49,7 @@ struct quad {
         Q_SETI, // affectation et indice de tableau
         Q_GETI,
         Q_BCTX,
+        Q_PECTX,
         Q_ECTX,
         Q_WINT,
         Q_WBOOL,

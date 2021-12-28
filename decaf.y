@@ -523,18 +523,25 @@ statement
 }
 | BREAK ';' {
 	ERRORIF(!inloop, "break doit être appelé dans une boucle");
+	struct s_context *tmp = context;
+	for (int i = inloop; i > 1; i--) {
+		gencode(quad_make(Q_PECTX, quadop_empty(), quadop_empty(), quadop_context(tmp)));
+		tmp = tmp->next;
+	}
 	$$ = new_statement();
 	$$.next_break = crelist(nextquad);
-	// for (int i = inloop; i > 1; i--)
-		// gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | CONTINUE ';' {
 	ERRORIF(!inloop, "continue doit être appelé dans une boucle");
+	struct s_context *tmp = context;
+	fprintf(stderr,"inloop = %d\n", inloop);
+	for (int i = inloop; i > 1; i--) {
+		gencode(quad_make(Q_PECTX, quadop_empty(), quadop_empty(), quadop_context(tmp)));
+		tmp = tmp->next;
+	}
 	$$ = new_statement();
 	$$.next_continue = crelist(nextquad);
-	// for (int i = inloop; i > 1; i--)
-		// gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | block {

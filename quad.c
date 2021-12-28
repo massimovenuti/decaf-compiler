@@ -331,6 +331,11 @@ void print_quad(quad q) {
 		print_quadop(q.op3);
 		break;
     
+    case Q_PECTX:
+        printf("Pseudo Fin Context =");
+        print_quadop(q.op3);
+		break;
+
     case Q_ECTX:
         printf("Fin Context");
 		break;
