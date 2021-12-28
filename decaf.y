@@ -94,6 +94,8 @@ pushctx
 : %empty {
 	context = tos_pushctx(context);
 	gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
+	if (inloop)
+		inloop++;
 }
 ;
 
@@ -101,6 +103,8 @@ popctx
 : %empty {
 	context = tos_popctx(context);
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+	if (inloop)
+		inloop--;
 }
 ;
 
@@ -206,7 +210,7 @@ method_decl
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
-	// faire print un message d'erreur
+	// TODO: faire print un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | BOOL ID {
@@ -224,7 +228,7 @@ method_decl
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
-	// faire print un message d'erreur
+	// TODO: faire print un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | VOID ID {
@@ -468,33 +472,32 @@ statement
 	$$.next_break = concat($6.next_break, $10.next_break);
 	$$.next_continue = concat($6.next_continue, $10.next_continue);
 }
-| FOR {
+| FOR pushctx ID '=' expr ',' expr {
+	ERRORIF($5.type != E_INT, "l'expression doit être int");
+	ERRORIF($7.type != E_INT, "l'expression doit être int");
 	inloop = 1;
-} pushctx ID '=' expr ',' expr {
-	ERRORIF($6.type != E_INT, "l'expression doit être int");
-	ERRORIF($8.type != E_INT, "l'expression doit être int");
 	struct s_entry *tmp = tos_newtemp(context);
 	tmp->type = elementary_type(T_INT);
-	gencode(quad_make(Q_MOVE, $8.u.result, quadop_empty(), quadop_name(tmp->ident)));
-	$8.u.result = quadop_name(tmp->ident);
-	struct s_entry *id = tos_newname(context, $4);
+	gencode(quad_make(Q_MOVE, $7.u.result, quadop_empty(), quadop_name(tmp->ident)));
+	$7.u.result = quadop_name(tmp->ident);
+	struct s_entry *id = tos_newname(context, $3);
 	id->type = elementary_type(T_INT);
-	gencode(quad_make(Q_MOVE, $6.u.result, quadop_empty(), quadop_name(id->ident)));
+	gencode(quad_make(Q_MOVE, $5.u.result, quadop_empty(), quadop_name(id->ident)));
 } marker {
-	struct s_entry *id = tos_lookup(context, $4);
-	gencode(quad_make(Q_BGT, quadop_name(id->ident), $8.u.result, quadop_empty()));
+	struct s_entry *id = tos_lookup(context, $3);
+	gencode(quad_make(Q_BGT, quadop_name(id->ident), $7.u.result, quadop_empty()));
 } block {
-	struct s_entry *id = tos_lookup(context, $4);
-	complete($12.next, nextquad);
-	complete($12.next_continue, nextquad);
+	struct s_entry *id = tos_lookup(context, $3);
+	complete($11.next, nextquad);
+	complete($11.next_continue, nextquad);
 	quadop qid = quadop_name(id->ident);
 	gencode(quad_make(Q_ADD, qid, quadop_cst(1), qid));
-	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($10)));
+	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($9)));
 	$$ = new_statement();
 	// $$.next = concat(crelist($10), $12.next_break);
 	inloop = 0;
-	complete(crelist($10), nextquad);
-	complete($12.next_break, nextquad);
+	complete(crelist($9), nextquad);
+	complete($11.next_break, nextquad);
 	context = tos_popctx(context);
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 }
@@ -522,12 +525,16 @@ statement
 	ERRORIF(!inloop, "break doit être appelé dans une boucle");
 	$$ = new_statement();
 	$$.next_break = crelist(nextquad);
+	// for (int i = inloop; i > 1; i--)
+		// gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | CONTINUE ';' {
 	ERRORIF(!inloop, "continue doit être appelé dans une boucle");
 	$$ = new_statement();
 	$$.next_continue = crelist(nextquad);
+	// for (int i = inloop; i > 1; i--)
+		// gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | block {
@@ -560,7 +567,6 @@ method_call
 		YYERROR;
 	}
 	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(0), qo));
-	// $$ = qo;
 }
 | ID s_call '(' expr_l ')' {
 	struct s_entry *id = tos_lookup(context, $1);
@@ -588,7 +594,6 @@ method_call
 		YYERROR;
 	}
 	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size( $4)), qo));
-	// $$ = qo;
 }
 ;
 
