@@ -536,7 +536,7 @@ statement
 ;
 
 method_call
-: ID '(' ')' {
+: ID s_call '(' ')' {
 	struct s_entry *id = tos_lookup(context, $1);
 	ERRORIF(id == NULL, "la fonction n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_FUNCTION), "la variable n'est pas une fonction");
@@ -562,23 +562,23 @@ method_call
 	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(0), qo));
 	// $$ = qo;
 }
-| ID '(' expr_l ')' {
+| ID s_call '(' expr_l ')' {
 	struct s_entry *id = tos_lookup(context, $1);
 	ERRORIF(id == NULL, "la fonction n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_FUNCTION), "la variable n'est pas une fonction");
 	// TODO: checker la fonction
 	quadop qo;
-	if (is_function_type(id->type, R_VOID, $3)) { // procédure
+	if (is_function_type(id->type, R_VOID,  $4)) { // procédure
 		// TODO: gérer WriteInt, WriteBool, etc...
 		// TODO: checker si on appelle main ?
 		qo = quadop_empty();
 		$$ = NULL;
-	} else if (is_function_type(id->type, R_INT, $3)) { // fonction renvoyant int
+	} else if (is_function_type(id->type, R_INT,  $4)) { // fonction renvoyant int
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_INT);
 		qo = quadop_name(temp->ident);
 		$$ = temp;
-	} else if (is_function_type(id->type, R_BOOL, $3)) { // fonction renvoyant bool
+	} else if (is_function_type(id->type, R_BOOL,  $4)) { // fonction renvoyant bool
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
@@ -587,8 +587,14 @@ method_call
 		yyerror("arguments incorrect");
 		YYERROR;
 	}
-	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size($3)), qo));
+	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size( $4)), qo));
 	// $$ = qo;
+}
+;
+
+s_call
+: %empty {
+	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 ;
 

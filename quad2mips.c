@@ -1,11 +1,13 @@
 #include "quad2mips.h"
 
-void compute_funoff(struct s_context *t) {
+void compute_funoff(struct s_context *t)
+{
 	for (int i = 0; i < N_HASH; i++)
 	{
-		for (struct s_entry *e = t->entry[i]; e != NULL; e = e->next) {
-			e->offset = t->count - e->offset - 1; 
-		}	
+		for (struct s_entry *e = t->entry[i]; e != NULL; e = e->next)
+		{
+			e->offset = t->count - e->offset - 1;
+		}
 	}
 }
 
@@ -92,7 +94,7 @@ void load_quadop(quadop qo, const char *registre, unsigned int my_off, struct s_
 	}
 }
 
-void save(quadop qo, const char *registre, struct s_context *t, FILE *output)
+void save(quadop qo, const char *registre, unsigned int my_off, struct s_context *t, FILE *output)
 {
 	int off = tos_getoff(t, qo.u.name);
 	if (off < 0)
@@ -101,11 +103,11 @@ void save(quadop qo, const char *registre, struct s_context *t, FILE *output)
 	}
 	else
 	{
-		fprintf(output, "sw %s, %d($sp)\n", registre, off * 4);
+		fprintf(output, "sw %s, %d($sp)\n", registre, off * 4 + my_off);
 	}
 }
 
-void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsigned int *my_off, FILE *output)
+void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, FILE *output)
 {
 	switch (q.type)
 	{
@@ -113,28 +115,28 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		load_quadop(q.op1, "$t0", *my_off, *t, output);
 		load_quadop(q.op2, "$t1", *my_off, *t, output);
 		fprintf(output, "add $t2, $t0, $t1\n");
-		save(q.op3, "$t2", *t, output);
+		save(q.op3, "$t2", *my_off, *t, output);
 		break;
 
 	case Q_SUB:
 		load_quadop(q.op1, "$t0", *my_off, *t, output);
 		load_quadop(q.op2, "$t1", *my_off, *t, output);
 		fprintf(output, "sub $t2, $t0, $t1\n");
-		save(q.op3, "$t2", *t, output);
+		save(q.op3, "$t2", *my_off, *t, output);
 		break;
 
 	case Q_MUL:
 		load_quadop(q.op1, "$t0", *my_off, *t, output);
 		load_quadop(q.op2, "$t1", *my_off, *t, output);
 		fprintf(output, "mul $t2, $t0, $t1\n");
-		save(q.op3, "$t2", *t, output);
+		save(q.op3, "$t2", *my_off, *t, output);
 		break;
 
 	case Q_DIV:
 		load_quadop(q.op1, "$t0", *my_off, *t, output);
 		load_quadop(q.op2, "$t1", *my_off, *t, output);
 		fprintf(output, "div $t2, $t0, $t1\n");
-		save(q.op3, "$t2", *t, output);
+		save(q.op3, "$t2", *my_off, *t, output);
 		break;
 
 	case Q_MOD:
@@ -142,18 +144,18 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		load_quadop(q.op2, "$t1", *my_off, *t, output);
 		fprintf(output, "div $t0, $t1\n");
 		fprintf(output, "mfhi $t2\n");
-		save(q.op3, "$t2", *t, output);
+		save(q.op3, "$t2", *my_off, *t, output);
 		break;
 
 	case Q_MINUS:
 		load_quadop(q.op1, "$t0", *my_off, *t, output);
 		fprintf(output, "mul $t1, $t0, -1\n");
-		save(q.op3, "$t1", *t, output);
+		save(q.op3, "$t1", *my_off, *t, output);
 		break;
 
 	case Q_MOVE:
 		load_quadop(q.op1, "$t0", *my_off, *t, output);
-		save(q.op3, "$t0", *t, output);
+		save(q.op3, "$t0", *my_off, *t, output);
 		break;
 
 	case Q_GOTO:
@@ -204,14 +206,13 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		}
 		break;
 
+	case Q_SCALL:
+		fprintf(output, "addi $sp, $sp, -4\n");
+		fprintf(output, "sw $ra, 0($sp)\n");
+		*my_off += 4;
+		break;
+
 	case Q_PARAM:
-		if (*first_param)
-		{
-			fprintf(output, "addi $sp, $sp, -4\n");
-			fprintf(output, "sw $ra, 0($sp)\n");
-			*first_param = 0;
-			*my_off += 4;
-		}
 		fprintf(output, "addi $sp, $sp, -4\n");
 		*my_off += 4;
 		load_quadop(q.op3, "$t0", *my_off, *t, output);
@@ -219,12 +220,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		break;
 
 	case Q_CALL:
-		*my_off = 0;
-		if (*first_param)
-		{
-			fprintf(output, "sw $ra, 0($sp)\n");
-		}
-		*first_param = 1;
+		*my_off -= 4 + q.op2.u.cst * 4;
 		fprintf(output, "jal %s\n", q.op1.u.name);
 		for (size_t i = 0; i < (q.op2.u.cst); i++)
 		{
@@ -232,10 +228,11 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		}
 		fprintf(output, "addi $sp, $sp, %d\n", (q.op2.u.cst) * 4);
 		fprintf(output, "lw $ra, 0($sp)\n");
+		fprintf(output, "sw $zero, 0($sp)\n");
 		fprintf(output, "addi $sp, $sp, 4\n");
 		if (q.op3.type != QO_EMPTY)
 		{
-			save(q.op3, "$v0", *t, output);
+			save(q.op3, "$v0", *my_off, *t, output);
 		}
 		break;
 
@@ -247,7 +244,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		free_tab(*t, output);
 		fprintf(output, "jr $ra\n");
 		break;
-	
+
 	case Q_DRETURN:
 		fprintf(output, "jr $ra\n");
 		break;
@@ -263,7 +260,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		load_quadop(q.op2, "$t0", *my_off, *t, output);
 		fprintf(output, "mul $t0, $t0, 4\n");
 		fprintf(output, "lw $t1, _A%s($t0)\n", q.op1.u.name);
-		save(q.op3, "$t1", *t, output);
+		save(q.op3, "$t1", *my_off, *t, output);
 		break;
 
 	case Q_BCTX:
@@ -275,7 +272,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, int *first_param, unsi
 		else
 		{
 			*is_def = 0;
-			compute_funoff(*t);			
+			compute_funoff(*t);
 		}
 		break;
 
@@ -310,18 +307,17 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 
 	struct s_context *t = NULL;
 	int is_def = 0;
-	int first_param = 1;
 	int my_off = 0;
 
 	fprintf(output, ".align 2\n");
-	quad2mips(quadcode[0], &t, &is_def, &my_off, &first_param, output);
+	quad2mips(quadcode[0], &t, &is_def, &my_off, output);
 
 	fprintf(output, ".text\n.globl start\nstart:\njal main\n%s\n%s\n%s\n%s\n%s\n", mips_exit, mips_WriteInt, mips_WriteString, mips_WriteBool, mips_ReadInt);
 	fprintf(output, "_Q0:\n");
 	for (size_t i = 1; i < len; i++)
 	{
 		fprintf(output, "_Q%ld:\n", i);
-		quad2mips(quadcode[i], &t, &is_def, &first_param, &my_off, output);
+		quad2mips(quadcode[i], &t, &is_def, &my_off, output);
 	}
 
 	// fprintf(output, "%s\n", mips_exit);

@@ -42,6 +42,7 @@ struct quad {
         Q_BEQ,
         Q_BNE,
         Q_PARAM, // appel de procédure
+        Q_SCALL,
         Q_CALL,
         Q_RETURN, // retour de fonction
         Q_FUN, // début de fonction

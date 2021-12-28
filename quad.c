@@ -284,6 +284,10 @@ void print_quad(quad q) {
 		print_quadop(q.op3);
 		break;
 
+    case Q_SCALL:
+        printf("SCALL");
+        break;
+
 	case Q_CALL:
         if (q.op3.type != QO_EMPTY) {
 		    print_quadop(q.op3);
