@@ -1,3 +1,11 @@
+/**
+* @file table.c
+* @author LAJARGE, ULUCAN, VENUTI, VOGEL
+* @brief Tables de symboles, types et table de chaine de caractères.
+* @date 2021-12-28
+* 
+*/
+
 #include "table.h"
 
 struct s_context *context = NULL;

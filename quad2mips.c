@@ -1,3 +1,11 @@
+/**
+* @file quad2mips.c
+* @author LAJARGE, ULUCAN, VENUTI, VOGEL
+* @brief Ensemble de fonctions permettant la génération de code mips.
+* @date 2021-12-28
+* 
+*/
+
 #include "quad2mips.h"
 
 void compute_funoff(struct s_context *t)

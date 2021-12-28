@@ -1,3 +1,11 @@
+/**
+* @file quad.c
+* @author LAJARGE, ULUCAN, VENUTI, VOGEL
+* @brief Génération du code 3 adresses.
+* @date 2021-12-28
+* 
+*/
+
 #include "quad.h"
 
 quad *globalcode = NULL; // code généré

@@ -1,6 +1,14 @@
 #ifndef __QUAD_H__
 #define __QUAD_H__
 
+/**
+* @file quad.h
+* @author LAJARGE, ULUCAN, VENUTI, VOGEL
+* @brief Génération du code 3 adresses (en-tête).
+* @date 2021-12-28
+* 
+*/
+
 #include "utils.h"
 #include "table.h"
 #include <stdio.h>
@@ -10,6 +18,14 @@
 #define CODE_SIZE 255
 #define LIST_SIZE 255
 
+//--------------------------------------------------------------
+// QUADRUPLETS
+//--------------------------------------------------------------
+
+/**
+* \struct quadop
+* 
+*/
 struct quadop {
     enum quadop_type { QO_EMPTY, QO_CST, QO_BOOL, QO_LABEL, QO_NAME, QO_CONTEXT, QO_STRING } type;
     union {
@@ -24,39 +40,38 @@ struct quadop {
 
 typedef struct quadop quadop;
 
+/**
+* \struct quad 
+* 
+*/
 struct quad {
     enum quad_type {
-        Q_ADD, // opération binaire et affectation
-        Q_SUB,
-        Q_MUL,
-        Q_DIV,
-        Q_MOD,
-        Q_MINUS, // opération unaire et affectation
-        Q_NOT,
-        Q_MOVE, // copie
-        Q_GOTO,   // branchement inconditionnel
-        Q_BLT,    // branchement conditionnel
-        Q_BGT,
-        Q_BLE,
-        Q_BGE,
-        Q_BEQ,
-        Q_BNE,
-        Q_PARAM, // appel de procédure
-        Q_SCALL,
-        Q_CALL,
-        Q_RETURN, // retour de fonction
-        Q_FUN, // début de fonction
-        Q_SETI, // affectation et indice de tableau
-        Q_GETI,
-        Q_BCTX,
-        Q_PECTX,
-        Q_ECTX,
-        Q_WINT,
-        Q_WBOOL,
-        Q_WSTR,
-        Q_RINT,
-        Q_EXIT,
-        Q_DRETURN
+        Q_ADD,      /*!< Addition */
+        Q_SUB,      /*!< Soustraction */
+        Q_MUL,      /*!< Multiplication */
+        Q_DIV,      /*!< Division*/
+        Q_MOD,      /*!< Modulo */
+        Q_MINUS,    /*!< Opposé */
+        Q_MOVE,     /*!< Copie */
+        Q_GOTO,     /*!< Branchement inconditionnel */
+        Q_BLT,      /*!< Inférieur strict */
+        Q_BGT,      /*!< Supérieur strict */
+        Q_BLE,      /*!< Inférieur ou égal */
+        Q_BGE,      /*!< Supérieur ou égal */
+        Q_BEQ,      /*!< Egalité */
+        Q_BNE,      /*!< Non égalité */
+        Q_PARAM,    /*!< Appel de procédure */
+        Q_SCALL,    /*!< Début d'un appel */
+        Q_CALL,     /*!< Appel de fonction */
+        Q_RETURN,   /*!< Retour de fonction */
+        Q_FUN,      /*!< Début de fonction */
+        Q_SETI,     /*!< Création d'un élément de tableau */
+        Q_GETI,     /*!< Récupération d'un élément de tableau */
+        Q_BCTX,     /*!< Début de contexte */
+        Q_PECTX,    /*!< Pseudo fin de contexte */
+        Q_ECTX,     /*!< Fin de contexte */
+        Q_EXIT,     /*!< Exit */
+        Q_DRETURN   /*!< Retour par défaut des procédures */
     } type;
     quadop op1, op2, op3;
 };
@@ -67,21 +82,98 @@ extern quad *globalcode; // code généré
 extern size_t codesize;  // taille du tableau globalcode
 extern size_t nextquad;  // numéro du prochain quad généré
 
-void initcode();      // initialise les variables globales
-void freecode();      // libère la mémoire du tableau global
-void gencode(quad q); // écrit dans globalcode[nextquad] et incrémente nextquad
+/**
+* \fn void initcode()
+* \brief Initialise les variables globales
+*/
+void initcode();
 
-quadop quadop_empty();           // crée un quadop vide
-quadop quadop_cst(int cst);      // crée un quadop de type constante
-quadop quadop_bool(int boolean); // crée un quadop de type booléen
-quadop quadop_label(int label);  // crée un quadop de type label
-quadop quadop_name(char *name);  // crée un quadop de type nom
-quadop quadop_context(struct s_context *context); // crée un quadop de type context
-quadop quadop_str(int string);    // crée un quadop de type string
+/**
+* \fn void freecode()
+* \brief Libère la mémoire du tableau global
+*/
+void freecode();
 
-quad quad_make(enum quad_type type, quadop op1, quadop op2,
-               quadop op3); // crée un quad
+/**
+* \fn void gencode(quad q)
+* \brief Ecrit dans globalcode[nextquad] et incrémente nextquad
+*/
+void gencode(quad q);
 
+/**
+* \fn quadop quadop_empty()
+* \brief Crée un quadop vide
+* \return Un quadop
+*/
+quadop quadop_empty();
+
+/**
+* \fn quadop quadop_cst(int cst)
+* \brief Crée un quadop de type constante
+* \param cst Un entier
+* \return Un quadop
+*/
+quadop quadop_cst(int cst);
+
+/**
+* \fn quadop quadop_bool(int boolean)
+* \brief Crée un quadop de type booléen
+* \param boolean Un entier
+* \return Un quadop
+*/
+quadop quadop_bool(int boolean);
+
+/**
+* \fn quadop quadop_label(int label)
+* \brief Crée un quadop de type label
+* \param label Un entier
+* \return Un quadop
+*/
+quadop quadop_label(int label);
+
+/**
+* \fn quadop quadop_name(char *name)
+* \brief Crée un quadop de type nom
+* \param name Une chaine de caractères
+* \return Un quadop
+*/
+quadop quadop_name(char *name);
+
+/**
+* \fn quadop quadop_context(struct s_context *context)
+* \brief Crée un quadop de type context
+* \param context Une structure s_context
+* \return Un quadop
+*/
+quadop quadop_context(struct s_context *context);
+
+/**
+* \fn quadop quadop_str(int string)
+* \brief Crée un quadop de type string
+* \param string Un entier
+* \return Un quadop
+*/
+quadop quadop_str(int string);
+
+/**
+* \fn quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3)
+* \brief Crée un quad
+* \param type Un quad_type
+* \param op1 Un quadop
+* \param op2 Un quadop
+* \param op3 Un quadop
+* \return Un quad
+*/
+quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3);
+
+//--------------------------------------------------------------
+// LISTES
+//--------------------------------------------------------------
+
+/**
+* \struct ilist 
+* 
+*/
 struct ilist {
     int *content;
     size_t size;
@@ -89,25 +181,63 @@ struct ilist {
 
 typedef struct ilist ilist;
 
-ilist *crelist(int label); // crée une liste d’adresses de quadruplets,
-// initialisée à un seul élément "label", et qui retourne un pointeur sur la
-// liste créée
+/**
+* \fn ilist *crelist(int label)
+* \brief Crée une liste d'adresses de quadruplets
+* \param label Un entier
+* \return Un pointeur sur une liste
+*/
+ilist *crelist(int label);
 
-ilist *concat(ilist *list1, ilist *list2); // concatène deux listes à partir de
-// leurs pointeurs respectifs "list1" et "list2", et retourne un pointeur sur la
-// liste résultat
+/**
+* \fn ilist *concat(ilist *list1, ilist *list2)
+* \brief Concatène deux listes
+* \param list1 Une liste
+* \param list2 Une liste
+* \return Un pointeur sur une liste
+*/
+ilist *concat(ilist *list1, ilist *list2);
 
-void complete(ilist *list, int label); // complète tous les quadruplets de la
-// liste "list" avec le label spécifié
+/**
+* \fn void complete(ilist *list, int label)
+* \brief Complète tous les quadruplets d'une liste
+* \param list Une liste
+* \param label Un entier
+*/
+void complete(ilist *list, int label);
 
+/**
+* \fn void freelist(ilist *list)
+* \brief Libère la mémoire allouée pour une liste
+* \param list Une liste
+*/
 void freelist(ilist *list);
 
+/**
+* \fn void print_quadop(quadop qo)
+* \brief Affiche un quadop
+* \param qo Un quadop
+*/
 void print_quadop(quadop qo);
 
+/**
+* \fn void print_quad(quad q)
+* \brief Affiche un quad
+* \param q Un quad
+*/
 void print_quad(quad q);
 
+/**
+* \fn void print_ilist(ilist *l)
+* \brief Affiche une liste
+* \param l Une liste
+*/
 void print_ilist(ilist *l);
 
+/**
+* \fn void print_globalcode()
+* \brief Affiche le code généré
+*/
 void print_globalcode();
 
 #endif
