@@ -10,7 +10,7 @@
 
 struct s_context *context = NULL;
 unsigned int tempnum = 0;
-struct s_stringtable *strings;
+struct s_stringtable *strings = NULL;
 
 //--------------------------------------------------------------
 // TABLE DE SYMBOLES
@@ -118,15 +118,12 @@ struct s_entry *tos_lookup(struct s_context *ctx, const char *ident)
 {
     unsigned int idx = hash_idx(ident);
 
-    struct s_context *tmp = ctx;
     struct s_entry *look = NULL;
 
-    while (tmp != NULL)
+    for (struct s_context *tmp = ctx; tmp != NULL; tmp = tmp->next)
     {
         if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
             return look;
-
-        tmp = tmp->next;
     }
     return NULL;
 }
@@ -135,25 +132,20 @@ int tos_getoff(struct s_context *ctx, const char *ident)
 {
     unsigned int idx = hash_idx(ident);
 
-    struct s_context *tmp = ctx;
     struct s_entry *look = NULL;
     int offset = 0;
 
-    while (tmp != NULL)
+    for (struct s_context *tmp = ctx; tmp != NULL; tmp = tmp->next)
     {
-        if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
-        {
-            if (tmp->next == NULL)
-            {
-                return -1;
-            }
-            return look->offset + offset;
-        }
+        if (tmp->next == NULL)
+            return -1;
 
+        if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
+            return look->offset + offset;
+        
         offset += tmp->count;
-        tmp = tmp->next;
     }
-    return -255;
+    return -1;
 }
 
 //--------------------------------------------------------------
@@ -204,8 +196,7 @@ struct s_arglist *arglist_addend(struct s_arglist *arglist, enum elem_type type)
     new_arg->next = NULL;
 
     struct s_arglist *tmp = arglist;
-    for (; tmp->next != NULL; tmp = tmp->next)
-        ;
+    for (; tmp->next != NULL; tmp = tmp->next);
     tmp->next = new_arg;
 
     return arglist;
@@ -271,14 +262,10 @@ struct s_stringtable *new_string(struct s_stringtable *st, const char *content)
 
 char *get_content(struct s_stringtable *st, unsigned int idx)
 {
-    struct s_stringtable *tmp = st;
-
-    while (tmp != NULL)
+    for (struct s_stringtable *tmp = st; tmp != NULL; tmp = tmp->next)
     {
         if (tmp->idx == idx)
             return tmp->content;
-
-        tmp = tmp->next;
     }
     return NULL;
 }

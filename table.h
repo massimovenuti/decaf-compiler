@@ -158,7 +158,7 @@ struct s_entry *tos_lookup(struct s_context *ctx, const char *ident);
 
 /**
 * \fn int tos_getoff(struct s_context *ctx, const char *ident)
-* \brief ...
+* \brief Calcule l'offset d'une entrée à partir du sommet de la pile de tables de symboles
 * \param ctx Une pile de tables de symboles
 * \param ident L'identificateur de l'entrée dans la pile de tables de symboles
 */
