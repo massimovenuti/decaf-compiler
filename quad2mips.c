@@ -63,7 +63,7 @@ void free_tab(struct s_context *t, FILE *output)
 	{
 		for (size_t i = 0; i < t->count; i++)
 		{
-			fprintf(output, "sw $zero, %d($sp)\n", i * 4);
+			fprintf(output, "sw $zero, %ld($sp)\n", i * 4);
 		}
 		fprintf(output, "addi $sp, $sp, %d\n", t->count * 4);
 	}
@@ -71,6 +71,8 @@ void free_tab(struct s_context *t, FILE *output)
 
 void load_quadop(quadop qo, const char *registre, unsigned int my_off, struct s_context *t, FILE *output)
 {
+    int off;
+    
 	switch (qo.type)
 	{
 	case QO_CST:
@@ -82,7 +84,7 @@ void load_quadop(quadop qo, const char *registre, unsigned int my_off, struct s_
 		break;
 
 	case QO_NAME:
-		int off = tos_getoff(t, qo.u.name);
+		off = tos_getoff(t, qo.u.name);
 		if (off < 0)
 		{
 			fprintf(output, "lw %s, _G%s\n", registre, qo.u.name);
@@ -117,6 +119,8 @@ void save(quadop qo, const char *registre, unsigned int my_off, struct s_context
 
 void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, FILE *output)
 {
+    struct s_context *tmp;
+
 	switch (q.type)
 	{
 	case Q_ADD:
@@ -232,7 +236,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		fprintf(output, "jal %s\n", q.op1.u.name);
 		for (size_t i = 0; i < (q.op2.u.cst); i++)
 		{
-			fprintf(output, "sw $zero, %d($sp)\n", i * 4);
+			fprintf(output, "sw $zero, %ld($sp)\n", i * 4);
 		}
 		fprintf(output, "addi $sp, $sp, %d\n", (q.op2.u.cst) * 4);
 		fprintf(output, "lw $ra, 0($sp)\n");
@@ -285,13 +289,13 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		break;
 
 	case Q_PECTX:
-		struct s_context *tp = q.op3.u.context;
-		free_tab(tp, output);
+        tmp = q.op3.u.context;
+		free_tab(tmp, output);
 		break;
 
 	case Q_ECTX:
 		free_tab(*t, output);
-		struct s_context *tmp = *t;
+		tmp = *t;
 		*t = (*t)->next;
 		tos_freectx(tmp);
 		break;
