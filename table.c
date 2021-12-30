@@ -138,15 +138,17 @@ int tos_getoff(struct s_context *ctx, const char *ident)
 
     for (struct s_context *tmp = ctx; tmp != NULL; tmp = tmp->next)
     {
-        if (tmp->next == NULL)
-            return -1;
-
         if ((look = lookup_entry(tmp->entry[idx], ident)) != NULL)
+        {
+            if (tmp->next == NULL)
+            {
+                return -1;
+            }
             return look->offset + offset;
-        
+        }
         offset += tmp->count;
     }
-    return -1;
+    return -255;
 }
 
 //--------------------------------------------------------------
