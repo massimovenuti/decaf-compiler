@@ -71,6 +71,7 @@ struct s_entry {
 struct s_context {
     struct s_entry *entry[N_HASH];
     unsigned int count;
+    unsigned int idx;
     struct s_context *next;
 };
 
@@ -279,5 +280,45 @@ unsigned int count_stringtable(struct s_stringtable *st);
 * \param st Une table de chaînes de caractères
 */
 void free_stringtable(struct s_stringtable *st);
+
+//--------------------------------------------------------------
+// AFFICHAGE
+//--------------------------------------------------------------
+
+/**
+* \fn ...
+* \brief ...
+* \param type ...
+*/
+void print_elem_type(enum elem_type type);
+
+/**
+* \fn ...
+* \brief ...
+* \param arglist ...
+*/
+void print_arglist(struct s_arglist *arglist);
+
+/**
+* \fn ...
+* \brief ...
+* \param fun ...
+* \param ident ...
+*/
+void print_function(struct s_typedesc *fun, const char* ident);
+
+/**
+* \fn ...
+* \brief ...
+* \param entry ...
+*/
+void print_entry(struct s_entry *entry);
+
+/**
+* \fn ...
+* \brief ...
+* \param ctx ...
+*/
+void tos_printctx(struct s_context *ctx);
 
 #endif

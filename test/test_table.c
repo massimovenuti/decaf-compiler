@@ -294,5 +294,45 @@ int main(int argc, char **argv)
         exit(EXIT_FAILURE);
     }
 
+    //--------------------------------------------------------------
+    // BONUS : PRINTING A SAMPLE OF SYMBOL TABLE
+    //--------------------------------------------------------------
+    context = tos_pushctx(context);
+
+    e1 = tos_newname(context, "var1");
+    e1->type = elementary_type(T_INT);
+
+    e1 = tos_newname(context, "var2");
+    e1->type = elementary_type(T_BOOL);
+
+    e1 = tos_newname(context, "var3");
+    e1->type = array_type(E_BOOL, 50);
+
+    e1 = tos_newname(context, "fun1");
+    al1 = NULL;
+
+    // function : ret = T_VOID, args = [E_BOOL, E_INT, E_BOOL, E_INT, E_INT] 
+    al1 = arglist_addbegin(al1, E_INT);
+    al1 = arglist_addbegin(al1, E_INT);
+    al1 = arglist_addbegin(al1, E_BOOL);
+    al1 = arglist_addbegin(al1, E_INT);
+    al1 = arglist_addbegin(al1, E_BOOL);
+
+    e1->type = function_type(R_VOID, al1);
+
+    context = tos_pushctx(context);
+
+    e1 = tos_newname(context, "var4");
+    e1->type = array_type(E_BOOL, 10);
+
+    e1 = tos_newname(context, "var5");
+    e1->type = elementary_type(T_INT);
+
+    printf("\n[PRINTING-SAMPLE]\n\n");
+    tos_printctx(context);
+
+    context = tos_popfreectx(context);
+    context = tos_popfreectx(context);
+
     return EXIT_SUCCESS;
 }

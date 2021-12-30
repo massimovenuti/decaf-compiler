@@ -61,6 +61,7 @@ struct s_context *tos_pushctx(struct s_context *ctx)
         new_ctx->entry[i] = NULL;
 
     new_ctx->count = 0;
+    new_ctx->idx = (ctx == NULL) ? 0 : 1 + ctx->idx;
     new_ctx->next = ctx;
     return new_ctx;
 }
@@ -282,4 +283,125 @@ void free_stringtable(struct s_stringtable *st)
     free_stringtable(st->next);
     free(st->content);
     free(st);
+}
+
+//--------------------------------------------------------------
+// AFFICHAGE
+//--------------------------------------------------------------
+
+void print_elem_type(enum elem_type type)
+{
+    switch (type)
+    {
+    case E_STR:
+        printf("string");
+        break;
+
+    case E_INT:
+        printf("int");
+        break;
+
+    case E_BOOL:
+        printf("boolean");
+        break;
+
+    default:
+        break;
+    }
+}
+
+void print_arglist(struct s_arglist *arglist)
+{
+    if (arglist == NULL)
+        return;
+    print_elem_type(arglist->type);
+    
+    if (arglist->next != NULL)
+        printf(", ");
+    print_arglist(arglist->next);
+}
+
+void print_function(struct s_typedesc *fun, const char* ident)
+{
+    switch (fun->u.function_info.ret_type)
+    {
+    case R_VOID:
+        printf("void ");
+        break;
+
+    case R_INT:
+        printf("int ");
+        break;
+
+    case R_BOOL:
+        printf("bool ");
+        break;
+    
+    default:
+        break;
+    }
+    printf("%s (", ident);
+    print_arglist(fun->u.function_info.arglist);
+    printf(")");
+}
+
+void print_entry(struct s_entry *entry)
+{
+    struct s_typedesc *typedesc = NULL;
+
+    for (struct s_entry *tmp = entry; tmp != NULL; tmp = tmp->next)
+    {
+        typedesc = tmp->type;
+
+        printf("{ ");
+
+        if (typedesc != NULL)
+        {
+            switch (typedesc->type)
+            {
+            case T_FUNCTION:
+                print_function(typedesc, tmp->ident);
+                break;
+
+            case T_ARRAY:
+                print_elem_type(typedesc->u.array_info.type);
+                printf(" %s[%d]", tmp->ident, typedesc->u.array_info.size);
+                break;
+
+            case T_INT:
+                printf("int %s", tmp->ident);
+                break;
+
+            case T_BOOL:
+                printf("boolean %s", tmp->ident);
+                break;
+            
+            default:
+                break;
+            }
+        }
+        printf(" } ");
+    }    
+}
+
+void tos_printctx(struct s_context *ctx)
+{
+    printf(">> Table des symboles <<\n\n");
+
+    for (struct s_context *tmp = ctx; tmp != NULL; tmp = tmp->next)
+    {
+        printf("# Context %d\n", tmp->idx);
+
+        for (int i = 0; i < N_HASH; i++)
+        {
+            if (tmp->entry[i] != NULL) 
+            {
+                printf("%03d: ", i);
+                print_entry(tmp->entry[i]);
+                printf("\n");
+            }
+        }
+        printf("\n");
+    }
+    printf(">> ------------------ <<\n");
 }
