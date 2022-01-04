@@ -565,7 +565,6 @@ statement
 	token_yylloc = @2;
 	if ($2.type == E_INT) { // cas int
 		ERRORIF(infunction_type != R_INT, "mauvais type de retour");
-		fprintf(stderr, "%d\n", infunction);
 		gencode(quad_make(Q_RETURN, quadop_context(context), quadop_cst(infunction - 2), $2.u.result));
 	} else { // cas bool
 		ERRORIF(infunction_type != R_BOOL, "mauvais type de retour");

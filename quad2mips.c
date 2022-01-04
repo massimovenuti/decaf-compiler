@@ -267,7 +267,6 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 			load_quadop(q.op3, "$v0", *my_off, *t, output);
 		}
 		free_n_tab(*t, q.op2.u.cst, output);
-		fprintf(stderr, "\n%d\n", q.op2.u.cst);
 		fprintf(output, "jr $ra\n");
 		break;
 
@@ -315,7 +314,7 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		break;
 
 	case Q_EXIT:
-		fprintf(output, "li $v0 17\nli $a0 0\nsyscall\n");
+		fprintf(output, "li $v0 10\nsyscall\n");
 		break;
 
 	default:
@@ -334,7 +333,7 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 	char *mips_WriteString = "WriteString:\nli $v0 4\nlw $a0 0($sp)\nsyscall\njr $ra\n";
 	char *mips_WriteBool = "WriteBool:\nli $v0 4\nlw $t0 0($sp)\nbnez $t0,  _True\nla $a0 _SFALSE\nsyscall\njr $ra\n_True:\nla $a0 _STRUE\nsyscall\njr $ra\n";
 	char *mips_ReadInt = "ReadInt:\nli $v0 5\nsyscall\njr $ra\n";
-	char *mips_exit = "li $v0 17\nli $a0 0\nsyscall";
+	char *mips_exit = "li $v0 10\nsyscall";
 
 	struct s_context *t = NULL;
 	int is_def = 0;
