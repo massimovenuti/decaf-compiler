@@ -230,6 +230,10 @@ method_decl
 			infunction--;
 	}
 	// TODO: faire print un message d'erreur
+	strings = new_string(strings, "\"**** \"");
+	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | BOOL ID {
@@ -253,6 +257,10 @@ method_decl
 			infunction--;
 	}
 	// TODO: faire print un message d'erreur
+	strings = new_string(strings, "\"**** \"");
+	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 | VOID ID {
@@ -415,8 +423,12 @@ statement
 	token_yylloc = @3;
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 2)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 5)));
 	// TODO: faire afficher un message d'erreur
+	strings = new_string(strings, "\"**** \"");
+	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
 	quadop qid = quadop_name(id->ident);
@@ -456,8 +468,12 @@ statement
 	token_yylloc = @6;
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 2)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 5)));
 	// TODO: faire afficher un message d'erreur
+	strings = new_string(strings, "\"**** \"");
+	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
 	quadop qid = quadop_name(id->ident);
@@ -490,8 +506,12 @@ statement
 	token_yylloc = @6;
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 2)));
-	// TODO: faire afficher un message d'erreur
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 5)));
+	// TODO: faire afficher un message d'
+	strings = new_string(strings, "\"**** \"");
+	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_statement();
 	quadop qid = quadop_name(id->ident);
@@ -738,8 +758,12 @@ expr
 	token_yylloc = @3;
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
-	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 2)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 5)));
 	// TODO: faire afficher un message d'erreur
+	strings = new_string(strings, "\"**** \"");
+	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$ = new_expr();
 	struct s_entry *temp = tos_newtemp(context);
