@@ -81,6 +81,7 @@ typedef struct quad quad;
 extern quad *globalcode; // code généré
 extern size_t codesize;  // taille du tableau globalcode
 extern size_t nextquad;  // numéro du prochain quad généré
+// extern struct s_stringtable *strings;
 
 /**
 * \fn void initcode()
