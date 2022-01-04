@@ -286,38 +286,38 @@ void free_stringtable(struct s_stringtable *st);
 //--------------------------------------------------------------
 
 /**
-* \fn ...
-* \brief ...
-* \param type ...
+* \fn void print_elem_type(elem elem_type type)
+* \brief Affiche le nom d'un type élémentaire
+* \param type Un type de fonction
 */
 void print_elem_type(enum elem_type type);
 
 /**
-* \fn ...
-* \brief ...
-* \param arglist ...
+* \fn void print_arglist(struct s_arglist *arglist)
+* \brief Affiche le type des arguments dans une liste d'arguments
+* \param arglist Une liste d'arguments
 */
 void print_arglist(struct s_arglist *arglist);
 
 /**
-* \fn ...
-* \brief ...
-* \param fun ...
-* \param ident ...
+* \fn void print_function(struct s_typedesc *fun, const char* ident)
+* \brief Affiche le prototype d'une fonction
+* \param fun Descripteur du type d'une fonction
+* \param ident Une chaine de caractère
 */
 void print_function(struct s_typedesc *fun, const char* ident);
 
 /**
-* \fn ...
-* \brief ...
-* \param entry ...
+* \fn void print_entry(struct s_entry *entry)
+* \brief Affiche une structure d'entrée
+* \param entry Une structure descripteur d'entrée
 */
 void print_entry(struct s_entry *entry);
 
 /**
-* \fn ...
-* \brief ...
-* \param ctx ...
+* \fn void tos_printctx(struct s_context *ctx)
+* \brief Affiche les contextes d'une table des symboles
+* \param ctx Une pile de table des symboles
 */
 void tos_printctx(struct s_context *ctx);
 
