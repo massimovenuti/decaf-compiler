@@ -83,7 +83,8 @@ YYLTYPE token_yylloc;
 
 %left OR
 %left AND
-%left '<' '>' LEQ BEQ EQ NEQ
+%left EQ NEQ
+%left '<' '>' LEQ BEQ
 %left '+' '-'
 %left '*' '/' '%'
 %nonassoc NOT UMINUS
