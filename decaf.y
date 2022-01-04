@@ -101,6 +101,8 @@ pushctx
 	gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
 	if (inloop)
 		inloop++;
+	if (infunction)
+		infunction++;
 }
 ;
 
@@ -110,6 +112,8 @@ popctx
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	if (inloop)
 		inloop--;
+	if (infunction)
+		infunction--;
 }
 ;
 
@@ -219,6 +223,10 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+		if (inloop)
+			inloop--;
+		if (infunction)
+			infunction--;
 	}
 	// TODO: faire print un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
@@ -238,6 +246,10 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+		if (inloop)
+			inloop--;
+		if (infunction)
+			infunction--;
 	}
 	// TODO: faire print un message d'erreur
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
@@ -258,6 +270,10 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+		if (inloop)
+			inloop--;
+		if (infunction)
+			infunction--;
 	}
 }
 ;
@@ -537,6 +553,10 @@ statement
 	complete($11.next_break, nextquad);
 	context = tos_popctx(context);
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+	if (inloop)
+		inloop--;
+	if (infunction)
+		infunction--;
 }
 | RETURN expr ';' {
 	token_yylloc = @1;
@@ -545,13 +565,14 @@ statement
 	token_yylloc = @2;
 	if ($2.type == E_INT) { // cas int
 		ERRORIF(infunction_type != R_INT, "mauvais type de retour");
-		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), $2.u.result));
+		fprintf(stderr, "%d\n", infunction);
+		gencode(quad_make(Q_RETURN, quadop_context(context), quadop_cst(infunction - 2), $2.u.result));
 	} else { // cas bool
 		ERRORIF(infunction_type != R_BOOL, "mauvais type de retour");
 		complete($2.u.boolexpr.true, nextquad);
-		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(1)));
+		gencode(quad_make(Q_RETURN, quadop_context(context), quadop_cst(infunction - 2), quadop_bool(1)));
 		complete($2.u.boolexpr.false, nextquad);
-		gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_bool(0)));
+		gencode(quad_make(Q_RETURN, quadop_context(context), quadop_cst(infunction - 2), quadop_bool(0)));
 	}
 }
 | RETURN ';' {
@@ -559,7 +580,7 @@ statement
 	ERRORIF(!infunction, "return doit être appelé dans une fonction");
 	ERRORIF(infunction_type != R_VOID, "mauvais type de retour");
 	$$ = new_statement();
-	gencode(quad_make(Q_RETURN, quadop_empty(), quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_RETURN, quadop_context(context), quadop_cst(infunction - 2), quadop_empty()));
 }
 | BREAK ';' {
 	token_yylloc = @1;

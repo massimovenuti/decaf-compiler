@@ -69,6 +69,19 @@ void free_tab(struct s_context *t, FILE *output)
 	}
 }
 
+void free_n_tab(struct s_context *t, int n, FILE *output)
+{
+	struct s_context *tmp = t;
+	for (int i = 0; i < n; i++, tmp = tmp->next)
+	{
+		for (size_t i = 0; i < tmp->count; i++)
+		{
+			fprintf(output, "sw $zero, %ld($sp)\n", i * 4);
+		}
+		fprintf(output, "addi $sp, $sp, %d\n", tmp->count * 4);
+	}
+}
+
 void load_quadop(quadop qo, const char *registre, unsigned int my_off, struct s_context *t, FILE *output)
 {
     int off;
@@ -253,7 +266,8 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 		{
 			load_quadop(q.op3, "$v0", *my_off, *t, output);
 		}
-		free_tab(*t, output);
+		free_n_tab(*t, q.op2.u.cst, output);
+		fprintf(stderr, "\n%d\n", q.op2.u.cst);
 		fprintf(output, "jr $ra\n");
 		break;
 
