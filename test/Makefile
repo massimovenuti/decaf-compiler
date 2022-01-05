@@ -3,7 +3,7 @@ CFLAGS = -Wall -Wextra -Werror
 LDFLAGS = -fprofile-arcs -ftest-coverage
 all: test_quad test_table
 
-test_quad: test_quad.o quad.o
+test_quad: test_quad.o quad.o table.o
 
 quad.o: ../quad.c
 	$(CC) $(CFLAGS) -fprofile-arcs -ftest-coverage -c $< -I../
