@@ -11,6 +11,8 @@ int main(int argc, char **argv)
     char *content;
     int i, test, errors;
     unsigned int idx1, idx2;
+
+    struct s_fifo *fifo;
     struct s_stringtable *st;
     struct s_entry *e1, *e2, *e3;
     struct s_arglist *al1, *al2, *al3;
@@ -27,6 +29,7 @@ int main(int argc, char **argv)
     al3 = NULL;
 
     st = NULL;
+    fifo = NULL;
     content = NULL;
 
     //--------------------------------------------------------------
@@ -291,6 +294,36 @@ int main(int argc, char **argv)
     else
     {
         printf("[ko]\t'string table'\n");
+        exit(EXIT_FAILURE);
+    }
+
+    //--------------------------------------------------------------
+    // TEST 9 : FIFO
+    //--------------------------------------------------------------
+    fifo = fifo_push(fifo, 1);
+    fifo = fifo_push(fifo, 3);
+    fifo = fifo_push(fifo, 7);
+
+    errors += (fifo == NULL || fifo->num != 7 ) ? 1 : 0;
+    errors += (errors || fifo->next == NULL || fifo->next->num != 3) ? 1 : 0;
+    errors += (errors || fifo->next->next == NULL || fifo->next->next->num != 1) ? 1 : 0;
+    errors += (errors || fifo->next->next->next != NULL) ? 1 : 0;
+
+    fifo = fifo_pop(fifo);
+    errors += (fifo == NULL || fifo->num != 3) ? 1 : 0;
+    errors += (errors || fifo->next == NULL || fifo->next->num != 1) ? 1 : 0;
+    errors += (errors || fifo->next->next != NULL) ? 1 : 0;
+
+    fifo_free(fifo);
+
+    printf("test %d\t", ++test);
+    if (!errors)
+    {
+        printf("[ok]\t'fifo'\n");
+    }
+    else
+    {
+        printf("[ko]\t'fifo'\n");
         exit(EXIT_FAILURE);
     }
 

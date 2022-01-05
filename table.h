@@ -16,6 +16,15 @@
 #define N_HASH 100  // taille de la table de hachage
 
 /**
+* \struct s_fifo
+* \brief Pile d'entiers
+*/
+struct s_fifo {
+    int num;
+    struct s_fifo *next;
+};
+
+/**
 * \struct s_stringtable
 * \brief Table de chaine de caractères
 */
@@ -280,6 +289,32 @@ unsigned int count_stringtable(struct s_stringtable *st);
 * \param st Une table de chaînes de caractères
 */
 void free_stringtable(struct s_stringtable *st);
+
+//--------------------------------------------------------------
+// PILE D'ENTIERS
+//--------------------------------------------------------------
+
+/**
+* \fn ...
+* \brief ...
+* \param fifo ...
+* \param num ...
+*/
+struct s_fifo *fifo_push(struct s_fifo *fifo, int num);
+
+/**
+* \fn ...
+* \brief ...
+* \param fifo ...
+*/
+struct s_fifo *fifo_pop(struct s_fifo *fifo);
+
+/**
+* \fn ...
+* \brief ...
+* \param fifo ...
+*/
+void fifo_free(struct s_fifo *fifo);
 
 //--------------------------------------------------------------
 // AFFICHAGE

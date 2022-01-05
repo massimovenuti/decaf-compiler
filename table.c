@@ -288,6 +288,33 @@ void free_stringtable(struct s_stringtable *st)
 }
 
 //--------------------------------------------------------------
+// PILE D'ENTIERS
+//--------------------------------------------------------------
+
+struct s_fifo *fifo_push(struct s_fifo *fifo, int num)
+{
+    struct s_fifo *new_fifo = (struct s_fifo *)malloc(sizeof(struct s_fifo));
+    new_fifo->num = num;
+    new_fifo->next = fifo;
+    return new_fifo;
+}
+
+struct s_fifo *fifo_pop(struct s_fifo *fifo)
+{
+    struct s_fifo *next = fifo->next;
+    free(fifo);
+    return next;
+}
+
+void fifo_free(struct s_fifo *fifo)
+{
+    if (fifo == NULL)
+        return;
+    fifo_free(fifo->next);
+    free(fifo);
+}
+
+//--------------------------------------------------------------
 // AFFICHAGE
 //--------------------------------------------------------------
 
