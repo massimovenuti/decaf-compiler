@@ -295,24 +295,24 @@ void free_stringtable(struct s_stringtable *st);
 //--------------------------------------------------------------
 
 /**
-* \fn ...
-* \brief ...
-* \param fifo ...
-* \param num ...
+* \fn struct s_fifo *fifo_push(struct s_fifo *fifo, int num)
+* \brief Empile un nouvel entier dans la pile
+* \param fifo Une pile d'entiers
+* \param num Un entier
 */
 struct s_fifo *fifo_push(struct s_fifo *fifo, int num);
 
 /**
-* \fn ...
-* \brief ...
-* \param fifo ...
+* \fn struct s_fifo *fifo_pop(struct s_fifo *fifo)
+* \brief Dépile et libère l'espace mémoire occupé par le maillon au sommet de la pile
+* \param fifo Une pile d'entiers
 */
 struct s_fifo *fifo_pop(struct s_fifo *fifo);
 
 /**
-* \fn ...
-* \brief ...
-* \param fifo ...
+* \fn void fifo_free(struct s_fifo *fifo)
+* \brief Libère l'espace mémoire occupé par une pile d'entiers
+* \param fifo Une pile d'entiers
 */
 void fifo_free(struct s_fifo *fifo);
 
