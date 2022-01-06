@@ -223,6 +223,10 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+		if (infunction)
+			infunction--;
+		if (inloop != NULL)
+			inloop->num--;
 	}
 	strings = new_string(strings, "\"**** fonction déclarée comme retournant un résultat ne retourne rien\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
@@ -245,6 +249,10 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+		if (infunction)
+			infunction--;
+		if (inloop != NULL)
+			inloop->num--;
 	}
 	strings = new_string(strings, "\"**** fonction déclarée comme retournant un résultat ne retourne rien\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
@@ -268,6 +276,10 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
+		if (infunction)
+			infunction--;
+		if (inloop != NULL)
+			inloop->num--;
 	}
 }
 ;
@@ -557,6 +569,9 @@ statement
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	if (infunction)
 		infunction--;
+	if (inloop != NULL)
+		inloop->num--;
+
 }
 | RETURN expr ';' {
 	token_yylloc = @1;
