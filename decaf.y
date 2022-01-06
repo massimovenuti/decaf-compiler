@@ -9,9 +9,11 @@
 extern struct s_context *context;
 extern struct s_stringtable *strings;
 
-unsigned inloop = 0;
+// int yydebug = 1; 
+struct s_fifo *inloop = NULL;
 unsigned infunction = 0;
 enum ret_type infunction_type;
+YYLTYPE token_yylloc;
 
 extern int yylex();
 extern int yylineno;
@@ -22,9 +24,6 @@ void print_line(int lineNum);
 void yyerror(char *msg);
 struct s_statement new_statement();
 struct s_expr new_expr();
-YYLTYPE token_yylloc;
-
-// int yydebug = 1; 
 %}
 
 %locations
@@ -100,8 +99,8 @@ pushctx
 : %empty {
 	context = tos_pushctx(context);
 	gencode(quad_make(Q_BCTX, quadop_empty(), quadop_empty(), quadop_context(context)));
-	if (inloop)
-		inloop++;
+	if (inloop != NULL)
+		inloop->num++;
 	if (infunction)
 		infunction++;
 }
@@ -111,8 +110,8 @@ popctx
 : %empty {
 	context = tos_popctx(context);
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
-	if (inloop)
-		inloop--;
+	if (inloop != NULL)
+		inloop->num--;
 	if (infunction)
 		infunction--;
 }
@@ -224,10 +223,6 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
-		if (inloop)
-			inloop--;
-		if (infunction)
-			infunction--;
 	}
 	// TODO: faire print un message d'erreur
 	strings = new_string(strings, "\"**** \"");
@@ -251,10 +246,6 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
-		if (inloop)
-			inloop--;
-		if (infunction)
-			infunction--;
 	}
 	// TODO: faire print un message d'erreur
 	strings = new_string(strings, "\"**** \"");
@@ -279,10 +270,6 @@ method_decl
 	if ($5 != NULL) {
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
-		if (inloop)
-			inloop--;
-		if (infunction)
-			infunction--;
 	}
 }
 ;
@@ -549,7 +536,7 @@ statement
 	ERRORIF($5.type != E_INT, "l'expression doit être int");
 	token_yylloc = @7;
 	ERRORIF($7.type != E_INT, "l'expression doit être int");
-	inloop = 1;
+	inloop = fifo_push(inloop, 0);
 	struct s_entry *tmp = tos_newtemp(context);
 	tmp->type = elementary_type(T_INT);
 	gencode(quad_make(Q_MOVE, $7.u.result, quadop_empty(), quadop_name(tmp->ident)));
@@ -568,14 +555,11 @@ statement
 	gencode(quad_make(Q_ADD, qid, quadop_cst(1), qid));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($9)));
 	$$ = new_statement();
-	// $$.next = concat(crelist($10), $12.next_break);
-	inloop = 0;
+	inloop = fifo_pop(inloop);
 	complete(crelist($9), nextquad);
 	complete($11.next_break, nextquad);
 	context = tos_popctx(context);
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
-	if (inloop)
-		inloop--;
 	if (infunction)
 		infunction--;
 }
@@ -604,9 +588,9 @@ statement
 }
 | BREAK ';' {
 	token_yylloc = @1;
-	ERRORIF(!inloop, "break doit être appelé dans une boucle");
+	ERRORIF(inloop == NULL, "break doit être appelé dans une boucle");
 	struct s_context *tmp = context;
-	for (int i = inloop; i > 1; i--) {
+	for (int i = inloop->num; i > 0; i--) {
 		gencode(quad_make(Q_PECTX, quadop_empty(), quadop_empty(), quadop_context(tmp)));
 		tmp = tmp->next;
 	}
@@ -616,10 +600,9 @@ statement
 }
 | CONTINUE ';' {
 	token_yylloc = @1;
-	ERRORIF(!inloop, "continue doit être appelé dans une boucle");
+	ERRORIF(inloop == NULL, "continue doit être appelé dans une boucle");
 	struct s_context *tmp = context;
-	fprintf(stderr,"inloop = %d\n", inloop);
-	for (int i = inloop; i > 1; i--) {
+	for (int i = inloop->num; i > 0; i--) {
 		gencode(quad_make(Q_PECTX, quadop_empty(), quadop_empty(), quadop_context(tmp)));
 		tmp = tmp->next;
 	}
