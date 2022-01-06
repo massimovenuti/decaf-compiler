@@ -1,7 +1,7 @@
 /**
 * @file table.c
 * @author LAJARGE, ULUCAN, VENUTI, VOGEL
-* @brief Tables de symboles, types et table de chaine de caractères.
+* @brief Table de symboles, types, table de chaine de caractères et pile d'entiers.
 * @date 2021-12-28
 * 
 */
@@ -9,8 +9,9 @@
 #include "table.h"
 
 struct s_context *context = NULL;
-unsigned int tempnum = 0;
 struct s_stringtable *strings = NULL;
+
+unsigned int tempnum = 0;
 
 //--------------------------------------------------------------
 // TABLE DE SYMBOLES

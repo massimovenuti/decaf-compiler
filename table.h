@@ -4,7 +4,7 @@
 /**
 * @file table.h
 * @author LAJARGE, ULUCAN, VENUTI, VOGEL
-* @brief Tables de symboles, types et table de chaine de caractères (en-tête).
+* @brief Table de symboles, types, table de chaine de caractères et pile d'entiers (en-tête).
 * @date 2021-12-28
 * 
 */
