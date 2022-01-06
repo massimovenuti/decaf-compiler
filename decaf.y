@@ -224,8 +224,7 @@ method_decl
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
-	// TODO: faire print un message d'erreur
-	strings = new_string(strings, "\"**** \"");
+	strings = new_string(strings, "\"**** fonction déclarée comme retournant un résultat ne retourne rien\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
@@ -247,8 +246,7 @@ method_decl
 		context = tos_popctx(context);
 		gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	}
-	// TODO: faire print un message d'erreur
-	strings = new_string(strings, "\"**** \"");
+	strings = new_string(strings, "\"**** fonction déclarée comme retournant un résultat ne retourne rien\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
@@ -411,8 +409,7 @@ statement
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 5)));
-	// TODO: faire afficher un message d'erreur
-	strings = new_string(strings, "\"**** \"");
+	strings = new_string(strings, "\"**** index de tableau hors de portée\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
@@ -456,8 +453,7 @@ statement
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 5)));
-	// TODO: faire afficher un message d'erreur
-	strings = new_string(strings, "\"**** \"");
+	strings = new_string(strings, "\"**** index de tableau hors de portée\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
@@ -494,8 +490,7 @@ statement
 	ERRORIF($6.type != E_INT, "l'expression doit être int");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 5)));
-	// TODO: faire afficher un message d'
-	strings = new_string(strings, "\"**** \"");
+	strings = new_string(strings, "\"**** index de tableau hors de portée\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
@@ -621,9 +616,9 @@ method_call
 	token_yylloc = @1;
 	ERRORIF(id == NULL, "la fonction n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_FUNCTION), "la variable n'est pas une fonction");
-	// TODO: checker la fonction
 	quadop qo;
 	if (is_function_type(id->type, R_VOID, NULL)) { // procédure
+		// TODO: checker si on appelle main ?
 		qo = quadop_empty();
 		$$ = NULL;
 	} else if (is_function_type(id->type, R_INT, NULL)) { // fonction renvoyant int
@@ -647,11 +642,8 @@ method_call
 	token_yylloc = @1;
 	ERRORIF(id == NULL, "la fonction n'existe pas");
 	ERRORIF(!is_elementary_type(id->type, T_FUNCTION), "la variable n'est pas une fonction");
-	// TODO: checker la fonction
 	quadop qo;
 	if (is_function_type(id->type, R_VOID,  $4)) { // procédure
-		// TODO: gérer WriteInt, WriteBool, etc...
-		// TODO: checker si on appelle main ?
 		qo = quadop_empty();
 		$$ = NULL;
 	} else if (is_function_type(id->type, R_INT,  $4)) { // fonction renvoyant int
@@ -742,8 +734,7 @@ expr
 	ERRORIF($3.type != E_INT, "index de tableau doit être int");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(id->type->u.array_info.size), quadop_label(nextquad + 5)));
-	// TODO: faire afficher un message d'erreur
-	strings = new_string(strings, "\"**** \"");
+	strings = new_string(strings, "\"**** index de tableau hors de portée\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
