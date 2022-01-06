@@ -997,7 +997,7 @@ void check_array_use(struct s_entry *arr, YYLTYPE arr_loc, struct s_expr index, 
 }
 
 void gen_bool_eval(struct s_entry *result, struct s_expr expr) {
-	result->type = elementary_type(E_BOOL);
+	result->type = elementary_type(T_BOOL);
 	quadop qresult = quadop_name(result->ident);
 	complete(expr.u.boolexpr.true, nextquad);
 	gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qresult));
