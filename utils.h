@@ -17,7 +17,7 @@
     do {                                    \
         if ((exp)) {                        \
             yyerror(msg);                   \
-            YYERROR;                        \
+            exit(EXIT_FAILURE);                        \
         }                                   \
     } while (0)
 
