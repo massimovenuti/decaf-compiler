@@ -658,12 +658,16 @@ expr
 	if (is_array_type(id->type, E_INT)) {
 		$$ = new_expr(E_INT);
 		temp->type = elementary_type(T_INT);
+		$$.u.result = qo;
 	}
 	else {
 		$$ = new_expr(E_BOOL);
 		temp->type = elementary_type(T_BOOL);
+		$$.u.boolexpr.true = crelist(nextquad);
+		gencode(quad_make(Q_BEQ, qo, quadop_bool(1), quadop_empty()));
+		$$.u.boolexpr.false = crelist(nextquad);
+		gencode(quad_make(Q_GOTO, qo, quadop_empty(), quadop_empty()));
 	}
-	$$.u.result = qo;
 }
 | method_call {
 	token_yylloc = @1;
