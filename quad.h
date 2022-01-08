@@ -172,17 +172,6 @@ quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3);
 //--------------------------------------------------------------
 
 /**
-* \struct ilist 
-* 
-*/
-// struct ilist {
-//     int *content;
-//     size_t size;
-// };
-
-// typedef struct ilist ilist;
-
-/**
 * \fn struct s_fifo *crelist(int label)
 * \brief Crée une liste d'adresses de quadruplets
 * \param label Un entier
