@@ -69,7 +69,7 @@ test-decaf:
     GIT_SUBMODULE_STRATEGY: recursive
   stage: test
   before_script:
-    - apt update && apt -y install spim ssh
+    - apt update && apt -y install spim
   script:
     - ./dts/run.sh
   needs: ["build-decaf"]
