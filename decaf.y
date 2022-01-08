@@ -48,8 +48,7 @@ void gen_loop_exit();
 
 %union {
 	char charval;
-	// TODO: rendre dynamique
-	char strval[255];
+	char strval[2048];
 	int intval;
 	struct s_expr {
 		enum elem_type type;
@@ -78,21 +77,20 @@ void gen_loop_exit();
 %type <alistval> arg_l arg_l_ expr_l
 %type <etypeval> arg
 
-%token CLASS							// class 
-%token INT BOOL						// type
-%token VOID							// void
-%token <strval> ID							// id
-%token IF ELSE						// if else
-%token FOR							// for
-%token BREAK CONTINUE				// break continue
-%token RETURN						// return
-%token ADD_ASSIGN SUB_ASSIGN		// '+=' '-='
-%token LEQ BEQ EQ NEQ				// '<=' '>=' '==' '!='
-%token AND OR						// '&&' '||'
-%token <intval> INT_LITERAL BOOL_LITERAL		// ...
-%token <charval> CHAR_LITERAL 
-%token <strval> STRING_LITERAL	// ...
-
+%token CLASS							        // class 
+%token INT BOOL						            // type
+%token VOID							            // void
+%token <strval> ID							    // id
+%token IF ELSE						            // if else
+%token FOR							            // for
+%token BREAK CONTINUE				            // break continue
+%token RETURN						            // return
+%token ADD_ASSIGN SUB_ASSIGN		            // '+=' '-='
+%token LEQ BEQ EQ NEQ				            // '<=' '>=' '==' '!='
+%token AND OR						            // '&&' '||'
+%token <intval> INT_LITERAL BOOL_LITERAL		// int constant
+%token <charval> CHAR_LITERAL                   // char constant
+%token <strval> STRING_LITERAL	                // string constant
 
 %left OR
 %left AND

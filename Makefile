@@ -22,11 +22,10 @@ lex.yy.c: $(prefixe).l $(prefixe).tab.h
 	flex $(prefixe).l
 
 doc:
-	bison --report=all --report-file=$(prefixe).output \
-		--graph=$(prefixe).dot --output=/dev/null \
-		$(prefixe).y
-	dot -Tpdf < $(prefixe).dot > $(prefixe).pdf
+	doxygen doxygen.conf
 
 clean:
 	rm -f *.o $(prefixe).tab.c $(prefixe).tab.h lex.yy.c decaf \
 		$(prefixe).output $(prefixe).dot $(prefixe).pdf
+	rm -rf doc
+

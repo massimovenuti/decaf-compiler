@@ -1,3 +1,3 @@
 [submodule "dts"]
 	path = dts
-	url = git@git.unistra.fr:alain/dts.git
+	url = https://git.unistra.fr/alain/dts.git
