@@ -1,5 +1,6 @@
 prefixe=decaf
 
+CFLAGS= -g
 # exige 3 fichiers:
 # - $(prefixe).y (fichier bison)
 # - $(prefixe).lex (fichier flex)
@@ -9,19 +10,16 @@ prefixe=decaf
 # note : le programme principal ne doit surtout pas s'appeler $(prefixe).c
 # (make l'écraserait parce qu'il a une règle "%.c: %.y")
 
-all: main
+all: decaf
 
-main: main.o $(prefixe).tab.o lex.yy.o quad.o table.o
-	$(CC) $(LDFLAGS) $^ -o $@ $(LDLIBS)
+decaf: main.o $(prefixe).tab.o lex.yy.o quad.o table.o quad2mips.o
+	$(CC) $(LDFLAGS) $^ -g -o $@ $(LDLIBS)
 
 $(prefixe).tab.c: $(prefixe).y
 	bison -t -d --debug --verbose $(prefixe).y
 
 lex.yy.c: $(prefixe).l $(prefixe).tab.h
 	flex $(prefixe).l
-
-test: main
-	./main < test.txt
 
 doc:
 	bison --report=all --report-file=$(prefixe).output \
@@ -30,5 +28,5 @@ doc:
 	dot -Tpdf < $(prefixe).dot > $(prefixe).pdf
 
 clean:
-	rm -f *.o $(prefixe).tab.c $(prefixe).tab.h lex.yy.c main \
+	rm -f *.o $(prefixe).tab.c $(prefixe).tab.h lex.yy.c decaf \
 		$(prefixe).output $(prefixe).dot $(prefixe).pdf

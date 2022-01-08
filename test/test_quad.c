@@ -1,6 +1,7 @@
 #include "../quad.h"
 
-int check_quadop(quadop expected, quadop output) {
+int check_quadop(quadop expected, quadop output) 
+{
     if (expected.type != output.type) {
         return 0;
     }
@@ -26,71 +27,18 @@ int check_quadop(quadop expected, quadop output) {
     }
 }
 
-int check_quad(quad expected, quad output) {
+int check_quad(quad expected, quad output) 
+{
     return expected.type == output.type &&
            check_quadop(expected.op1, output.op1) &&
            check_quadop(expected.op2, output.op2) &&
            check_quadop(expected.op3, output.op3);
 }
 
-void print_quadop(quadop qo) {
-    switch (qo.type) {
-    case QO_CST:
-        printf("(cst,%d)", qo.u.cst);
-        break;
-    case QO_LABEL:
-        printf("(label,%d)", qo.u.label);
-        break;
-    case QO_BOOL:
-        printf("(bool,%s)", qo.u.boolean ? "true" : "false");
-        break;
-    case QO_NAME:
-        printf("(name,%s)", qo.u.name);
-        break;
-    case QO_EMPTY:
-        printf("(empty,_)");
-        break;
-    default:
-        printf("(%d,_)", qo.type);
-        break;
-    }
-}
+int main(int argc, char **argv) 
+{
+    (void)argc; (void)argv;
 
-void print_quad(quad q) {
-    char quad_type_str[][5] = {"add",   "sub",  "mul",  "div",  "mod",
-                               "minus", "not",  "move", "goto", "blt",
-                               "bgt",   "ble",  "bge",  "beq",  "bne",
-                               "param", "call", "seti", "geti"};
-    if (q.type >= Q_ADD && q.type <= Q_GETI) {
-        printf("(%s,", quad_type_str[q.type]);
-    } else {
-        printf("(%d,", q.type);
-    }
-    print_quadop(q.op1);
-    printf(",");
-    print_quadop(q.op2);
-    printf(",");
-    print_quadop(q.op3);
-    printf(")");
-}
-
-void print_ilist(ilist *l) {
-    printf("{ ");
-    for (size_t i = 0; i < l->size; i++) {
-        printf("%d ", l->content[i]);
-    }
-    printf("}\n");
-}
-
-void print_globalcode() {
-    for (size_t i = 0; i < nextquad; i++) {
-        printf("%ld: ", i);
-        print_quad(globalcode[i]);
-        printf("\n");
-    }
-}
-
-int main() {
     initcode();
 
     printf("check gencode\n"
@@ -131,39 +79,39 @@ int main() {
     printf("check crelist\n"
            "crelist(0)\n");
 
-    ilist *l0 = crelist(0);
+    struct s_fifo *l0 = crelist(0);
 
-    if (l0->content && l0->content[0] == 0) {
+    if (l0 && l0->num == 0) {
         printf("[ok]\n\n");
     } else {
         printf("[ko]\n");
-        print_ilist(l0);
+        print_list(l0);
         exit(EXIT_FAILURE);
     }
 
     printf("check concat\n"
            "concat({0},{1})\n");
 
-    ilist *l1 = crelist(1);
-    ilist *l01 = concat(l0, l1);
+    struct s_fifo *l1 = crelist(1);
+    struct s_fifo *l01 = concat(l0, l1);
 
-    if (!l01->content || l01->content[0] != 0 || l01->content[1] != 1) {
+    if (!l01 || !l01->next || l01->next->num != 0 || l01->num != 1) {
         printf("[ko]\n");
-        print_ilist(l01);
+        print_list(l01);
         exit(EXIT_FAILURE);
     }
 
     printf("concat({0,1},{2})\n");
 
-    ilist *l2 = crelist(2);
-    ilist *l012 = concat(l01, l2);
+    struct s_fifo *l2 = crelist(2);
+    struct s_fifo *l012 = concat(l01, l2);
 
-    if (l012->content && l012->content[0] == 0 && l012->content[1] == 1 &&
-        l012->content[2] == 2) {
+    if (l012 && l012->next && l012->next->next && l012->next->next->num == 0 && l012->next->num == 1 &&
+        l012->num == 2) {
         printf("[ok]\n\n");
     } else {
         printf("[ko]\n");
-        print_ilist(l012);
+        print_list(l012);
         exit(EXIT_FAILURE);
     }
 
@@ -179,12 +127,7 @@ int main() {
         print_globalcode();
         exit(EXIT_FAILURE);
     }
-
-    freelist(l0);
-    freelist(l1);
-    freelist(l2);
-    freelist(l01);
-    freelist(l012);
+    
     freecode();
-    return 0;
+    return EXIT_SUCCESS;
 }

@@ -1,14 +1,34 @@
 %{
 #include <stdio.h>
+#include <stdlib.h>
+#include <limits.h>
+#include <string.h>
+#include "quad.h"
+
+#define YY_USER_ACTION                                       \
+  yylloc.first_line = yylloc.last_line;                      \
+  yylloc.first_column = yylloc.last_column;                  \
+  if (yylloc.first_line == yylineno)                         \
+     yylloc.last_column += yyleng;                           \
+  else {                                                     \
+     int col;                                                \
+     for (col = 1; yytext[yyleng - col] != '\n'; ++col) {}   \
+     yylloc.last_column = col;                               \
+     yylloc.last_line = yylineno;                            \
+  }
+
 #include "decaf.tab.h"
+
+extern YYLTYPE token_yylloc; 
+extern void yyerror(char *msg);
 %}
 
-%option nounput noyywrap
+%option nounput noyywrap yylineno
 
 ID [[:alpha:]_][[:alnum:]_]*
 
-SPECIAL_CHAR \\\"|\\'|\\|"\t"|"\n"
-CHAR {SPECIAL_CHAR}|[ !#-&(-\[\]-~]
+SPECIAL_CHAR \\\"|\\'|\\\\|\\t|\\n
+CHAR {SPECIAL_CHAR}|[ !#-&\(-\[\]-~]
 
 NUM [[:digit:]][[:digit:]]* 
 HEX_NUM 0x[0-9a-fA-F]+ 
@@ -17,11 +37,11 @@ HEX_NUM 0x[0-9a-fA-F]+
 
 "boolean"					{return BOOL;}
 "break"						{return BREAK;}
-"class Program"				{return CLPR;}
+"class"						{return CLASS;}
 "continue"					{return CONTINUE;}
 "else"						{return ELSE;}
-"true"						{yylval=1; return BOOL_LITERAL;}
-"false"						{yylval=0; return BOOL_LITERAL;}
+"true"						{yylval.intval = 1; return BOOL_LITERAL;}
+"false"						{yylval.intval = 0; return BOOL_LITERAL;}
 "for"						{return FOR;}
 "if"						{return IF;}
 "int"						{return INT;}
@@ -38,28 +58,36 @@ HEX_NUM 0x[0-9a-fA-F]+
 "+="						{return ADD_ASSIGN;}
 "-="                        {return SUB_ASSIGN;}
 
-{ID}						{return ID;}
+{ID}						{strncpy(yylval.strval, yytext, yyleng+1) ;  return ID;}
 
 [\{\}\(\)\[\]\,\;\=\+\-\*\/\%\<\>\!]		{return yytext[0];}
 
 "//"[^\n]*"\n"				{;}
 
-'{CHAR}' 					{yylval = yytext[1]; return CHAR_LITERAL;}
-\"{CHAR}*\"					{return STRING_LITERAL;}
+'{CHAR}' 					{yylval.charval = yytext[1]; return CHAR_LITERAL;}
+\"{CHAR}*\"					{strncpy(yylval.strval, yytext, yyleng+1); return STRING_LITERAL;}
 
 {NUM}						{
-								if (sscanf(yytext, "%d", &yylval) != 1) {
-									fprintf(stderr, "%s not int\n", yytext);
+								long x = strtol(yytext, NULL, 10);
+								if (x < INT_MIN || x > INT_MAX) {
+									token_yylloc = yylloc;
+									yyerror("not int");
 									exit(EXIT_FAILURE);
+								} else {
+									yylval.intval = (int) x;
+									return INT_LITERAL;
 								}
-								return INT_LITERAL;
 							}
 {HEX_NUM}					{
-								if (sscanf(yytext, "%x", &yylval) != 1) {
-									fprintf(stderr, "%s not hex\n", yytext);
+								long x = strtol(yytext, NULL, 16);
+								if (x < INT_MIN || x > INT_MAX) {
+									token_yylloc = yylloc;
+									yyerror("not int");
 									exit(EXIT_FAILURE);
+								} else {
+									yylval.intval = (int) x;
+									return INT_LITERAL;
 								}
-								return INT_LITERAL;
 							}
 
 [[:space:]]					{;}

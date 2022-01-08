@@ -1,5 +1,7 @@
 // Exemple de programme en DECAF
+
 class Program {
+    
     int compteur, diviseur;
     int valeurs[4];
     boolean test;
@@ -16,7 +18,7 @@ class Program {
             // WriteString("Entrez la valeur ");
             // WriteInt(i+1);
             // WriteString(" : \n");
-            ReadInt(valeurs[i]);
+            // ReadInt(valeurs[i]);
             test = valeurs[i] > 0; // vérification
             if (!test) {
                 // WriteString("Les valeurs doivent être strictement positives !\n");
@@ -37,12 +39,12 @@ class Program {
     void main() {
         int nombre;
         // WriteString("Nombre de valeurs : ");
-        ReadInt(nombre);
-        // if (lecture_valeurs(nombre)) {
+        // ReadInt(nombre);
+        if (lecture_valeurs(nombre)) {
         //     WriteString("Moyenne = ");
         //     WriteInt(moyenne(nombre));
         //     WriteString("\n");
-        // }
+        }
         // else { WriteString("Erreur\n"); }
     }
 }

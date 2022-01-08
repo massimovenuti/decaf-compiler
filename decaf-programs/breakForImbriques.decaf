@@ -1,0 +1,26 @@
+class ForSommeDesEntiers {
+
+    void main ()
+    {
+        int s;
+        s = 0;
+        for i = 1, 10
+        {
+            for j = 1, 10 
+            {
+                if (s >= 20) 
+                {
+                    break;
+                }
+                s += i;
+            }
+            if (s >= 20) 
+            {
+                break;
+            }
+        }
+        WriteInt (s);
+        WriteString ("=55\n");
+    }
+
+}
