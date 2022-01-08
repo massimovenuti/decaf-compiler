@@ -8,6 +8,8 @@ extern int yydebug;
 
 const char *inname = NULL;
 
+void test(int a, int b) {
+}
 int main(int argc, char const *argv[])
 {
     char *outname = "a.mips";
