@@ -57,7 +57,7 @@ test-table:
 build-decaf:
   stage: build
   before_script:
-    - apt update && apt -y install make
+    - apt update && apt -y install make flex bison
   script:
     - make
   artifacts:
