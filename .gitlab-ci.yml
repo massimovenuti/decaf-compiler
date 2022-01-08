@@ -54,6 +54,26 @@ test-table:
       cobertura: ./test/coverage.xml
   needs: ["build-table"]
 
+build-decaf:
+  stage: build
+  before_script:
+    - apt update && apt -y install make
+  script:
+    - make
+  artifacts:
+    paths:
+      - ./decaf
+
+test-decaf:
+  variables:
+    GIT_SUBMODULE_STRATEGY: recursive
+  stage: test
+  before_script:
+    - apt update && apt -y install spim
+  script:
+    - ./dts/run.sh
+  needs: ["build-decaf"]
+
 doc:
   image: alpine
   stage: deploy
