@@ -1,0 +1,70 @@
+class boolArray {
+    boolean a[6], b[6];
+    int c[6];
+
+    int fib(int n) {
+        if (n == 0 || n == 1) {
+            return n;
+        }
+        else {
+            return (fib(n-1) + fib(n-2));
+        }
+    }
+
+    void writeBool(boolean b) {
+        if (b) {
+            WriteString ("true");
+        }
+        else {
+            WriteString ("false");
+        }
+    }
+
+    void main()
+    {
+        a[0] = true;
+        a[1] = false;
+        a[2] = false;
+        a[3] = true;
+        a[4] = true;
+        a[5] = false;
+
+        b[0] = false;
+        b[1] = false;
+        b[2] = false;
+        b[3] = true;
+        b[4] = true;
+        b[5] = false;
+
+        c[0] = fib(0);
+        c[1] = fib(1);
+        c[2] = fib(2);
+        c[3] = fib(3);
+        c[4] = fib(4);
+        c[5] = fib(5);
+
+        for i = 0, 5
+        {
+            if (c[i]%2 == 0) {
+                a[i] = a[i] && b[i];
+            }
+        }
+
+        WriteString ("c = {");
+        for i = 0, 5
+        {
+            WriteInt(c[i]);
+            WriteString (" ");
+        }
+        WriteString ("}\n");
+
+        WriteString ("a = {");
+        for i = 0, 5
+        {
+            writeBool(a[i]);
+            WriteString (" ");
+        }
+        WriteString ("}\n");
+    }
+
+}

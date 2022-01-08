@@ -1,4 +1,4 @@
-class boolArray {
+class inversionBoolArray {
     boolean s[6];
 
     void main()
