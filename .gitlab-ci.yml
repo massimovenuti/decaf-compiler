@@ -57,7 +57,7 @@ test-table:
 build-decaf:
   stage: build
   before_script:
-    - apt update && apt -y install make flex bison ssh
+    - apt update && apt -y install make flex bison
   script:
     - make
   artifacts:
@@ -69,7 +69,7 @@ test-decaf:
     GIT_SUBMODULE_STRATEGY: recursive
   stage: test
   before_script:
-    - apt update && apt -y install spim
+    - apt update && apt -y install spim ssh
   script:
     - ./dts/run.sh
   needs: ["build-decaf"]
