@@ -598,7 +598,8 @@ method_call
 		yyerror("arguments incorrect");
 		YYERROR;
 	}
-	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size( $4)), qo));
+	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size($4)), qo));
+	free_arglist($4);
 }
 ;
 
