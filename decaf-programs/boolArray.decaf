@@ -1,0 +1,28 @@
+class boolArray {
+    boolean s[6];
+
+    void main()
+    {
+        s[0] = true;
+        s[1] = false;
+        s[2] = false;
+        s[3] = true;
+        s[4] = true;
+        s[5] = false;
+        WriteString ("{");
+        for i = 0, 5
+        {
+            if (i%2 == 0) {
+                s[i] = !s[i]; // inverser les éléments pairs
+            }
+            if (s[i]) {
+                WriteString ("true ");
+            }
+            else {
+                WriteString ("false ");
+            }
+        }
+        WriteString ("}\n");
+    }
+
+}

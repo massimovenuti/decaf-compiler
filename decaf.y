@@ -401,9 +401,9 @@ statement
 		check_expr_bool($6, @6);
 		complete($6.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_SETI, qid, $3.u.result, quadop_bool(1)));
-		complete($6.u.boolexpr.false, nextquad);
 		$$.next = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
+		complete($6.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_SETI, qid, $3.u.result, quadop_bool(0)));
 	}
 }
