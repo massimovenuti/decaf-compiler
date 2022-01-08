@@ -22,7 +22,7 @@ lex.yy.c: $(prefixe).l $(prefixe).tab.h
 	flex $(prefixe).l
 
 doc:
-	doxygen config_doxygen
+	doxygen doxygen.conf
 
 clean:
 	rm -f *.o $(prefixe).tab.c $(prefixe).tab.h lex.yy.c decaf \

@@ -53,3 +53,15 @@ test-table:
     reports:
       cobertura: ./test/coverage.xml
   needs: ["build-table"]
+
+pages:
+  image: alpine
+  stage: doc
+  before_script:
+    - apk update && apk add doxygen graphviz ttf-freefont make
+  script:
+  - make doc
+  - mv doc/html/ public/
+  artifacts:
+    paths:
+    - public
