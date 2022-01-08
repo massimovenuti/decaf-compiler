@@ -54,9 +54,9 @@ test-table:
       cobertura: ./test/coverage.xml
   needs: ["build-table"]
 
-pages:
+doc:
   image: alpine
-  stage: doc
+  stage: deploy
   before_script:
     - apk update && apk add doxygen graphviz ttf-freefont make
   script:
