@@ -77,7 +77,7 @@ void tos_freectx(struct s_context *ctx)
     for (int i = 0; i < N_HASH; i++)
         free_entry(ctx->entry[i]);
 
-    free(context);
+    free(ctx);
 }
 
 struct s_context *tos_popfreectx(struct s_context *ctx)

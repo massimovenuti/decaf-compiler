@@ -349,6 +349,4 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 		fprintf(output, "_Q%ld:\n", i);
 		quad2mips(quadcode[i], &t, &is_def, &my_off, output);
 	}
-
-	// fprintf(output, "%s\n", mips_exit);
 }
