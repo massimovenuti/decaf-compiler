@@ -79,39 +79,39 @@ int main(int argc, char **argv)
     printf("check crelist\n"
            "crelist(0)\n");
 
-    ilist *l0 = crelist(0);
+    struct s_fifo *l0 = crelist(0);
 
-    if (l0->content && l0->content[0] == 0) {
+    if (l0 && l0->num == 0) {
         printf("[ok]\n\n");
     } else {
         printf("[ko]\n");
-        print_ilist(l0);
+        print_list(l0);
         exit(EXIT_FAILURE);
     }
 
     printf("check concat\n"
            "concat({0},{1})\n");
 
-    ilist *l1 = crelist(1);
-    ilist *l01 = concat(l0, l1);
+    struct s_fifo *l1 = crelist(1);
+    struct s_fifo *l01 = concat(l0, l1);
 
-    if (!l01->content || l01->content[0] != 0 || l01->content[1] != 1) {
+    if (!l01 || !l01->next || l01->next->num != 0 || l01->num != 1) {
         printf("[ko]\n");
-        print_ilist(l01);
+        print_list(l01);
         exit(EXIT_FAILURE);
     }
 
     printf("concat({0,1},{2})\n");
 
-    ilist *l2 = crelist(2);
-    ilist *l012 = concat(l01, l2);
+    struct s_fifo *l2 = crelist(2);
+    struct s_fifo *l012 = concat(l01, l2);
 
-    if (l012->content && l012->content[0] == 0 && l012->content[1] == 1 &&
-        l012->content[2] == 2) {
+    if (l012 && l012->next && l012->next->next && l012->next->next->num == 0 && l012->next->num == 1 &&
+        l012->num == 2) {
         printf("[ok]\n\n");
     } else {
         printf("[ko]\n");
-        print_ilist(l012);
+        print_list(l012);
         exit(EXIT_FAILURE);
     }
 

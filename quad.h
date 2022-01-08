@@ -175,44 +175,44 @@ quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3);
 * \struct ilist 
 * 
 */
-struct ilist {
-    int *content;
-    size_t size;
-};
+// struct ilist {
+//     int *content;
+//     size_t size;
+// };
 
-typedef struct ilist ilist;
+// typedef struct ilist ilist;
 
 /**
-* \fn ilist *crelist(int label)
+* \fn struct s_fifo *crelist(int label)
 * \brief Crée une liste d'adresses de quadruplets
 * \param label Un entier
 * \return Un pointeur sur une liste
 */
-ilist *crelist(int label);
+struct s_fifo *crelist(int label);
 
 /**
-* \fn ilist *concat(ilist *list1, ilist *list2)
+* \fn struct s_fifo *concat(struct s_fifo *list1, struct s_fifo *list2)
 * \brief Concatène deux listes
 * \param list1 Une liste
 * \param list2 Une liste
 * \return Un pointeur sur une liste
 */
-ilist *concat(ilist *list1, ilist *list2);
+struct s_fifo *concat(struct s_fifo *list1, struct s_fifo *list2);
 
 /**
-* \fn void complete(ilist *list, int label)
+* \fn void complete(struct s_fifo *list, int label)
 * \brief Complète tous les quadruplets d'une liste
 * \param list Une liste
 * \param label Un entier
 */
-void complete(ilist *list, int label);
+void complete(struct s_fifo *list, int label);
 
 /**
 * \fn void freelist(ilist *list)
 * \brief Libère la mémoire allouée pour une liste
 * \param list Une liste
 */
-void freelist(ilist *list);
+// void freelist(struct s_fifo *list);
 
 /**
 * \fn void print_quadop(quadop qo)
@@ -229,11 +229,11 @@ void print_quadop(quadop qo);
 void print_quad(quad q);
 
 /**
-* \fn void print_ilist(ilist *l)
+* \fn void print_ilist(struct s_fifo *list)
 * \brief Affiche une liste
-* \param l Une liste
+* \param list Une liste
 */
-void print_ilist(ilist *l);
+void print_list(struct s_fifo *list);
 
 /**
 * \fn void print_globalcode()

@@ -56,15 +56,15 @@ void gen_loop_exit();
 		union {
 			quadop result;
 			struct {
-				ilist *true;
-				ilist *false;
+				struct s_fifo *true;
+				struct s_fifo *false;
 			} boolexpr;
 		} u;
 	} exprval;
 	struct s_statement {
-		ilist *next;
-		ilist *next_break;
-		ilist *next_continue;
+		struct s_fifo *next;
+		struct s_fifo *next_break;
+		struct s_fifo *next_continue;
 	} stateval;
 	struct s_entry *entryval;
 	struct s_arglist *alistval;

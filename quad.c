@@ -28,10 +28,6 @@ void gencode(quad q) {
         globalcode = realloc(globalcode, codesize * sizeof(quad));
     }
     globalcode[nextquad] = q;
-    // debug
-    // printf("%ld: ", nextquad);
-    // print_quad(q);
-    // printf("\n");
     nextquad++;
 }
 
@@ -65,10 +61,7 @@ quadop quadop_label(int label) {
 quadop quadop_name(char *name) {
     quadop qo;
     qo.type = QO_NAME;
-    qo.u.name = name; // ?
-    // int len = strlen(name) + 1;
-    // MEMCHECK(qo.u.name = malloc(len * sizeof(char)));
-    // snprintf(qo.u.name, len, "%s", name);
+    qo.u.name = name;
     return qo;
 }
 
@@ -95,47 +88,29 @@ quad quad_make(enum quad_type type, quadop op1, quadop op2, quadop op3) {
     return q;
 }
 
-ilist *crelist(int label) {
-    ilist *l;
-    MEMCHECK(l = malloc(sizeof(ilist)));
-    MEMCHECK(l->content = malloc(sizeof(int)));
-    l->content[0] = label;
-    l->size = 1;
-    return l;
+struct s_fifo *crelist(int label) {
+    return fifo_push(NULL, label);
 }
 
-ilist *concat(ilist *list1, ilist *list2) {
-    ilist *l;
+struct s_fifo *concat(struct s_fifo *list1, struct s_fifo *list2) {
     if (list1 == NULL && list2 == NULL) {
-        l = NULL;
+        return NULL;
     } else if (list1 == NULL) {
-        l = list2;
+        return list2;
     } else if (list2 == NULL) {
-        l = list1;
+        return list1;
     } else {
-        MEMCHECK(l = malloc(sizeof(ilist)));
-        l->size = list1->size + list2->size;
-        MEMCHECK(l->content = malloc(l->size * sizeof(int)));
-        MEMCHECK(memcpy(l->content, list1->content, list1->size * sizeof(int)));
-        MEMCHECK(memcpy(l->content + list1->size, list2->content,
-                    list2->size * sizeof(int)));
+        struct s_fifo *l;
+        for (l = list2; l->next != NULL; l = l->next);
+        l->next = list1;
+        return list2;
     }
-    return l;
 }
 
-void complete(ilist *list, int label) {
-    if (list == NULL)
-        return;
-    for (size_t i = 0; i < list->size; i++) {
-        quad *q = &globalcode[list->content[i]];
-        q->op3 = quadop_label(label);
-    }
-    freelist(list);
-}
-
-void freelist(ilist *list) {
-    free(list->content);
-    free(list);
+void complete(struct s_fifo *list, int label) {
+    for (struct s_fifo *l = list; l != NULL; l = l->next)
+        globalcode[l->num].op3 = quadop_label(label);
+    fifo_free(list);
 }
 
 void print_quadop(quadop qo) {
@@ -217,13 +192,6 @@ void print_quad(quad q) {
 		printf(" - ");
         print_quadop(q.op1);
 		break;
-
-    // case Q_NOT:
-    //     print_quadop(q.op3);
-    //     printf(" = ");
-	// 	printf(" ! ");
-    //     print_quadop(q.op1);
-	// 	break;
 
 	case Q_MOVE:
 		print_quadop(q.op3);
@@ -367,13 +335,10 @@ void print_quad(quad q) {
 	}
 }
 
-void print_ilist(ilist *l) {
-    if (l == NULL)
-        return;
+void print_list(struct s_fifo *list) {
     printf("{ ");
-    for (size_t i = 0; i < l->size; i++) {
-        printf("%d ", l->content[i]);
-    }
+    for (struct s_fifo *l = list; l != NULL; l = l->next)
+        printf("%d ", l->num);
     printf("}\n");
 }
 
