@@ -247,9 +247,9 @@ void quad2mips(quad q, struct s_context **t, int *is_def, unsigned int *my_off, 
 	case Q_CALL:
 		*my_off -= 4 + q.op2.u.cst * 4;
 		fprintf(output, "jal %s\n", q.op1.u.name);
-		for (size_t i = 0; i < (q.op2.u.cst); i++)
+		for (int i = 0; i < (q.op2.u.cst); i++)
 		{
-			fprintf(output, "sw $zero, %ld($sp)\n", i * 4);
+			fprintf(output, "sw $zero, %ld($sp)\n", (long int) i * 4);
 		}
 		fprintf(output, "addi $sp, $sp, %d\n", (q.op2.u.cst) * 4);
 		fprintf(output, "lw $ra, 0($sp)\n");
@@ -337,7 +337,7 @@ void gen_mips(quad *quadcode, size_t len, FILE *output)
 
 	struct s_context *t = NULL;
 	int is_def = 0;
-	int my_off = 0;
+	unsigned int my_off = 0;
 
 	fprintf(output, ".align 2\n");
 	quad2mips(quadcode[0], &t, &is_def, &my_off, output);
