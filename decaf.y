@@ -152,8 +152,8 @@ final
     struct s_entry *id = tos_lookup(context, "main");
     ERRORIF(id == NULL, "missing `main` function declaration in the program");
     ERRORIF(!is_elementary_type(id->type, T_FUNCTION), "missing `main` function declaration in the program");
-    ERRORIF(id->type->u.function_info.ret_type != R_VOID, "`main` function must have void returning type");
-    ERRORIF(id->type->u.function_info.arglist != NULL, "`main` function must not have arguments");
+    ERRORIF(!check_ret_type(id->type, R_VOID), "`main` function must have void returning type");
+    ERRORIF(!check_arglist(id->type, NULL), "`main` function must not have arguments");
 }
 
 id_decl
@@ -520,24 +520,22 @@ method_call
 : id_use s_call '(' expr_l_ ')' {
 	token_yylloc = @1;
 	ERRORIF(!is_elementary_type($1->type, T_FUNCTION), "called object is not a function");
+	token_yylloc = @4;
+	ERRORIF(!check_arglist($1->type, $4), "wrong arguments in function call");
 	quadop qo;
-	if (is_function_type($1->type, R_VOID,  $4)) { // procédure
+	if (check_ret_type($1->type, R_VOID)) { // procédure
 		qo = quadop_empty();
 		$$ = NULL;
-	} else if (is_function_type($1->type, R_INT,  $4)) { // fonction renvoyant int
+	} else if (check_ret_type($1->type, R_INT)) { // fonction renvoyant int
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_INT);
 		qo = quadop_name(temp->ident);
 		$$ = temp;
-	} else if (is_function_type($1->type, R_BOOL,  $4)) { // fonction renvoyant bool
+	} else { // fonction renvoyant bool
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
 		$$ = temp;
-	} else {
-		token_yylloc = @4;
-		yyerror("wrong arguments in function call");
-		YYERROR;
 	}
 	gencode(quad_make(Q_CALL, quadop_name($1->ident), quadop_cst(arglist_size($4)), qo));
 	free_arglist($4);
