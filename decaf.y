@@ -285,13 +285,13 @@ arg_l
 arg 
 : INT ID {
 	struct s_entry *ident = tos_newname(context, $2);
-	check_use(ident, @2);
+	check_decl(ident, @2);
 	ident->type = elementary_type(T_INT);
 	$$ = E_INT;
 }
 | BOOL ID {
 	struct s_entry *ident = tos_newname(context, $2);
-	check_use(ident, @2);
+	check_decl(ident, @2);
 	ident->type = elementary_type(T_BOOL);
 	$$ = E_BOOL;
 }
