@@ -134,7 +134,9 @@ void print_quadop(quadop qo) {
         printf("%p", qo.u.context);
         break;
     case QO_STRING:
-        printf("%s", get_content(strings, qo.u.string));
+        char *str = get_content(strings, qo.u.string);
+        if (str != NULL)
+            printf("%s", str);
         break;
     default:
         printf("?:%d", qo.type);
