@@ -26,7 +26,6 @@ void print_line(int lineNum);
 void yyerror(char *msg);
 struct s_statement new_statement();
 struct s_expr new_expr();
-void check_array_use(struct s_entry *arr, YYLTYPE arr_loc, struct s_expr index, YYLTYPE index_loc);
 void check_expr_bool(struct s_expr expr, YYLTYPE expr_loc);
 void check_expr_int(struct s_expr expr, YYLTYPE expr_loc);
 void check_op(struct s_expr expr1, struct s_expr expr2, YYLTYPE expr2_loc);
@@ -62,6 +61,10 @@ void gen_loop_exit();
 		struct s_fifo *next_break;
 		struct s_fifo *next_continue;
 	} stateval;
+	struct s_array {
+		struct s_entry *entry;
+		struct s_expr index;
+	} arrayval;
 	struct s_entry *entryval;
 	struct s_arglist *alistval;
 	enum elem_type etypeval;
@@ -71,8 +74,9 @@ void gen_loop_exit();
 %type <intval> marker
 %type <entryval> method_call id_use id_decl
 %type <stateval> statement statement_l statement_l_ goto block
-%type <alistval> arg_l arg_l_ expr_l
+%type <alistval> arg_l arg_l_ expr_l expr_l_
 %type <etypeval> arg
+%type <arrayval> array_use
 
 %token CLASS							        // class 
 %token INT BOOL						            // type
@@ -168,6 +172,25 @@ id_decl
 	ERRORIF($$ == NULL, "identifier redefined");
 }
 ;
+
+array_use
+: id_use '[' expr ']' {
+	token_yylloc = @1;
+	ERRORIF(!is_elementary_type($1->type, T_ARRAY), "object is not an array");
+	token_yylloc = @3;
+	ERRORIF($3.type != E_INT, "array index must be of type integer");
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
+	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst($1->type->u.array_info.size), quadop_label(nextquad + 5)));
+	strings = new_string(strings, "\"**** array index out of bounds\"");
+	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
+	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
+	$$.entry = $1;
+	$$.index = $3;
+}
+;
+
 
 decl
 : field_decl_l method_decl_l
@@ -346,21 +369,20 @@ statement
 		YYERROR;
 	}
 }
-| id_use '[' expr ']' '=' expr ';' {
-	check_array_use($1, @1, $3, @3);
+| array_use '=' expr ';' {
 	$$ = new_statement();
-	quadop qid = quadop_name($1->ident);
-	if (is_array_type($1->type, E_INT)) { // cas int
-		check_expr_int($6, @6);
-		gencode(quad_make(Q_SETI, qid, $3.u.result, $6.u.result));	
+	quadop qid = quadop_name($1.entry->ident);
+	if (is_array_type($1.entry->type, E_INT)) { // cas int
+		check_expr_int($3, @3);
+		gencode(quad_make(Q_SETI, qid, $1.index.u.result, $3.u.result));	
 	} else { // cas bool
-		check_expr_bool($6, @6);
-		complete($6.u.boolexpr.true, nextquad);
-		gencode(quad_make(Q_SETI, qid, $3.u.result, quadop_bool(1)));
+		check_expr_bool($3, @3);
+		complete($3.u.boolexpr.true, nextquad);
+		gencode(quad_make(Q_SETI, qid, $1.index.u.result, quadop_bool(1)));
 		$$.next = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
-		complete($6.u.boolexpr.false, nextquad);
-		gencode(quad_make(Q_SETI, qid, $3.u.result, quadop_bool(0)));
+		complete($3.u.boolexpr.false, nextquad);
+		gencode(quad_make(Q_SETI, qid, $1.index.u.result, quadop_bool(0)));
 	}
 }
 | id_use ADD_ASSIGN expr ';' {
@@ -370,19 +392,18 @@ statement
 	quadop qid = quadop_name($1->ident);
 	gencode(quad_make(Q_ADD, qid, $3.u.result, qid));
 }
-| id_use '[' expr ']' ADD_ASSIGN expr ';' {
-	check_array_use($1, @1, $3, @3);
+| array_use ADD_ASSIGN expr ';' {
 	token_yylloc = @1;
-	ERRORIF(!is_array_type($1->type, E_INT), "operand must be an array of integers");
-	check_expr_int($6, @6);
+	ERRORIF(!is_array_type($1.entry->type, E_INT), "operand must be an array of integers");
+	check_expr_int($3, @3);
 	$$ = new_statement();
-	quadop qid = quadop_name($1->ident);
+	quadop qid = quadop_name($1.entry->ident);
 	struct s_entry *temp = tos_newtemp(context); 
 	temp->type = elementary_type(T_INT);
 	quadop qo = quadop_name(temp->ident);
-	gencode(quad_make(Q_GETI, qid, $3.u.result, qo));
-	gencode(quad_make(Q_ADD, qo, $6.u.result, qo));
-	gencode(quad_make(Q_SETI, qid, $3.u.result, qo));
+	gencode(quad_make(Q_GETI, qid, $1.index.u.result, qo));
+	gencode(quad_make(Q_ADD, qo, $3.u.result, qo));
+	gencode(quad_make(Q_SETI, qid, $1.index.u.result, qo));
 }
 | id_use SUB_ASSIGN expr ';' {
 	ERRORIF(!is_elementary_type($1->type, T_INT), "operand must be of type integer");
@@ -391,19 +412,18 @@ statement
 	quadop qid = quadop_name($1->ident);
 	gencode(quad_make(Q_SUB, qid, $3.u.result, qid));
 }
-| id_use '[' expr ']' SUB_ASSIGN expr ';' {
-	check_array_use($1, @1, $3, @3);
+| array_use SUB_ASSIGN expr ';' {
 	token_yylloc = @1;
-	ERRORIF(!is_array_type($1->type, E_INT), "operand must be an array of integers");
-	check_expr_int($6, @6);
+	ERRORIF(!is_array_type($1.entry->type, E_INT), "operand must be an array of integers");
+	check_expr_int($3, @3);
 	$$ = new_statement();
-	quadop qid = quadop_name($1->ident);
+	quadop qid = quadop_name($1.entry->ident);
 	struct s_entry *temp = tos_newtemp(context); 
 	temp->type = elementary_type(T_INT);
 	quadop qo = quadop_name(temp->ident);
-	gencode(quad_make(Q_GETI, qid, $3.u.result, qo));
-	gencode(quad_make(Q_SUB, qo, $6.u.result, qo));
-	gencode(quad_make(Q_SETI, qid, $3.u.result, qo));
+	gencode(quad_make(Q_GETI, qid, $1.index.u.result, qo));
+	gencode(quad_make(Q_SUB, qo, $3.u.result, qo));
+	gencode(quad_make(Q_SETI, qid, $1.index.u.result, qo));
 }
 | method_call ';' { $$ = new_statement(); }
 | IF '(' expr ')' marker block {
@@ -498,32 +518,9 @@ statement
 | block { $$ = $1; }
 ;
 
+
 method_call
-: id_use s_call '(' ')' {
-	token_yylloc = @1;
-	ERRORIF(!is_elementary_type($1->type, T_FUNCTION), "called object is not a function");
-	quadop qo;
-	if (is_function_type($1->type, R_VOID, NULL)) { // procédure
-		// TODO: checker si on appelle main ?
-		qo = quadop_empty();
-		$$ = NULL;
-	} else if (is_function_type($1->type, R_INT, NULL)) { // fonction renvoyant int
-		struct s_entry *temp = tos_newtemp(context); 
-		temp->type = elementary_type(T_INT);
-		qo = quadop_name(temp->ident);
-		$$ = temp;
-	} else if (is_function_type($1->type, R_BOOL, NULL)) { // fonction renvoyant bool
-		struct s_entry *temp = tos_newtemp(context); 
-		temp->type = elementary_type(T_BOOL);
-		qo = quadop_name(temp->ident);
-		$$ = temp;
-	} else {
-		yyerror("missing arguments in function call");
-		YYERROR;
-	}
-	gencode(quad_make(Q_CALL, quadop_name($1->ident), quadop_cst(0), qo));
-}
-| id_use s_call '(' expr_l ')' {
+: id_use s_call '(' expr_l_ ')' {
 	token_yylloc = @1;
 	ERRORIF(!is_elementary_type($1->type, T_FUNCTION), "called object is not a function");
 	quadop qo;
@@ -553,6 +550,11 @@ s_call
 : %empty {
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 }
+;
+
+expr_l_
+: expr_l { $$ = $1; }
+| %empty { $$ = NULL; }
 ;
 
 expr_l 
@@ -594,12 +596,11 @@ expr
 		YYERROR;
 	}
 } 
-| id_use '[' expr ']' {
-	check_array_use($1, @1, $3, @3);
+| array_use {
 	struct s_entry *temp = tos_newtemp(context);
 	quadop qo = quadop_name(temp->ident);
-	gencode(quad_make(Q_GETI, quadop_name($1->ident), $3.u.result, qo));
-	if (is_array_type($1->type, E_INT)) {
+	gencode(quad_make(Q_GETI, quadop_name($1.entry->ident), $1.index.u.result, qo));
+	if (is_array_type($1.entry->type, E_INT)) {
 		$$ = new_expr(E_INT);
 		temp->type = elementary_type(T_INT);
 		$$.u.result = qo;
@@ -891,20 +892,6 @@ void check_bool_op(struct s_expr expr1, YYLTYPE expr1_loc, struct s_expr expr2, 
 
 void gen_err_fun_no_return() {
 	strings = new_string(strings, "\"**** function declared as returning a result returns nothing\"");
-	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
-	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
-	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
-	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
-}
-
-void check_array_use(struct s_entry *arr, YYLTYPE arr_loc, struct s_expr index, YYLTYPE index_loc) {
-	token_yylloc = arr_loc;
-	ERRORIF(!is_elementary_type(arr->type, T_ARRAY), "object is not an array");
-	token_yylloc = index_loc;
-	ERRORIF(index.type != E_INT, "array index must be of type integer");
-	gencode(quad_make(Q_BLT, index.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
-	gencode(quad_make(Q_BLT, index.u.result, quadop_cst(arr->type->u.array_info.size), quadop_label(nextquad + 5)));
-	strings = new_string(strings, "\"**** array index out of bounds\"");
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
 	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
