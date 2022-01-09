@@ -1,0 +1,15 @@
+class Test {
+
+    void main ()
+    {
+        int a, b, c;
+        boolean t;
+
+        a = 10; b = 100; c = 1000;
+
+        t = (b > c || b > a) && ((a*b == c) && (b == (c - a) || (c > b && (c/b == a))));
+        
+        WriteBool(t);
+        WriteString("\n");
+    }
+}
