@@ -248,6 +248,22 @@ int is_elementary_type(struct s_typedesc *elem, enum entry_type type);
 int is_array_type(struct s_typedesc *arr, enum elem_type type);
 
 /**
+* \fn int check_ret_type(struct s_typedesc *fun, enum ret_type type)
+* \brief Vérifie si un type de retour concorde avec celui d'un descripteur de fonction
+* \param fun Un descripteur de type
+* \param type Le type de retour de la fonction
+*/
+int check_ret_type(struct s_typedesc *fun, enum ret_type type);
+
+/**
+* \fn int check_arglist(struct s_typedesc *fun, struct s_arglist *arglist)
+* \brief Vérifie si une liste d'arguments concorde avec celle d'un descripteur de fonction
+* \param fun Un descripteur de type
+* \param arglist La liste des arguments de la fonction
+*/
+int check_arglist(struct s_typedesc *fun, struct s_arglist *arglist);
+
+/**
 * \fn int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglist *arglist)
 * \brief Teste si un descripteur de type correspond à la description d'une fonction
 * \param fun Un descripteur de type

@@ -230,12 +230,16 @@ int is_array_type(struct s_typedesc *arr, enum elem_type type)
     return arr->type == T_ARRAY && arr->u.array_info.type == type;
 }
 
-int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglist *arglist)
+int check_ret_type(struct s_typedesc *fun, enum ret_type type)
+{
+    return fun->type == T_FUNCTION && fun->u.function_info.ret_type == type;
+}
+
+int check_arglist(struct s_typedesc *fun, struct s_arglist *arglist)
 {
     if (fun->type != T_FUNCTION)
         return 0;
-    if (fun->u.function_info.ret_type != type)
-        return 0;
+
     if (fun->u.function_info.arglist_size != arglist_size(arglist))
         return 0;
 
@@ -250,6 +254,11 @@ int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglis
         arglist = arglist->next;
     }
     return 1;
+}
+
+int is_function_type(struct s_typedesc *fun, enum ret_type type, struct s_arglist *arglist)
+{
+    return check_ret_type(fun, type) * check_arglist(fun, arglist);
 }
 
 //--------------------------------------------------------------
