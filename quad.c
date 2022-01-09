@@ -311,7 +311,7 @@ void print_quad(quad q) {
 		break;
     
     case Q_PECTX:
-        printf("Pseudo Fin Context =");
+        printf("Pseudo Fin Context = ");
         print_quadop(q.op3);
 		break;
 
@@ -333,13 +333,6 @@ void print_quad(quad q) {
         printf(")");
 		break;
 	}
-}
-
-void print_list(struct s_fifo *list) {
-    printf("{ ");
-    for (struct s_fifo *l = list; l != NULL; l = l->next)
-        printf("%d ", l->num);
-    printf("}\n");
 }
 
 void print_globalcode() {

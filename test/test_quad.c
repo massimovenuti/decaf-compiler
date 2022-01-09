@@ -41,10 +41,7 @@ int main(int argc, char **argv)
 
     initcode();
 
-    printf("check gencode\n"
-           "gencode(GOTO,_,_,_);\n"
-           "gencode(BEQ,_,_,_);\n"
-           "gencode(BNE,_,_,_);\n");
+    // === GENCODE ===
 
     quad q1 = quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()),
          q2 = quad_make(Q_BEQ, quadop_empty(), quadop_empty(), quadop_empty()),
@@ -55,79 +52,119 @@ int main(int argc, char **argv)
     gencode(q3);
 
     if (globalcode == NULL) {
-        printf("[ko]\n"
-               "globalcode = NULL\n");
+        printf("[ko] gencode: globalcode = NULL\n");
         exit(EXIT_FAILURE);
     }
 
     if (nextquad != 3) {
-        printf("[ko]\n"
-               "nextquad = %ld\n",
+        printf("[ko] gencode: nextquad = %ld\n",
                nextquad);
         exit(EXIT_FAILURE);
     }
 
     if (!check_quad(q1, globalcode[0]) || !check_quad(q2, globalcode[1]) ||
         !check_quad(q3, globalcode[2])) {
-        printf("[ko]\n");
+        printf("[ko] gencode:\n");
         print_globalcode();
         exit(EXIT_FAILURE);
     }
 
-    printf("[ok]\n\n");
+    printf("[ok] gencode\n");
 
-    printf("check crelist\n"
-           "crelist(0)\n");
+
+    // === CRELIST ===
 
     struct s_fifo *l0 = crelist(0);
 
     if (l0 && l0->num == 0) {
-        printf("[ok]\n\n");
+        printf("[ok] crelist\n");
     } else {
-        printf("[ko]\n");
+        printf("[ko] crelist: ");
         print_list(l0);
         exit(EXIT_FAILURE);
     }
 
-    printf("check concat\n"
-           "concat({0},{1})\n");
+
+    // === CONCAT ===
 
     struct s_fifo *l1 = crelist(1);
     struct s_fifo *l01 = concat(l0, l1);
 
     if (!l01 || !l01->next || l01->next->num != 0 || l01->num != 1) {
-        printf("[ko]\n");
+        printf("[ko] concat: ");
         print_list(l01);
         exit(EXIT_FAILURE);
     }
-
-    printf("concat({0,1},{2})\n");
 
     struct s_fifo *l2 = crelist(2);
     struct s_fifo *l012 = concat(l01, l2);
 
     if (l012 && l012->next && l012->next->next && l012->next->next->num == 0 && l012->next->num == 1 &&
         l012->num == 2) {
-        printf("[ok]\n\n");
+        printf("[ok] concat\n");
     } else {
-        printf("[ko]\n");
+        printf("[ko] concat: ");
         print_list(l012);
         exit(EXIT_FAILURE);
     }
 
-    printf("check complete\n"
-           "complete({0,1},2)\n");
+    // === COMPLETE ===
 
     complete(l01, 2);
 
     if (globalcode[0].op3.u.label == 2 && globalcode[1].op3.u.label == 2) {
-        printf("[ok]\n");
+        printf("[ok] complete\n");
     } else {
-        printf("[ko]\n");
+        printf("[ko] complete:\n");
         print_globalcode();
         exit(EXIT_FAILURE);
     }
-    
+
+    freecode();
+
+
+    // === PRINT ===
+
+    initcode();
+
+    char a[] = "a", b[] = "b", c[] = "c", f[] = "f", t[] = "t";
+    int label = 15, cst = 8;
+
+    quadop qa = quadop_name(a), qb = quadop_name(b), qc = quadop_name(c), qf = quadop_name(f), qt = quadop_name(t);
+    quadop qlabel = quadop_label(label);
+    quadop qcst = quadop_cst(cst);
+    quadop qempty = quadop_empty();
+    quadop qctx = quadop_context(NULL);
+
+    gencode(quad_make(Q_ADD, qa, qb, qc));
+    gencode(quad_make(Q_SUB, qa, qb, qc));
+    gencode(quad_make(Q_MUL, qa, qb, qc));
+    gencode(quad_make(Q_DIV, qa, qb, qc));
+    gencode(quad_make(Q_MOD, qa, qb, qc));
+    gencode(quad_make(Q_MINUS, qa, qempty, qc));
+    gencode(quad_make(Q_MOVE, qa, qempty, qc));
+    gencode(quad_make(Q_GOTO, qa, qempty, qlabel));
+    gencode(quad_make(Q_BLT, qa, qb, qlabel));
+    gencode(quad_make(Q_BGT, qa, qb, qlabel));
+    gencode(quad_make(Q_BLE, qa, qb, qlabel));
+    gencode(quad_make(Q_BGE, qa, qb, qlabel));
+    gencode(quad_make(Q_BEQ, qa, qb, qlabel));
+    gencode(quad_make(Q_BNE, qa, qb, qlabel));
+    gencode(quad_make(Q_PARAM, qempty, qempty, qa));
+    gencode(quad_make(Q_SCALL, qempty, qempty, qempty));
+    gencode(quad_make(Q_CALL, qf, qcst, qempty));
+    gencode(quad_make(Q_RETURN, qempty, qempty, qa));
+    gencode(quad_make(Q_FUN, qempty, qempty, qf));
+    gencode(quad_make(Q_SETI, qt, qcst, qa));
+    gencode(quad_make(Q_GETI, qt, qcst, qa));
+    gencode(quad_make(Q_BCTX, qempty, qempty, qctx));
+    gencode(quad_make(Q_PECTX, qempty, qempty, qctx));
+    gencode(quad_make(Q_ECTX, qempty, qempty, qempty));
+    gencode(quad_make(Q_EXIT, qempty, qempty, qempty));
+
+    printf("==== print\n");
+    print_globalcode();
+
     freecode();
     return EXIT_SUCCESS;
 }

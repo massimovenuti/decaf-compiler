@@ -325,6 +325,13 @@ void fifo_free(struct s_fifo *fifo)
     free(fifo);
 }
 
+void print_list(struct s_fifo *list) {
+    printf("{ ");
+    for (struct s_fifo *l = list; l != NULL; l = l->next)
+        printf("%d ", l->num);
+    printf("}\n");
+}
+
 //--------------------------------------------------------------
 // AFFICHAGE
 //--------------------------------------------------------------
