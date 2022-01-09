@@ -160,7 +160,7 @@ id_decl
 : ID {
 	$$ = tos_newname(context, $1);
 	token_yylloc = @1;
-	ERRORIF($$ == NULL, "identifier redefined");
+	ERRORIF($$ == NULL, "identifier redefinition");
 }
 ;
 
