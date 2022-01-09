@@ -1,18 +1,60 @@
+# include <fcntl.h>
+# include <unistd.h>
+
 # include "../table.h"
 
 #define NB_NEWTEMP 200
 
 extern struct s_context *context;
 
+void raler(const char *msg)
+{
+	perror(msg);
+	exit(EXIT_FAILURE);
+}
+
+int disable_printf()
+{
+    int fd, nullfd;
+    
+    fflush(stdout);
+    
+    if ((fd = dup(1)) == -1)
+        raler("dup");
+
+    if ((nullfd = open("/dev/null", O_WRONLY)) == -1)
+        raler("open");
+    
+    if (dup2(nullfd, 1) == -1)
+        raler("dup2");
+    
+    if (close(nullfd) == - 1)
+        raler("close");
+
+    return fd;
+}
+
+void enable_printf(int fd)
+{
+    fflush(stdout);
+    
+    if (dup2(fd, 1) == -1)
+        raler("dup2");
+    
+    if (close(fd) == -1)
+        raler("close");
+}
+
 int main(int argc, char **argv)
 {
     (void)argc; (void)argv;
 
     char *content;
-    int i, test, errors;
+    int i, fd, test, errors;
     unsigned int idx1, idx2;
 
     struct s_fifo *fifo;
+    struct s_typedesc *d1;
     struct s_stringtable *st;
     struct s_entry *e1, *e2, *e3;
     struct s_arglist *al1, *al2, *al3;
@@ -36,12 +78,14 @@ int main(int argc, char **argv)
     // TEST 1 : SINGLE VARIABLE AND LOOKUP ERROR
     //--------------------------------------------------------------
     context = tos_pushctx(context);
-
+    
     errors += (tos_newname(context, "var1") == NULL) ? 1 : 0;
     errors += (tos_lookup(context, "var1") == NULL) ? 1 : 0;
 
     // lookup error
     errors += (tos_lookup(context, "var2") != NULL) ? 1 : 0;
+
+    errors += (tos_popctx(context) != NULL) ? 1 : 0;
 
     context = tos_popfreectx(context);
 
@@ -108,26 +152,33 @@ int main(int argc, char **argv)
     }
 
     //--------------------------------------------------------------
-    // TEST 4 : SAME VARIABLE NAME, DIFFERENT CONTEXT
+    // TEST 4 : SAME VARIABLE NAME, DIFFERENT CONTEXT AND OFFSET
     //--------------------------------------------------------------
     context = tos_pushctx(context);
 
     e1 = tos_newname(context, "var1");
     e2 = tos_lookup(context, "var1");
 
-    errors += (e1 == NULL || e1 != e2) ? 1 : 0;
+    errors += (e1 == NULL || e1 != e2) ? 1 : 0;    
 
     context = tos_pushctx(context);
-    
+        
     e2 = tos_lookup(context, "var1");
 
     errors += (e1 == NULL || e1 != e2)? 1 : 0;
+
+    // offset error
+    errors += (tos_getoff(context, "var0") != -255) ? 1 : 0; 
+
+    errors += (tos_getoff(context, "var1") != -1) ? 1 : 0; 
 
     e2 = tos_newname(context, "var1");
     e3 = tos_lookup(context, "var1");
 
     errors += (e2 != e3)? 1 : 0;
     errors += (e1 == e3)? 1 : 0;
+
+    errors += (tos_getoff(context, e2->ident) != (int)(e2->offset)) ? 1 : 0; 
 
     context = tos_popfreectx(context);
 
@@ -139,11 +190,11 @@ int main(int argc, char **argv)
     printf("test %d\t", ++test);
     if (context == NULL && !errors)  
     {
-        printf("[ok]\t'same variable name, different context'\n");
+        printf("[ok]\t'same variable name, different context and offset'\n");
     }
     else
     {
-        printf("[ko]\t'same variable name, different context'\n");
+        printf("[ko]\t'same variable name, different context and offset'\n");
         exit(EXIT_FAILURE);
     }
 
@@ -215,7 +266,7 @@ int main(int argc, char **argv)
 
     e1 = tos_newname(context, "var1");
 
-    // function : ret = T_VOID, args = [E_BOOL, E_INT, E_BOOL, E_INT, E_INT] 
+    // function : ret = R_VOID, args = [E_BOOL, E_INT, E_BOOL, E_INT, E_INT] 
     al1 = arglist_addbegin(al1, E_INT);
     al1 = arglist_addbegin(al1, E_INT);
     al1 = arglist_addbegin(al1, E_BOOL);
@@ -237,13 +288,26 @@ int main(int argc, char **argv)
     errors +=  is_function_type(e1->type, R_INT, al2);
 
     // al3 != al1
-    al3 = arglist_addbegin(al3, E_BOOL);
-    al3 = arglist_addbegin(al3, E_INT);
+    al3 = arglist_addend(al3, E_BOOL);
+    al3 = arglist_addend(al3, E_BOOL);
 
-    errors += is_function_type(e1->type, R_VOID, al3);
+    errors += check_arglist(e1->type, al3);
+
+    al3 = arglist_addend(al3, E_INT);
+    al3 = arglist_addend(al3, E_INT);
+    al3 = arglist_addend(al3, E_INT);
+
+    // al3 != al1
+    errors += check_arglist(e1->type, al3);
+
+    d1 = elementary_type(T_INT);
+
+    // d1->type != T_FUNCTION    
+    errors += check_arglist(d1, al3);
 
     context = tos_popfreectx(context);
 
+    free(d1);
     free_arglist(al2);
     free_arglist(al3);
 
@@ -309,6 +373,10 @@ int main(int argc, char **argv)
     errors += (errors || fifo->next->next == NULL || fifo->next->next->num != 1) ? 1 : 0;
     errors += (errors || fifo->next->next->next != NULL) ? 1 : 0;
 
+    fd = disable_printf();
+    fifo_print(fifo);
+    enable_printf(fd);
+
     fifo = fifo_pop(fifo);
     errors += (fifo == NULL || fifo->num != 3) ? 1 : 0;
     errors += (errors || fifo->next == NULL || fifo->next->num != 1) ? 1 : 0;
@@ -330,6 +398,9 @@ int main(int argc, char **argv)
     //--------------------------------------------------------------
     // BONUS : PRINTING A SAMPLE OF SYMBOL TABLE
     //--------------------------------------------------------------
+    al1 = NULL;
+    al2 = NULL;
+    
     context = tos_pushctx(context);
 
     e1 = tos_newname(context, "var1");
@@ -342,15 +413,14 @@ int main(int argc, char **argv)
     e1->type = array_type(E_BOOL, 50);
 
     e1 = tos_newname(context, "fun1");
-    al1 = NULL;
 
-    // function : ret = T_VOID, args = [E_BOOL, E_INT, E_BOOL, E_INT, E_INT] 
-    al1 = arglist_addbegin(al1, E_INT);
-    al1 = arglist_addbegin(al1, E_INT);
-    al1 = arglist_addbegin(al1, E_BOOL);
-    al1 = arglist_addbegin(al1, E_INT);
-    al1 = arglist_addbegin(al1, E_BOOL);
-
+    // function : ret = R_VOID, args = [E_STR, E_INT, E_BOOL, E_INT, E_BOOL] 
+    al1 = arglist_addend(al1, E_STR);
+    al1 = arglist_addend(al1, E_INT);
+    al1 = arglist_addend(al1, E_BOOL);
+    al1 = arglist_addend(al1, E_INT);
+    al1 = arglist_addend(al1, E_BOOL);
+    
     e1->type = function_type(R_VOID, al1);
 
     context = tos_pushctx(context);
@@ -361,11 +431,18 @@ int main(int argc, char **argv)
     e1 = tos_newname(context, "var5");
     e1->type = elementary_type(T_INT);
 
+    e1 = tos_newname(context, "fun2");
+    al2 = arglist_addbegin(al2, E_INT);
+    e1->type = function_type(R_INT, al2);
+
+    e1 = tos_newname(context, "fun3");
+    e1->type = function_type(R_BOOL, NULL);
+
     printf("\n[PRINTING-SAMPLE]\n\n");
     tos_printctx(context);
 
     context = tos_popfreectx(context);
     context = tos_popfreectx(context);
-
+    
     return EXIT_SUCCESS;
 }

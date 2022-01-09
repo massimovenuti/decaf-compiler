@@ -333,7 +333,7 @@ struct s_fifo *fifo_pop(struct s_fifo *fifo);
 void fifo_free(struct s_fifo *fifo);
 
 /**
-* \fn void fifo_print(struct s_fifo *list)
+* \fn void fifo_print(struct s_fifo *fifo)
 * \brief Affiche une pile d'entiers
 * \param fifo Une pile d'entiers
 */
