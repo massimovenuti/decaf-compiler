@@ -71,7 +71,7 @@ HEX_NUM 0x[0-9a-fA-F]+
 {NUM}						{
 								long x = strtol(yytext, NULL, 10);
 								if (x < INT_MIN || x > INT_MAX) {
-									yyerror("not int");
+									yyerror("integer overflow");
 									exit(EXIT_FAILURE);
 								} else {
 									yylval.intval = (int) x;
@@ -81,7 +81,7 @@ HEX_NUM 0x[0-9a-fA-F]+
 {HEX_NUM}					{
 								long x = strtol(yytext, NULL, 16);
 								if (x < INT_MIN || x > INT_MAX) {
-									yyerror("not int");
+									yyerror("integer overflow");
 									exit(EXIT_FAILURE);
 								} else {
 									yylval.intval = (int) x;
