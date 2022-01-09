@@ -5,6 +5,8 @@
 #include <string.h>
 #include "quad.h"
 
+#include "decaf.tab.h"
+
 #define YY_USER_ACTION                                       \
   yylloc.first_line = yylloc.last_line;                      \
   yylloc.first_column = yylloc.last_column;                  \
@@ -15,9 +17,8 @@
      for (col = 1; yytext[yyleng - col] != '\n'; ++col) {}   \
      yylloc.last_column = col;                               \
      yylloc.last_line = yylineno;                            \
-  }
-
-#include "decaf.tab.h"
+  } 														 \
+  token_yylloc = yylloc;
 
 extern YYLTYPE token_yylloc; 
 extern void yyerror(char *msg);
@@ -70,7 +71,6 @@ HEX_NUM 0x[0-9a-fA-F]+
 {NUM}						{
 								long x = strtol(yytext, NULL, 10);
 								if (x < INT_MIN || x > INT_MAX) {
-									token_yylloc = yylloc;
 									yyerror("not int");
 									exit(EXIT_FAILURE);
 								} else {
@@ -81,7 +81,6 @@ HEX_NUM 0x[0-9a-fA-F]+
 {HEX_NUM}					{
 								long x = strtol(yytext, NULL, 16);
 								if (x < INT_MIN || x > INT_MAX) {
-									token_yylloc = yylloc;
 									yyerror("not int");
 									exit(EXIT_FAILURE);
 								} else {
