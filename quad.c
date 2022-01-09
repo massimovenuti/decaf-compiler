@@ -114,6 +114,7 @@ void complete(struct s_fifo *list, int label) {
 }
 
 void print_quadop(quadop qo) {
+    char * str = NULL;
     switch (qo.type) {
     case QO_CST:
         printf("%d", qo.u.cst);
@@ -134,7 +135,7 @@ void print_quadop(quadop qo) {
         printf("%p", qo.u.context);
         break;
     case QO_STRING:
-        char *str = get_content(strings, qo.u.string);
+        str = get_content(strings, qo.u.string);
         if (str != NULL)
             printf("%s", str);
         break;
