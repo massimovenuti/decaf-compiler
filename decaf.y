@@ -902,7 +902,6 @@ void yyerror(char *msg) {
 	for (int i = 0; i < token_yylloc.last_column - token_yylloc.first_column - 1; i++)
 		fprintf(stderr, "~");
 	fprintf(stderr, RESET "\n");
-	/* exit(EXIT_FAILURE); */
 }
 
 struct s_statement new_statement() {
