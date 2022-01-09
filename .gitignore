@@ -15,3 +15,4 @@ decaf-programs/p-01.asm
 decaf
 doc/*
 *.mips
+test.decaf

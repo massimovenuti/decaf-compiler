@@ -26,9 +26,6 @@ void print_line(int lineNum);
 void yyerror(char *msg);
 struct s_statement new_statement();
 struct s_expr new_expr();
-void check_decl(struct s_entry *var, YYLTYPE var_loc);
-void check_use(struct s_entry *var, YYLTYPE var_loc);
-void check_function_call(struct s_entry *fun, YYLTYPE fun_loc);
 void check_array_use(struct s_entry *arr, YYLTYPE arr_loc, struct s_expr index, YYLTYPE index_loc);
 void check_expr_bool(struct s_expr expr, YYLTYPE expr_loc);
 void check_expr_int(struct s_expr expr, YYLTYPE expr_loc);
@@ -72,7 +69,7 @@ void gen_loop_exit();
 
 %type <exprval> expr
 %type <intval> marker
-%type <entryval> method_call
+%type <entryval> method_call id_use id_decl
 %type <stateval> statement statement_l statement_l_ goto block
 %type <alistval> arg_l arg_l_ expr_l
 %type <etypeval> arg
@@ -156,6 +153,22 @@ final
     ERRORIF(id->type->u.function_info.arglist != NULL, "`main` function must not have arguments");
 }
 
+id_use
+: ID {
+	$$ = tos_lookup(context, $1);
+	token_yylloc = @1;
+	ERRORIF($$ == NULL, "identifier undefined");
+}
+;
+
+id_decl
+: ID {
+	$$ = tos_newname(context, $1);
+	token_yylloc = @1;
+	ERRORIF($$ == NULL, "identifier redefined");
+}
+;
+
 decl
 : field_decl_l method_decl_l
 | field_decl_l
@@ -179,16 +192,8 @@ field_decl_int_l
 ;
 
 field_decl_int 
-: ID {
-	struct s_entry *ident = tos_newname(context, $1);
-	check_decl(ident, @1);
-	ident->type = elementary_type(T_INT);
-}
-| ID '[' INT_LITERAL ']' {
-	struct s_entry *ident = tos_newname(context, $1);
-	check_decl(ident, @1);
-	ident->type = array_type(E_INT, $3);
-}
+: id_decl { $1->type = elementary_type(T_INT); }
+| id_decl '[' INT_LITERAL ']' { $1->type = array_type(E_INT, $3); }
 ;
 
 field_decl_bool_l 
@@ -197,15 +202,11 @@ field_decl_bool_l
 ;
 
 field_decl_bool 
-: ID {
-	struct s_entry *ident = tos_newname(context, $1);
-	check_decl(ident, @1);
-	ident->type = elementary_type(T_BOOL);
+: id_decl {
+	$1->type = elementary_type(T_BOOL);
 }
-| ID '[' INT_LITERAL ']' {
-	struct s_entry *id = tos_newname(context, $1);
-	check_decl(id, @1);
-	id->type = array_type(E_BOOL, $3);
+| id_decl '[' INT_LITERAL ']' {
+	$1->type = array_type(E_BOOL, $3);
 }
 ;
 
@@ -215,15 +216,12 @@ method_decl_l
 ;
 
 method_decl
-: INT ID {
-	struct s_entry *id = tos_newname(context, $2);
-	check_decl(id, @2);
-	$<entryval>$ = id;
+: INT id_decl {
 	infunction = 1;
 	infunction_type = R_INT;
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2->ident)));
 } '(' arg_l_ ')' {
-	$<entryval>3->type = function_type(R_INT, $5);
+	$2->type = function_type(R_INT, $5);
 } block {
 	infunction = 0;
 	if ($5 != NULL) {
@@ -232,15 +230,12 @@ method_decl
 	}
 	gen_err_fun_no_return();
 }
-| BOOL ID {
-	struct s_entry *id = tos_newname(context, $2);
-	check_decl(id, @2);
-	$<entryval>$ = id;
+| BOOL id_decl {
 	infunction = 1;
 	infunction_type = R_BOOL;
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2->ident)));
 } '(' arg_l_ ')' {
-	$<entryval>3->type = function_type(R_BOOL, $5);
+	$2->type = function_type(R_BOOL, $5);
 } block {
 	infunction = 0;
 	if ($5 != NULL) {
@@ -249,15 +244,12 @@ method_decl
 	}
 	gen_err_fun_no_return();
 }
-| VOID ID {
-	struct s_entry *id = tos_newname(context, $2);
-	check_decl(id, @2);
-	$<entryval>$ = id;
+| VOID id_decl {
 	infunction = 1;
 	infunction_type = R_VOID;
-	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
+	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name($2->ident)));
 } '(' arg_l_ ')' {
-	$<entryval>3->type = function_type(R_VOID, $5);
+	$2->type = function_type(R_VOID, $5);
 } block {
 	infunction = 0;
 	gencode(quad_make(Q_DRETURN, quadop_empty(), quadop_empty(), quadop_empty()));
@@ -283,16 +275,12 @@ arg_l
 ;
 
 arg 
-: INT ID {
-	struct s_entry *ident = tos_newname(context, $2);
-	check_decl(ident, @2);
-	ident->type = elementary_type(T_INT);
+: INT id_decl {
+	$2->type = elementary_type(T_INT);
 	$$ = E_INT;
 }
-| BOOL ID {
-	struct s_entry *ident = tos_newname(context, $2);
-	check_decl(ident, @2);
-	ident->type = elementary_type(T_BOOL);
+| BOOL id_decl {
+	$2->type = elementary_type(T_BOOL);
 	$$ = E_BOOL;
 }
 ;
@@ -322,42 +310,22 @@ var_decl
 ;
 
 id_int_l 
-: ID {
-	struct s_entry *ident = tos_newname(context, $1);
-	check_decl(ident, @1);
-	ident->type = elementary_type(T_INT);
-}
-| id_int_l ',' ID {
-	struct s_entry *ident = tos_newname(context, $3);
-	check_decl(ident, @3);
-	ident->type = elementary_type(T_INT);
-}
+: id_decl { $1->type = elementary_type(T_INT); }
+| id_int_l ',' id_decl { $3->type = elementary_type(T_INT); }
 ;
 
 id_bool_l 
-: ID {
-	struct s_entry *ident = tos_newname(context, $1);
-	check_decl(ident, @1);
-	ident->type = elementary_type(T_BOOL);
-}
-| id_bool_l ',' ID {
-	struct s_entry *ident = tos_newname(context, $3);
-	check_decl(ident, @3);
-	ident->type = elementary_type(T_BOOL);
-}
+: id_decl { $1->type = elementary_type(T_BOOL); }
+| id_bool_l ',' id_decl { $3->type = elementary_type(T_BOOL); }
 ;
 
 statement_l_
-: %empty {
-	$$ = new_statement();
-}
-| statement_l {
-	$$ = $1;
-}
+: %empty { $$ = new_statement(); }
+| statement_l { $$ = $1; }
 ;
 
 statement_l 
-: statement {$$ = $1;}
+: statement { $$ = $1; }
 | statement_l marker statement {
 	complete($1.next, $2);
 	$$.next = $3.next;
@@ -367,15 +335,13 @@ statement_l
 ;
 
 statement 
-: ID '=' expr ';' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_use(id, @1);
+: id_use '=' expr ';' {
 	$$ = new_statement();
-	quadop qid = quadop_name(id->ident);
-	if (is_elementary_type(id->type, T_INT)) { // cas int
+	quadop qid = quadop_name($1->ident);
+	if (is_elementary_type($1->type, T_INT)) { // cas int
 		check_expr_int($3, @3);
 		gencode(quad_make(Q_MOVE, $3.u.result, quadop_empty(), qid));
-	} else if (is_elementary_type(id->type, T_BOOL)) { // cas bool
+	} else if (is_elementary_type($1->type, T_BOOL)) { // cas bool
 		check_expr_bool($3, @3);
 		complete($3.u.boolexpr.true, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(1), quadop_empty(), qid));
@@ -388,12 +354,11 @@ statement
 		YYERROR;
 	}
 }
-| ID '[' expr ']' '=' expr ';' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_array_use(id, @1, $3, @3);
+| id_use '[' expr ']' '=' expr ';' {
+	check_array_use($1, @1, $3, @3);
 	$$ = new_statement();
-	quadop qid = quadop_name(id->ident);
-	if (is_array_type(id->type, E_INT)) { // cas int
+	quadop qid = quadop_name($1->ident);
+	if (is_array_type($1->type, E_INT)) { // cas int
 		check_expr_int($6, @6);
 		gencode(quad_make(Q_SETI, qid, $3.u.result, $6.u.result));	
 	} else { // cas bool
@@ -406,23 +371,20 @@ statement
 		gencode(quad_make(Q_SETI, qid, $3.u.result, quadop_bool(0)));
 	}
 }
-| ID ADD_ASSIGN expr ';' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_use(id, @1);
-	ERRORIF(!is_elementary_type(id->type, T_INT), "operand must be of type integer");
+| id_use ADD_ASSIGN expr ';' {
+	ERRORIF(!is_elementary_type($1->type, T_INT), "operand must be of type integer");
 	check_expr_int($3, @3);
 	$$ = new_statement();
-	quadop qid = quadop_name(id->ident);
+	quadop qid = quadop_name($1->ident);
 	gencode(quad_make(Q_ADD, qid, $3.u.result, qid));
 }
-| ID '[' expr ']' ADD_ASSIGN expr ';' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_array_use(id, @1, $3, @3);
+| id_use '[' expr ']' ADD_ASSIGN expr ';' {
+	check_array_use($1, @1, $3, @3);
 	token_yylloc = @1;
-	ERRORIF(!is_array_type(id->type, E_INT), "operand must be an array of integers");
+	ERRORIF(!is_array_type($1->type, E_INT), "operand must be an array of integers");
 	check_expr_int($6, @6);
 	$$ = new_statement();
-	quadop qid = quadop_name(id->ident);
+	quadop qid = quadop_name($1->ident);
 	struct s_entry *temp = tos_newtemp(context); 
 	temp->type = elementary_type(T_INT);
 	quadop qo = quadop_name(temp->ident);
@@ -430,23 +392,20 @@ statement
 	gencode(quad_make(Q_ADD, qo, $6.u.result, qo));
 	gencode(quad_make(Q_SETI, qid, $3.u.result, qo));
 }
-| ID SUB_ASSIGN expr ';' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_use(id, @1);
-	ERRORIF(!is_elementary_type(id->type, T_INT), "operand must be of type integer");
+| id_use SUB_ASSIGN expr ';' {
+	ERRORIF(!is_elementary_type($1->type, T_INT), "operand must be of type integer");
 	check_expr_int($3, @3);
 	$$ = new_statement();
-	quadop qid = quadop_name(id->ident);
+	quadop qid = quadop_name($1->ident);
 	gencode(quad_make(Q_SUB, qid, $3.u.result, qid));
 }
-| ID '[' expr ']' SUB_ASSIGN expr ';' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_array_use(id, @1, $3, @3);
+| id_use '[' expr ']' SUB_ASSIGN expr ';' {
+	check_array_use($1, @1, $3, @3);
 	token_yylloc = @1;
-	ERRORIF(!is_array_type(id->type, E_INT), "operand must be an array of integers");
+	ERRORIF(!is_array_type($1->type, E_INT), "operand must be an array of integers");
 	check_expr_int($6, @6);
 	$$ = new_statement();
-	quadop qid = quadop_name(id->ident);
+	quadop qid = quadop_name($1->ident);
 	struct s_entry *temp = tos_newtemp(context); 
 	temp->type = elementary_type(T_INT);
 	quadop qo = quadop_name(temp->ident);
@@ -552,20 +511,20 @@ statement
 ;
 
 method_call
-: ID s_call '(' ')' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_function_call(id, @1);
+: id_use s_call '(' ')' {
+	token_yylloc = @1;
+	ERRORIF(!is_elementary_type($1->type, T_FUNCTION), "called object is not a function");
 	quadop qo;
-	if (is_function_type(id->type, R_VOID, NULL)) { // procédure
+	if (is_function_type($1->type, R_VOID, NULL)) { // procédure
 		// TODO: checker si on appelle main ?
 		qo = quadop_empty();
 		$$ = NULL;
-	} else if (is_function_type(id->type, R_INT, NULL)) { // fonction renvoyant int
+	} else if (is_function_type($1->type, R_INT, NULL)) { // fonction renvoyant int
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_INT);
 		qo = quadop_name(temp->ident);
 		$$ = temp;
-	} else if (is_function_type(id->type, R_BOOL, NULL)) { // fonction renvoyant bool
+	} else if (is_function_type($1->type, R_BOOL, NULL)) { // fonction renvoyant bool
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
@@ -574,21 +533,21 @@ method_call
 		yyerror("missing arguments in function call");
 		YYERROR;
 	}
-	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(0), qo));
+	gencode(quad_make(Q_CALL, quadop_name($1->ident), quadop_cst(0), qo));
 }
-| ID s_call '(' expr_l ')' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_function_call(id, @1);
+| id_use s_call '(' expr_l ')' {
+	token_yylloc = @1;
+	ERRORIF(!is_elementary_type($1->type, T_FUNCTION), "called object is not a function");
 	quadop qo;
-	if (is_function_type(id->type, R_VOID,  $4)) { // procédure
+	if (is_function_type($1->type, R_VOID,  $4)) { // procédure
 		qo = quadop_empty();
 		$$ = NULL;
-	} else if (is_function_type(id->type, R_INT,  $4)) { // fonction renvoyant int
+	} else if (is_function_type($1->type, R_INT,  $4)) { // fonction renvoyant int
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_INT);
 		qo = quadop_name(temp->ident);
 		$$ = temp;
-	} else if (is_function_type(id->type, R_BOOL,  $4)) { // fonction renvoyant bool
+	} else if (is_function_type($1->type, R_BOOL,  $4)) { // fonction renvoyant bool
 		struct s_entry *temp = tos_newtemp(context); 
 		temp->type = elementary_type(T_BOOL);
 		qo = quadop_name(temp->ident);
@@ -597,7 +556,7 @@ method_call
 		yyerror("wrong arguments in function call");
 		YYERROR;
 	}
-	gencode(quad_make(Q_CALL, quadop_name(id->ident), quadop_cst(arglist_size($4)), qo));
+	gencode(quad_make(Q_CALL, quadop_name($1->ident), quadop_cst(arglist_size($4)), qo));
 	free_arglist($4);
 }
 ;
@@ -632,16 +591,14 @@ expr_l
 ;
 
 expr 
-: ID {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_use(id, @1);
-	if (is_elementary_type(id->type, T_INT)) { // cas int
+: id_use {
+	if (is_elementary_type($1->type, T_INT)) { // cas int
 		$$ = new_expr(E_INT);
-		$$.u.result = quadop_name(id->ident);
-	} else if (is_elementary_type(id->type, T_BOOL)) { // cas bool
+		$$.u.result = quadop_name($1->ident);
+	} else if (is_elementary_type($1->type, T_BOOL)) { // cas bool
 		$$ = new_expr(E_BOOL);
 		$$.u.boolexpr.true = crelist(nextquad);
-		gencode(quad_make(Q_BEQ, quadop_name(id->ident), quadop_bool(1), quadop_empty()));
+		gencode(quad_make(Q_BEQ, quadop_name($1->ident), quadop_bool(1), quadop_empty()));
 		$$.u.boolexpr.false = crelist(nextquad);
 		gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 	} else {
@@ -649,13 +606,12 @@ expr
 		YYERROR;
 	}
 } 
-| ID '[' expr ']' {
-	struct s_entry *id = tos_lookup(context, $1);
-	check_array_use(id, @1, $3, @3);
+| id_use '[' expr ']' {
+	check_array_use($1, @1, $3, @3);
 	struct s_entry *temp = tos_newtemp(context);
 	quadop qo = quadop_name(temp->ident);
-	gencode(quad_make(Q_GETI, quadop_name(id->ident), $3.u.result, qo));
-	if (is_array_type(id->type, E_INT)) {
+	gencode(quad_make(Q_GETI, quadop_name($1->ident), $3.u.result, qo));
+	if (is_array_type($1->type, E_INT)) {
 		$$ = new_expr(E_INT);
 		temp->type = elementary_type(T_INT);
 		$$.u.result = qo;
@@ -922,16 +878,6 @@ struct s_expr new_expr(enum elem_type type) {
 	};
 }
 
-void check_use(struct s_entry *id, YYLTYPE id_loc) {
-	token_yylloc = id_loc;
-	ERRORIF(id == NULL, "identifier undefined");
-}
-
-void check_decl(struct s_entry *id, YYLTYPE id_loc) {
-	token_yylloc = id_loc;
-	ERRORIF(id == NULL, "identifier redefined");
-}
-
 void check_expr_bool(struct s_expr expr, YYLTYPE expr_loc) {
 	token_yylloc = expr_loc;
 	ERRORIF(expr.type != E_BOOL, "expression must be of type boolean");
@@ -965,13 +911,7 @@ void gen_err_fun_no_return() {
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 }
 
-void check_function_call(struct s_entry *fun, YYLTYPE fun_loc) {
-	check_use(fun, fun_loc);
-	ERRORIF(!is_elementary_type(fun->type, T_FUNCTION), "called object is not a function");
-}
-
 void check_array_use(struct s_entry *arr, YYLTYPE arr_loc, struct s_expr index, YYLTYPE index_loc) {
-	check_use(arr, arr_loc);
 	ERRORIF(!is_elementary_type(arr->type, T_ARRAY), "object is not an array");
 	token_yylloc = index_loc;
 	ERRORIF(index.type != E_INT, "array index must be of type integer");
