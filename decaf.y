@@ -15,6 +15,8 @@ unsigned infunction = 0;
 enum ret_type infunction_type;
 YYLTYPE token_yylloc;
 
+int print_tos = 0;
+
 extern int yylex();
 extern int yylineno;
 
@@ -118,6 +120,8 @@ pushctx
 
 popctx
 : %empty {
+    if (print_tos)
+        tos_printctx(context);
 	context = tos_popctx(context);
 	gencode(quad_make(Q_ECTX, quadop_empty(), quadop_empty(), quadop_empty()));
 	if (inloop != NULL)
