@@ -332,6 +332,13 @@ struct s_fifo *fifo_pop(struct s_fifo *fifo);
 */
 void fifo_free(struct s_fifo *fifo);
 
+/**
+* \fn void fifo_print(struct s_fifo *list)
+* \brief Affiche une pile d'entiers
+* \param list Une pile d'entiers
+*/
+void fifo_print(struct s_fifo *list);
+
 //--------------------------------------------------------------
 // AFFICHAGE
 //--------------------------------------------------------------

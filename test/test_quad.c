@@ -82,7 +82,7 @@ int main(int argc, char **argv)
         printf("[ok] crelist\n");
     } else {
         printf("[ko] crelist: ");
-        print_list(l0);
+        fifo_print(l0);
         exit(EXIT_FAILURE);
     }
 
@@ -98,7 +98,7 @@ int main(int argc, char **argv)
 
     if (!l01 || !l01->next || l01->next->num != 0 || l01->num != 1) {
         printf("[ko] concat: ");
-        print_list(l01);
+        fifo_print(l01);
         exit(EXIT_FAILURE);
     }
 
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
         printf("[ok] concat\n");
     } else {
         printf("[ko] concat: ");
-        print_list(l012);
+        fifo_print(l012);
         exit(EXIT_FAILURE);
     }
 

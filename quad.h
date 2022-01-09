@@ -218,13 +218,6 @@ void print_quadop(quadop qo);
 void print_quad(quad q);
 
 /**
-* \fn void print_ilist(struct s_fifo *list)
-* \brief Affiche une liste
-* \param list Une liste
-*/
-void print_list(struct s_fifo *list);
-
-/**
 * \fn void print_globalcode()
 * \brief Affiche le code généré
 */
