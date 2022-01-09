@@ -202,12 +202,8 @@ field_decl_bool_l
 ;
 
 field_decl_bool 
-: id_decl {
-	$1->type = elementary_type(T_BOOL);
-}
-| id_decl '[' INT_LITERAL ']' {
-	$1->type = array_type(E_BOOL, $3);
-}
+: id_decl { $1->type = elementary_type(T_BOOL); }
+| id_decl '[' INT_LITERAL ']' { $1->type = array_type(E_BOOL, $3); }
 ;
 
 method_decl_l 
@@ -261,17 +257,13 @@ method_decl
 ;
 
 arg_l_
-: pushctx arg_l {$$ = $2;}
-| %empty {$$ = NULL;}
+: pushctx arg_l { $$ = $2; }
+| %empty { $$ = NULL; }
 ;
 
 arg_l 
-: arg {
-	$$ = arglist_addend(NULL, $1);
-}
-| arg_l ',' arg {
-	$$ = arglist_addend($1, $3);
-}
+: arg { $$ = arglist_addend(NULL, $1); }
+| arg_l ',' arg { $$ = arglist_addend($1, $3); }
 ;
 
 arg 
@@ -413,9 +405,7 @@ statement
 	gencode(quad_make(Q_SUB, qo, $6.u.result, qo));
 	gencode(quad_make(Q_SETI, qid, $3.u.result, qo));
 }
-| method_call ';' {
-	$$ = new_statement();
-}
+| method_call ';' { $$ = new_statement(); }
 | IF '(' expr ')' marker block {
 	check_expr_bool($3, @3);
 	$$ = new_statement();
@@ -505,9 +495,7 @@ statement
 	$$.next_continue = crelist(nextquad);
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_empty()));
 }
-| block {
-	$$ = $1;
-}
+| block { $$ = $1; }
 ;
 
 method_call
@@ -807,13 +795,11 @@ expr
 	$$.u.boolexpr.true = $2.u.boolexpr.false;
 	$$.u.boolexpr.false = $2.u.boolexpr.true;
 }
-| '(' expr ')' {
-	$$ = $2;
-}
+| '(' expr ')' { $$ = $2; }
 ;
 
 marker
-: %empty {$$ = nextquad;}
+: %empty { $$ = nextquad; }
 ;
 
 goto
