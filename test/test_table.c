@@ -9,8 +9,8 @@ extern struct s_context *context;
 
 void raler(const char *msg)
 {
-	perror(msg);
-	exit(EXIT_FAILURE);
+    perror(msg);
+    exit(EXIT_FAILURE);
 }
 
 int disable_printf()
