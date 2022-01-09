@@ -218,12 +218,12 @@ method_decl
 : INT ID {
 	struct s_entry *id = tos_newname(context, $2);
 	check_decl(id, @2);
+	$<entryval>$ = id;
 	infunction = 1;
 	infunction_type = R_INT;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
-	struct s_entry *ident = tos_lookup(context, $2);
-	ident->type = function_type(R_INT, $5);
+	$<entryval>3->type = function_type(R_INT, $5);
 } block {
 	infunction = 0;
 	if ($5 != NULL) {
@@ -235,12 +235,12 @@ method_decl
 | BOOL ID {
 	struct s_entry *id = tos_newname(context, $2);
 	check_decl(id, @2);
+	$<entryval>$ = id;
 	infunction = 1;
 	infunction_type = R_BOOL;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
-	struct s_entry *id = tos_lookup(context, $2);
-	id->type = function_type(R_BOOL, $5);
+	$<entryval>3->type = function_type(R_BOOL, $5);
 } block {
 	infunction = 0;
 	if ($5 != NULL) {
@@ -252,12 +252,12 @@ method_decl
 | VOID ID {
 	struct s_entry *id = tos_newname(context, $2);
 	check_decl(id, @2);
+	$<entryval>$ = id;
 	infunction = 1;
 	infunction_type = R_VOID;
 	gencode(quad_make(Q_FUN, quadop_empty(), quadop_empty(), quadop_name(id->ident)));
 } '(' arg_l_ ')' {
-	struct s_entry *id = tos_lookup(context, $2);
-	id->type = function_type(R_VOID, $5);
+	$<entryval>3->type = function_type(R_VOID, $5);
 } block {
 	infunction = 0;
 	gencode(quad_make(Q_DRETURN, quadop_empty(), quadop_empty(), quadop_empty()));
