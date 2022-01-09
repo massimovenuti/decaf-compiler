@@ -94,6 +94,4 @@ HEX_NUM 0x[0-9a-fA-F]+
 .		{
 	yyerror("illegal character");
 	exit(EXIT_FAILURE);
-	// exit(EXIT_FAILURE);
-	// return *yytext;
 }
