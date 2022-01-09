@@ -1,6 +1,7 @@
 prefixe=decaf
 
-CFLAGS= -g
+CC = gcc
+CFLAGS = -g -Wall -Wextra -Werror
 # exige 3 fichiers:
 # - $(prefixe).y (fichier bison)
 # - $(prefixe).lex (fichier flex)

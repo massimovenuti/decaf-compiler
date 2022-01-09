@@ -24,7 +24,7 @@ extern YYLTYPE token_yylloc;
 extern void yyerror(char *msg);
 %}
 
-%option nounput noyywrap yylineno
+%option noinput nounput noyywrap yylineno
 
 ID [[:alpha:]_][[:alnum:]_]*
 
