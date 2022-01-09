@@ -294,8 +294,8 @@ arg
 ;
 
 block 
-: '{' pushctx var_decl_l_ statement_l_ marker popctx '}' {
-  complete($4.next, $5);  
+: pushctx '{' var_decl_l_ statement_l_ '}' marker popctx {
+  complete($4.next, $6);  
   $$ = new_statement();
   $$.next_break = $4.next_break;
   $$.next_continue = $4.next_continue;
