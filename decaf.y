@@ -898,6 +898,7 @@ void gen_err_fun_no_return() {
 }
 
 void check_array_use(struct s_entry *arr, YYLTYPE arr_loc, struct s_expr index, YYLTYPE index_loc) {
+	token_yylloc = arr_loc;
 	ERRORIF(!is_elementary_type(arr->type, T_ARRAY), "object is not an array");
 	token_yylloc = index_loc;
 	ERRORIF(index.type != E_INT, "array index must be of type integer");
