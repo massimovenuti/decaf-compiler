@@ -322,9 +322,13 @@ array_access
 	ERRORIF($3.type != E_INT, "array index must be of type integer");
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst(0), quadop_label(nextquad + 2)));
 	gencode(quad_make(Q_BLT, $3.u.result, quadop_cst($1->type->u.array_info.size), quadop_label(nextquad + 5)));
-	strings = new_string(strings, "\"**** array index out of bounds\"");
+	static int string_idx = -1;
+	if (string_idx < 0) {
+		strings = new_string(strings, "\"**** array index out of bounds\\n\"");
+		string_idx = strings->idx;
+	} 
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
-	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(string_idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 	$$.entry = $1;
@@ -887,9 +891,13 @@ void check_bool_op(struct s_expr expr1, YYLTYPE expr1_loc, struct s_expr expr2, 
 }
 
 void gen_err_fun_no_return() {
-	strings = new_string(strings, "\"**** function declared as returning a result returns nothing\"");
+	static int string_idx = -1;
+	if (string_idx < 0) {
+		strings = new_string(strings, "\"**** function declared as returning a result returns nothing\\n\"");
+		string_idx = strings->idx;
+	} 
 	gencode(quad_make(Q_SCALL, quadop_empty(), quadop_empty(), quadop_empty()));
-	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(strings->idx)));
+	gencode(quad_make(Q_PARAM, quadop_empty(), quadop_empty(), quadop_str(string_idx)));
 	gencode(quad_make(Q_CALL, quadop_name("WriteString"), quadop_cst(1), quadop_empty()));
 	gencode(quad_make(Q_EXIT, quadop_empty(), quadop_empty(), quadop_empty()));
 }
