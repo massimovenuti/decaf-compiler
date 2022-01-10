@@ -78,7 +78,7 @@ test-decaf:
   artifacts:
     name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
     reports:
-      cobertura: ./test/coverage.xml
+      cobertura: ./coverage.xml
   needs: ["build-decaf"]
 
 doc:
