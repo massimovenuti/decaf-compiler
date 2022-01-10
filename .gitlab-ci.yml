@@ -70,7 +70,7 @@ test-decaf:
     GIT_SUBMODULE_STRATEGY: recursive
   stage: test
   before_script:
-    - apt update && apt -y install spim
+    - apt update && apt -y install spim gcovr
   script:
     - ./dts/run.sh
     - gcovr -e lex.yy.c -e decaf.tab.c -e quad.c -e table.c --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
