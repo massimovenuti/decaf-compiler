@@ -825,7 +825,7 @@ goto
 
 void print_line(int lineNum) {
 	int count = 1;
-	char lineStr[1000]; /* or other suitable maximum line size */
+	char lineStr[1000];
     FILE *input = freopen(inname, "r", stdin);
 	while (!feof(stdin)) {
 		fgets(lineStr, 1000, stdin);
