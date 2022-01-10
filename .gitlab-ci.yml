@@ -18,7 +18,7 @@ test-quad:
     - apt update && apt -y install gcovr
   script:
     - cd test
-    - ./test_quad 
+    - ./test_quad
     - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
@@ -45,7 +45,7 @@ test-table:
     - apt update && apt -y install gcovr
   script:
     - cd test
-    - ./test_table 
+    - ./test_table
     - gcovr --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
   coverage: /^\s*lines:\s*\d+.\d+\%/
   artifacts:
@@ -59,10 +59,11 @@ build-decaf:
   before_script:
     - apt update && apt -y install make flex bison
   script:
-    - make
+    - make COVERAGE=1
   artifacts:
     paths:
       - ./decaf
+      - ./*.gcno
 
 test-decaf:
   variables:
@@ -72,6 +73,12 @@ test-decaf:
     - apt update && apt -y install spim
   script:
     - ./dts/run.sh
+    - gcovr -e lex.yy.c -e decaf.tab.c -e quad.c -e table.c --xml-pretty --exclude-unreachable-branches --print-summary -o coverage.xml --root ${CI_PROJECT_DIR}
+  coverage: /^\s*lines:\s*\d+.\d+\%/
+  artifacts:
+    name: ${CI_JOB_NAME}-${CI_COMMIT_REF_NAME}-${CI_COMMIT_SHA}
+    reports:
+      cobertura: ./test/coverage.xml
   needs: ["build-decaf"]
 
 doc:
@@ -80,8 +87,8 @@ doc:
   before_script:
     - apk update && apk add doxygen graphviz ttf-freefont make
   script:
-  - make doc
-  - mv doc/html/ public/
+    - make doc
+    - mv doc/html/ public/
   artifacts:
     paths:
-    - public
+      - public
