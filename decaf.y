@@ -99,7 +99,8 @@ void gen_loop_exit();
 %left '<' '>' LEQ BEQ
 %left '+' '-'
 %left '*' '/' '%'
-%nonassoc NOT UMINUS
+%nonassoc NOT
+%nonassoc UMINUS
 
 %start program
 
