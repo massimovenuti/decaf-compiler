@@ -143,7 +143,7 @@ init
 	id = tos_newname(context, "WriteString");
 	id->type = function_type(R_VOID, arglist_addbegin(NULL, E_STR));
 	id = tos_newname(context, "ReadInt");
-	id->type = function_type(R_VOID, arglist_addbegin(NULL, E_INT));
+	id->type = function_type(R_INT, NULL);
 }
 ;
 
