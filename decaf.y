@@ -456,14 +456,13 @@ statement
 	struct s_entry *id = tos_newname(context, $3);
 	id->type = elementary_type(T_INT);
 	gencode(quad_make(Q_MOVE, $5.u.result, quadop_empty(), quadop_name(id->ident)));
+	$<entryval>$ = id;
 } marker {
-	struct s_entry *id = tos_lookup(context, $3);
-	gencode(quad_make(Q_BGT, quadop_name(id->ident), $7.u.result, quadop_empty()));
+	gencode(quad_make(Q_BGT, quadop_name($<entryval>8->ident), $7.u.result, quadop_empty()));
 } block {
-	struct s_entry *id = tos_lookup(context, $3);
 	complete($11.next, nextquad);
 	complete($11.next_continue, nextquad);
-	quadop qid = quadop_name(id->ident);
+	quadop qid = quadop_name($<entryval>8->ident);
 	gencode(quad_make(Q_ADD, qid, quadop_cst(1), qid));
 	gencode(quad_make(Q_GOTO, quadop_empty(), quadop_empty(), quadop_label($9)));
 	$$ = new_statement();
