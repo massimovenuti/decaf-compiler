@@ -376,6 +376,7 @@ statement
 		complete($3.u.boolexpr.false, nextquad);
 		gencode(quad_make(Q_MOVE, quadop_bool(0), quadop_empty(), qid));
 	} else {
+		token_yyloc = @1;
 		yyerror("operand must be of type integer or boolean");
 		YYERROR;
 	}
@@ -397,6 +398,7 @@ statement
 	}
 }
 | id_use ADD_ASSIGN expr ';' {
+	token_yyloc = @1;
 	ERRORIF(!is_elementary_type($1->type, T_INT), "operand must be of type integer");
 	check_expr_int($3, @3);
 	$$ = new_statement();
@@ -417,6 +419,7 @@ statement
 	gencode(quad_make(Q_SETI, qid, $1.index.u.result, qo));
 }
 | id_use SUB_ASSIGN expr ';' {
+	token_yyloc = @1;
 	ERRORIF(!is_elementary_type($1->type, T_INT), "operand must be of type integer");
 	check_expr_int($3, @3);
 	$$ = new_statement();
