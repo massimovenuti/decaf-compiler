@@ -189,7 +189,11 @@ field_decl_int_l
 
 field_decl_int 
 : id_decl { $1->type = elementary_type(T_INT); }
-| id_decl '[' INT_LITERAL ']' { $1->type = array_type(E_INT, $3); }
+| id_decl '[' INT_LITERAL ']' { 
+	token_yylloc = @3;
+	ERRORIF($3 == 0, "array size must be greater than 0");
+	$1->type = array_type(E_INT, $3); 
+}
 ;
 
 field_decl_bool_l 
@@ -199,7 +203,11 @@ field_decl_bool_l
 
 field_decl_bool 
 : id_decl { $1->type = elementary_type(T_BOOL); }
-| id_decl '[' INT_LITERAL ']' { $1->type = array_type(E_BOOL, $3); }
+| id_decl '[' INT_LITERAL ']' { 
+	token_yylloc = @3;
+	ERRORIF($3 == 0, "array size must be greater than 0");
+	$1->type = array_type(E_BOOL, $3);
+}
 ;
 
 method_decl_l 
