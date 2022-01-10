@@ -116,9 +116,9 @@ int main(int argc, char **argv)
 
     // === COMPLETE ===
 
-    complete(l01, 2);
+    complete(l012, 2);
 
-    if (globalcode[0].op3.u.label == 2 && globalcode[1].op3.u.label == 2) {
+    if (globalcode[0].op3.u.label == 2 && globalcode[1].op3.u.label == 2 && globalcode[2].op3.u.label == 2) {
         printf("[ok] complete\n");
     } else {
         printf("[ko] complete:\n");
@@ -127,6 +127,7 @@ int main(int argc, char **argv)
     }
 
     freecode();
+
 
     initcode();
 
